@@ -17,6 +17,10 @@ export interface EngineOptions {
   includeDeposits: boolean
 }
 
+export type ToggleKey = Exclude<keyof EngineOptions, 'costBasis'>
+
+export type Toggles = Pick<EngineOptions, ToggleKey>
+
 export const DEFAULT_OPTIONS: EngineOptions = {
   costBasis: 'average',
   includeDividends: true,

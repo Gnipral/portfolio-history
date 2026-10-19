@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type PortfolioDatabase } from '../data/db.ts'
+import { DEFAULT_OPTIONS, type CostBasisMethod, type Toggles } from '../engine/options.ts'
 import { DEFAULT_BENCHMARK_ID } from '../market/benchmarks.ts'
 
 /** Stored only in this browser's IndexedDB. */
@@ -10,7 +11,15 @@ export interface Settings {
   alphaVantageKey: string
   /** Id from BENCHMARKS, compared with the portfolio on the dashboard. */
   benchmarkId: string
+  costBasis: CostBasisMethod
+  /** Dashboard checkboxes; remembered between visits. */
+  toggles: Toggles
 }
+
+/** Settings edited as text in the settings form. */
+export type TextSetting = 'proxyUrl' | 'twelveDataKey' | 'alphaVantageKey' | 'benchmarkId'
+
+const { costBasis: defaultCostBasis, ...defaultToggles } = DEFAULT_OPTIONS
 
 /** The project's own deployment of workers/price-proxy (Cloudflare Workers Builds from main). */
 export const DEFAULT_PROXY_URL = 'https://portfolio-history-price-proxy.tibo-dhave.workers.dev'
@@ -20,6 +29,8 @@ export const DEFAULT_SETTINGS: Settings = {
   twelveDataKey: '',
   alphaVantageKey: '',
   benchmarkId: DEFAULT_BENCHMARK_ID,
+  costBasis: defaultCostBasis,
+  toggles: defaultToggles,
 }
 
 const SETTINGS_KEY = 'settings'
@@ -28,7 +39,8 @@ export async function loadSettings(database: PortfolioDatabase = db): Promise<Se
   const stored = (await database.kv.get(SETTINGS_KEY))?.value
   if (!stored) return DEFAULT_SETTINGS
   try {
-    return { ...DEFAULT_SETTINGS, ...(JSON.parse(stored) as Partial<Settings>) }
+    const parsed = JSON.parse(stored) as Partial<Settings>
+    return { ...DEFAULT_SETTINGS, ...parsed, toggles: { ...DEFAULT_SETTINGS.toggles, ...parsed.toggles } }
   } catch {
     return DEFAULT_SETTINGS
   }

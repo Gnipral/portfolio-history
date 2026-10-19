@@ -658,3 +658,55 @@ code {
 .table .num {
   white-space: nowrap;
 }
+
+.toggle-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+
+.toggle-bar legend {
+  float: left;
+  padding: 0;
+  margin-right: 0.25rem;
+  color: var(--text-muted);
+}
+
+.toggle-bar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.toggle-bar label.disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.toggle-bar input {
+  accent-color: var(--accent);
+}
+
+.toggle-reasons {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.toggle-reasons summary {
+  font-weight: 400;
+  margin: 0;
+}
+
+.toggle-reasons ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+}

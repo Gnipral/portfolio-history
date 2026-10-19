@@ -1,7 +1,8 @@
+import { useLiveQuery } from 'dexie-react-hooks'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { simulateBenchmark } from '../../engine/benchmark.ts'
-import { DEFAULT_OPTIONS } from '../../engine/options.ts'
+import { db } from '../../data/db.ts'
 import { positionsOn } from '../../engine/positions.ts'
 import { allocationSlices, colorSlots } from '../dashboard/allocation.ts'
 import type { ChartMode } from '../dashboard/chartData.ts'
@@ -9,7 +10,10 @@ import { PositionsTable } from '../dashboard/PositionsTable.tsx'
 import { SummaryCards } from '../dashboard/SummaryCards.tsx'
 import { TimeControls } from '../dashboard/TimeControls.tsx'
 import { clampIndex, rangeChange, visibleRange, type RangeKey } from '../dashboard/timeRange.ts'
+import { ToggleBar } from '../dashboard/ToggleBar.tsx'
+import { engineOptions, toggleStates } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
+import { DEFAULT_SETTINGS, saveSettings, useSettings } from '../../settings/settings.ts'
 import { formatPercent, formatSignedEur, trendClass } from '../format.ts'
 
 // The chart libraries are large; load them only when the dashboard shows data.
@@ -17,7 +21,11 @@ const PortfolioChart = lazy(() => import('../dashboard/PortfolioChart.tsx').then
 const AllocationChart = lazy(() => import('../dashboard/AllocationChart.tsx').then((m) => ({ default: m.AllocationChart })))
 
 export function DashboardPage() {
-  const [options] = useState(DEFAULT_OPTIONS)
+  const settings = useSettings() ?? DEFAULT_SETTINGS
+  const importRecord = useLiveQuery(() => db.imports.get('current'))
+  const capabilities = importRecord?.capabilities
+  const options = useMemo(() => engineOptions(settings, capabilities), [settings, capabilities])
+  const toggles = toggleStates(settings.toggles, capabilities, importRecord?.missingReasons)
   const { transactionCount, inputs, series, sync, syncProblems } = usePortfolio(options)
   const [range, setRange] = useState<RangeKey>('ALL')
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
@@ -101,6 +109,10 @@ export function DashboardPage() {
               setSelectedIndex(null)
             }}
             onSelect={setSelectedIndex}
+          />
+          <ToggleBar
+            states={toggles}
+            onChange={(key, value) => void saveSettings({ toggles: { ...settings.toggles, [key]: value } })}
           />
           <Suspense fallback={<div className="chart-wrapper chart-placeholder" />}>
             <PortfolioChart
