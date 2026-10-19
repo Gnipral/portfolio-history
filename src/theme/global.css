@@ -505,3 +505,34 @@ code {
     height: 300px;
   }
 }
+
+.sort-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+}
+
+.sort-button:hover {
+  color: var(--text);
+}
+
+.positions td {
+  vertical-align: top;
+}
+
+.positions .badge {
+  margin-left: 0.35rem;
+}
+
+.positions {
+  display: table;
+}
+
+@media (max-width: 900px) {
+  .positions {
+    display: block;
+  }
+}
