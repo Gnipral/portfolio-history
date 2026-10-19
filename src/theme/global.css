@@ -390,3 +390,118 @@ select:focus {
 code {
   font-size: 0.85rem;
 }
+
+.positive {
+  color: var(--positive);
+}
+
+.negative {
+  color: var(--negative);
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+}
+
+.cards-title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.time-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.segmented button {
+  border: none;
+  border-radius: 0;
+  padding: 0.3rem 0.75rem;
+  background: var(--surface);
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--border);
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--accent);
+  color: #fff;
+}
+
+.timeline {
+  flex: 1;
+  min-width: 160px;
+  accent-color: var(--accent);
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.chart-wrapper {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem;
+}
+
+.chart {
+  height: 420px;
+}
+
+.chart-legend {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.9rem;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  font-size: 0.85rem;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 3px;
+  vertical-align: middle;
+  margin-right: 0.15rem;
+  background: var(--accent);
+}
+
+.swatch.secondary {
+  background: var(--text-muted);
+}
+
+.swatch.pnl {
+  background: var(--positive);
+}
+
+@media (max-width: 640px) {
+  .chart {
+    height: 300px;
+  }
+}
