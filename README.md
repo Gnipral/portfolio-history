@@ -61,3 +61,7 @@ The **Daily data snapshot** workflow (`.github/workflows/data-snapshot.yml`) run
 3. builds and deploys the site, because pushes made with `GITHUB_TOKEN` do not start other workflows.
 
 GitHub disables scheduled workflows in public repositories after 60 days without repository activity. The daily commits keep the schedule active; if it is ever disabled, re-enable it in the Actions tab.
+
+## Price proxy
+
+Yahoo Finance and OpenFIGI block browser requests (no CORS). `workers/price-proxy/` is a small Cloudflare Worker that forwards only daily chart and ISIN-mapping requests from the app's own origin. See [its README](workers/price-proxy/README.md) for deployment. Without the proxy, the app can still use price APIs with your own key (Twelve Data, Alpha Vantage) and key-less CoinGecko for crypto.
