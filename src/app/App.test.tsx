@@ -1,3 +1,4 @@
+import 'fake-indexeddb/auto'
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -18,9 +19,9 @@ function renderAt(path: string) {
 }
 
 describe('App shell', () => {
-  it('shows the dashboard by default', () => {
+  it('shows the dashboard by default', async () => {
     renderAt('/')
-    expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeTruthy()
   })
 
   it('routes to the import page', () => {
@@ -28,8 +29,8 @@ describe('App shell', () => {
     expect(screen.getByRole('heading', { name: 'Import' })).toBeTruthy()
   })
 
-  it('redirects unknown routes to the dashboard', () => {
+  it('redirects unknown routes to the dashboard', async () => {
     renderAt('/does-not-exist')
-    expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeTruthy()
   })
 })
