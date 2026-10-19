@@ -3,6 +3,7 @@ import type { Transaction } from '../model/transaction.ts'
 import { Ledger, hasDeposits, sortTransactions, type LedgerIssue } from './ledger.ts'
 import type { EngineOptions } from './options.ts'
 import type { Price, PriceBook } from './priceBook.ts'
+import { irrSeries, twrIndex } from './returns.ts'
 
 /** Everything the dashboard shows for one day, in EUR. */
 export interface DailyPoint {
@@ -26,6 +27,10 @@ export interface DailyPoint {
   outflow: number
   /** Positions valued with a trade price or a stale market price. */
   estimated: number
+  /** Time-weighted return since the first transaction. */
+  twr: number
+  /** Annualized money-weighted return (XIRR) since the first transaction; undefined when not solvable. */
+  irr?: number
 }
 
 export interface SeriesResult {
@@ -96,7 +101,16 @@ export function computeDailySeries(
       inflow,
       outflow,
       estimated: holdings.estimated,
+      twr: 0,
     })
   }
+
+  const twr = twrIndex(points)
+  const irr = irrSeries(points)
+  points.forEach((point, i) => {
+    point.twr = (twr[i] as number) - 1
+    const value = irr[i]
+    if (value !== undefined) point.irr = value
+  })
   return { points, cashMode, issues: ledger.issues }
 }
