@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Called by workflows that push with GITHUB_TOKEN, because those pushes do not trigger this workflow.
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit to build and deploy
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -19,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || github.sha }}
       - uses: actions/setup-node@v5
         with:
           node-version: 24
