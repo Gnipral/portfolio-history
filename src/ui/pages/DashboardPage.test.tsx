@@ -55,7 +55,7 @@ describe('DashboardPage', () => {
   it('shows the cards for the last day and links to missing prices', async () => {
     await seed()
     renderPage()
-    const value = await screen.findByText('Value')
+    const value = await screen.findByText('Value', { selector: '.card-label' })
     const card = value.closest('.card') as HTMLElement
     expect(within(card).getByText('€1,100.00')).toBeTruthy()
     const pnl = screen.getByText('Profit / loss').closest('.card') as HTMLElement
@@ -63,22 +63,30 @@ describe('DashboardPage', () => {
     expect(await screen.findByText(/1 product has no price yet/)).toBeTruthy()
   })
 
+  it('lists the positions of the selected day', async () => {
+    await seed()
+    renderPage()
+    const table = (await screen.findByRole('columnheader', { name: /Quantity/ })).closest('table') as HTMLElement
+    expect(within(table).getByText(A)).toBeTruthy()
+    expect(within(table).getByText('100.00%')).toBeTruthy()
+  })
+
   it('moves the selection with the date picker and the slider', async () => {
     await seed()
     renderPage()
-    await screen.findByText('Value')
+    await screen.findByText('Value', { selector: '.card-label' })
     fireEvent.change(screen.getByLabelText('Date'), { target: { value: start } })
-    const card = screen.getByText('Value').closest('.card') as HTMLElement
+    const card = screen.getByText('Value', { selector: '.card-label' }).closest('.card') as HTMLElement
     expect(within(card).getByText('€1,000.00')).toBeTruthy()
 
     fireEvent.change(screen.getByLabelText('Timeline'), { target: { value: '10' } })
-    expect(within(screen.getByText('Value').closest('.card') as HTMLElement).getByText('€1,100.00')).toBeTruthy()
+    expect(within(screen.getByText('Value', { selector: '.card-label' }).closest('.card') as HTMLElement).getByText('€1,100.00')).toBeTruthy()
   })
 
   it('switches the chart unit', async () => {
     await seed()
     renderPage()
-    await screen.findByText('Value')
+    await screen.findByText('Value', { selector: '.card-label' })
     fireEvent.click(screen.getByRole('button', { name: '%' }))
     expect(screen.getByRole('button', { name: '%' }).getAttribute('aria-pressed')).toBe('true')
   })
@@ -86,7 +94,7 @@ describe('DashboardPage', () => {
   it('switches the quick range', async () => {
     await seed()
     renderPage()
-    await screen.findByText('Value')
+    await screen.findByText('Value', { selector: '.card-label' })
     fireEvent.click(screen.getByRole('button', { name: '1M' }))
     expect(screen.getByRole('button', { name: '1M' }).getAttribute('aria-pressed')).toBe('true')
   })
