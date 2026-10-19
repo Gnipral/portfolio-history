@@ -36,3 +36,15 @@ export interface DateRange {
   from: string
   to: string
 }
+
+/** How an instrument is priced: the resolved or manually entered symbol. */
+export interface SymbolRecord {
+  /** Instrument key: ISIN, or the product name when there is no ISIN. */
+  key: string
+  symbol?: string
+  kind: 'security' | 'crypto'
+  source: 'openfigi' | 'coingecko' | 'manual'
+  name?: string
+  error?: string
+  resolvedAt: string
+}

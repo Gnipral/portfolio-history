@@ -3,6 +3,7 @@ import { ThemeToggle } from '../ui/components/ThemeToggle.tsx'
 import { UpdateBanner } from '../ui/components/UpdateBanner.tsx'
 import { DashboardPage } from '../ui/pages/DashboardPage.tsx'
 import { ImportPage } from '../ui/pages/ImportPage.tsx'
+import { PricesPage } from '../ui/pages/PricesPage.tsx'
 import { SettingsPage } from '../ui/pages/SettingsPage.tsx'
 
 export function App() {
@@ -19,6 +20,7 @@ export function App() {
             Dashboard
           </NavLink>
           <NavLink to="/import">Import</NavLink>
+          <NavLink to="/prices">Prices</NavLink>
           <NavLink to="/settings">Settings</NavLink>
         </nav>
         <ThemeToggle />
@@ -27,6 +29,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/import" element={<ImportPage />} />
+          <Route path="/prices" element={<PricesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
