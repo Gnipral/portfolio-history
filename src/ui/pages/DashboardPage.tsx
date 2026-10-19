@@ -1,5 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { simulateBenchmark } from '../../engine/benchmark.ts'
 import { DEFAULT_OPTIONS } from '../../engine/options.ts'
 import { positionsOn } from '../../engine/positions.ts'
 import { allocationSlices, colorSlots } from '../dashboard/allocation.ts'
@@ -33,6 +34,17 @@ export function DashboardPage() {
     () => (inputs && selectedDate ? positionsOn(inputs.transactions, inputs.prices, options, selectedDate) : []),
     [inputs, options, selectedDate],
   )
+  const benchmark = useMemo(
+    () =>
+      inputs?.benchmark
+        ? {
+            label: inputs.benchmark.info.symbol.split('.')[0] ?? inputs.benchmark.info.id,
+            points: simulateBenchmark(points, inputs.benchmark.series),
+          }
+        : undefined,
+    [inputs, points],
+  )
+  const benchmarkChange = benchmark ? rangeChange(benchmark.points, visible.from, visible.to) : undefined
   const slots = useMemo(() => colorSlots(inputs?.transactions ?? []), [inputs])
   const slices = useMemo(() => allocationSlices(positions, slots), [positions, slots])
 
@@ -98,12 +110,20 @@ export function DashboardPage() {
               selected={selected}
               mode={mode}
               onHover={setSelectedIndex}
+              {...(benchmark ? { benchmark } : {})}
             />
           </Suspense>
           <p className="muted small">
             {range === 'ALL' ? 'Since the first transaction' : `Last ${range === 'YTD' ? 'year to date' : range}`}:{' '}
             <span className={trendClass(change.pnl)}>{formatSignedEur(change.pnl)}</span>, time-weighted{' '}
             <span className={trendClass(change.twr)}>{formatPercent(change.twr)}</span>
+            {benchmark && benchmarkChange && (
+              <>
+                . The same money in {benchmark.label}:{' '}
+                <span className={trendClass(benchmarkChange.pnl)}>{formatSignedEur(benchmarkChange.pnl)}</span>, time-weighted{' '}
+                <span className={trendClass(benchmarkChange.twr)}>{formatPercent(benchmarkChange.twr)}</span>
+              </>
+            )}
           </p>
           <SummaryCards point={point} cashMode={series?.cashMode ?? false} />
           <div className="dashboard-grid">

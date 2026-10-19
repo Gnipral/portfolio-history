@@ -24,7 +24,7 @@ const start = addDays(today, -10)
 
 beforeEach(async () => {
   resetSyncSession()
-  await Promise.all([db.transactions.clear(), db.symbols.clear(), db.prices.clear(), db.coverage.clear()])
+  await Promise.all([db.transactions.clear(), db.symbols.clear(), db.prices.clear(), db.coverage.clear(), db.kv.clear()])
 })
 afterEach(cleanup)
 
@@ -81,6 +81,18 @@ describe('DashboardPage', () => {
 
     fireEvent.change(screen.getByLabelText('Timeline'), { target: { value: '10' } })
     expect(within(screen.getByText('Value', { selector: '.card-label' }).closest('.card') as HTMLElement).getByText('€1,100.00')).toBeTruthy()
+  })
+
+  it('compares with the benchmark bought with the same money', async () => {
+    await seed()
+    await db.prices.bulkPut([
+      { symbol: 'IWDA.AS', date: start, close: 50 },
+      { symbol: 'IWDA.AS', date: today, close: 52.5 },
+    ])
+    renderPage()
+    // 1000 into IWDA at 50 = 20 units, worth 1050 today: +50, +5%
+    expect(await screen.findByText(/The same money in IWDA/)).toBeTruthy()
+    expect(screen.getByText('+€50.00')).toBeTruthy()
   })
 
   it('switches the chart unit', async () => {
