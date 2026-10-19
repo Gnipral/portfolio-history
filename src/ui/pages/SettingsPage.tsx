@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { BENCHMARKS } from '../../market/benchmarks.ts'
-import { DEFAULT_SETTINGS, saveSettings, useSettings, type Settings } from '../../settings/settings.ts'
+import { DEFAULT_SETTINGS, saveSettings, useSettings, type Settings, type TextSetting } from '../../settings/settings.ts'
 
 export function SettingsPage() {
   const stored = useSettings()
@@ -17,7 +17,7 @@ export function SettingsPage() {
     setSaved(true)
   }
 
-  const field = (key: keyof Settings) => ({
+  const field = (key: TextSetting) => ({
     value: form[key],
     onChange: (e: { target: { value: string } }) => {
       setSaved(false)
