@@ -1,0 +1,6 @@
+name = "portfolio-history-price-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[vars]
+ALLOWED_ORIGINS = "https://gnipral.github.io,http://localhost:5173,http://localhost:4173"
