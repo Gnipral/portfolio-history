@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { DEFAULT_OPTIONS } from '../../engine/options.ts'
+import type { ChartMode } from '../dashboard/chartData.ts'
+import { PortfolioChart } from '../dashboard/PortfolioChart.tsx'
 import { SummaryCards } from '../dashboard/SummaryCards.tsx'
 import { TimeControls } from '../dashboard/TimeControls.tsx'
 import { clampIndex, rangeChange, visibleRange, type RangeKey } from '../dashboard/timeRange.ts'
@@ -12,6 +14,7 @@ export function DashboardPage() {
   const { transactionCount, series, sync, syncProblems } = usePortfolio(options)
   const [range, setRange] = useState<RangeKey>('ALL')
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [mode, setMode] = useState<ChartMode>('eur')
 
   const points = useMemo(() => series?.points ?? [], [series])
   const dates = useMemo(() => points.map((p) => p.date), [points])
@@ -44,6 +47,14 @@ export function DashboardPage() {
             {sync.message}
           </span>
         )}
+        <div className="segmented" role="group" aria-label="Chart unit">
+          <button type="button" aria-pressed={mode === 'eur'} onClick={() => setMode('eur')}>
+            EUR
+          </button>
+          <button type="button" aria-pressed={mode === 'percent'} onClick={() => setMode('percent')}>
+            %
+          </button>
+        </div>
         {!syncing && syncProblems > 0 && (
           <Link to="/prices" className="small">
             {syncProblems} {syncProblems === 1 ? 'product has' : 'products have'} no price yet
@@ -65,6 +76,14 @@ export function DashboardPage() {
               setSelectedIndex(null)
             }}
             onSelect={setSelectedIndex}
+          />
+          <PortfolioChart
+            points={points}
+            from={visible.from}
+            to={visible.to}
+            selected={selected}
+            mode={mode}
+            onHover={setSelectedIndex}
           />
           <p className="muted small">
             {range === 'ALL' ? 'Since the first transaction' : `Last ${range === 'YTD' ? 'year to date' : range}`}:{' '}

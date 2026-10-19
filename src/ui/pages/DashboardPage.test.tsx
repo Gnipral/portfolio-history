@@ -8,6 +8,9 @@ import { localToday, addDays } from '../../market/dates.ts'
 import { resetSyncSession } from '../dashboard/usePortfolio.ts'
 import { DashboardPage } from './DashboardPage.tsx'
 
+// Canvas charts do not run in jsdom; PortfolioChart has its own test with a mocked library.
+vi.mock('../dashboard/PortfolioChart.tsx', () => ({ PortfolioChart: () => null }))
+
 vi.mock('../../market/sync.ts', () => ({
   syncMarketData: vi.fn(async ({ onProgress }: { onProgress?: (p: unknown) => void }) => {
     onProgress?.({ phase: 'done', done: 1, total: 1, message: 'Done' })
@@ -70,6 +73,14 @@ describe('DashboardPage', () => {
 
     fireEvent.change(screen.getByLabelText('Timeline'), { target: { value: '10' } })
     expect(within(screen.getByText('Value').closest('.card') as HTMLElement).getByText('€1,100.00')).toBeTruthy()
+  })
+
+  it('switches the chart unit', async () => {
+    await seed()
+    renderPage()
+    await screen.findByText('Value')
+    fireEvent.click(screen.getByRole('button', { name: '%' }))
+    expect(screen.getByRole('button', { name: '%' }).getAttribute('aria-pressed')).toBe('true')
   })
 
   it('switches the quick range', async () => {
