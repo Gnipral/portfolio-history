@@ -650,3 +650,11 @@ code {
 .chart-placeholder {
   height: 437px;
 }
+
+.swatch.benchmark {
+  background: var(--series-2);
+}
+
+.table .num {
+  white-space: nowrap;
+}

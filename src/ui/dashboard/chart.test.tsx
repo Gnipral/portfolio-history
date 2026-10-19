@@ -43,6 +43,17 @@ describe('chartData', () => {
     expect(data.pnl).toEqual([])
   })
 
+  it('adds the benchmark: value in EUR, return from the first visible day in percent', () => {
+    const benchmark = [
+      { date: '2026-10-15', value: 1000, pnl: 0, twr: 0 },
+      { date: '2026-10-16', value: 1050, pnl: 50, twr: 0.05 },
+      { date: '2026-10-17', value: 1155, pnl: 155, twr: 0.155 },
+    ]
+    expect(chartData(points, 1, 2, 'eur', benchmark).benchmark.map((p) => p.value)).toEqual([1050, 1155])
+    expect(chartData(points, 1, 2, 'percent', benchmark).benchmark.map((p) => p.value)).toEqual([5, 15.5])
+    expect(chartData(points, 0, 2, 'eur').benchmark).toEqual([])
+  })
+
   it('shows the simple return only for the full history', () => {
     expect(chartData(points, 0, 2, 'percent').secondary.map((p) => p.value)).toEqual([0, 10, 21])
   })
