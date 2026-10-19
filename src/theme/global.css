@@ -311,3 +311,14 @@ details summary {
   color: var(--accent);
   border-color: var(--accent);
 }
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brand img {
+  display: block;
+  border-radius: 6px;
+}
