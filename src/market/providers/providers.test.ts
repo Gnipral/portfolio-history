@@ -42,7 +42,7 @@ describe('Yahoo via proxy', () => {
   })
 
   it('needs the proxy URL', () => {
-    expect(yahooProxyProvider.isAvailable(DEFAULT_SETTINGS)).toBe(false)
+    expect(yahooProxyProvider.isAvailable({ ...DEFAULT_SETTINGS, proxyUrl: '' })).toBe(false)
     expect(yahooProxyProvider.isAvailable({ ...DEFAULT_SETTINGS, proxyUrl: 'https://p.example' })).toBe(true)
     expect(yahooProxyProvider.supports('crypto:bitcoin', 'crypto')).toBe(false)
   })
