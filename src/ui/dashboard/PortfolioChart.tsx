@@ -12,6 +12,7 @@ import {
   type Time,
 } from 'lightweight-charts'
 import { useEffect, useMemo, useRef } from 'react'
+import type { BenchmarkPoint } from '../../engine/benchmark.ts'
 import type { DailyPoint } from '../../engine/series.ts'
 import { formatDate, formatEur, formatPercent } from '../format.ts'
 import { chartData, type ChartMode } from './chartData.ts'
@@ -24,12 +25,14 @@ interface Props {
   selected: number
   mode: ChartMode
   onHover: (index: number) => void
+  benchmark?: { label: string; points: BenchmarkPoint[] }
 }
 
 interface ChartRefs {
   chart: IChartApi
   main: ISeriesApi<'Area'>
   secondary: ISeriesApi<'Line'>
+  benchmark: ISeriesApi<'Line'>
   /** Only in EUR mode; removing it also removes its pane. */
   pnl: ISeriesApi<'Baseline'> | null
 }
@@ -46,13 +49,14 @@ function pnlColors(colors: ReturnType<typeof useThemeColors>) {
 }
 
 /** Value and profit over time with a crosshair that follows, and drives, the selected day. */
-export function PortfolioChart({ points, from, to, selected, mode, onHover }: Props) {
+export function PortfolioChart({ points, from, to, selected, mode, onHover, benchmark }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const refs = useRef<ChartRefs | null>(null)
   const colors = useThemeColors()
   const colorsRef = useRef(colors)
   colorsRef.current = colors
-  const data = useMemo(() => chartData(points, from, to, mode), [points, from, to, mode])
+  const benchmarkPoints = benchmark?.points
+  const data = useMemo(() => chartData(points, from, to, mode, benchmarkPoints), [points, from, to, mode, benchmarkPoints])
   const hoverRef = useRef(onHover)
   hoverRef.current = onHover
   const fromRef = useRef(from)
@@ -73,7 +77,8 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover }: Pr
     })
     const main = chart.addSeries(AreaSeries, { lineWidth: 2, priceLineVisible: false })
     const secondary = chart.addSeries(LineSeries, { lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false })
-    refs.current = { chart, main, secondary, pnl: null }
+    const benchmarkLine = chart.addSeries(LineSeries, { lineWidth: 2, priceLineVisible: false, lastValueVisible: false })
+    refs.current = { chart, main, secondary, benchmark: benchmarkLine, pnl: null }
 
     const handleMove = (param: MouseEventParams<Time>) => {
       if (param.time === undefined || param.logical === undefined) return
@@ -97,6 +102,7 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover }: Pr
     })
     r.main.applyOptions({ lineColor: colors.accent, topColor: `${colors.accent}55`, bottomColor: `${colors.accent}05` })
     r.secondary.applyOptions({ color: colors.textMuted })
+    r.benchmark.applyOptions({ color: colors.benchmark })
     r.pnl?.applyOptions(pnlColors(colors))
   }, [colors])
 
@@ -109,6 +115,7 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover }: Pr
     r.chart.applyOptions({ localization: { locale: 'en-GB', priceFormatter: format } })
     r.main.setData(data.main)
     r.secondary.setData(data.secondary)
+    r.benchmark.setData(data.benchmark)
     if (percent && r.pnl) {
       r.chart.removeSeries(r.pnl)
       r.pnl = null
@@ -131,6 +138,8 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover }: Pr
   }, [data, selected, from])
 
   const point = points[selected]
+  const benchmarkValue = mode === 'eur' ? benchmarkPoints?.[selected]?.value : undefined
+  const benchmarkReturn = mode === 'percent' ? data.benchmark[selected - from]?.value : undefined
   return (
     <div className="chart-wrapper">
       {point && (
@@ -144,6 +153,11 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover }: Pr
               <span>
                 <i className="swatch secondary" /> Invested {formatEur(point.invested)}
               </span>
+              {benchmarkValue !== undefined && (
+                <span>
+                  <i className="swatch benchmark" /> {benchmark?.label} {formatEur(benchmarkValue)}
+                </span>
+              )}
               <span>
                 <i className="swatch pnl" /> Profit {formatEur(point.pnl)}
               </span>
@@ -153,6 +167,11 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover }: Pr
               <span>
                 <i className="swatch main" /> Time-weighted {formatPercent((data.main[selected - from]?.value ?? 0) / 100)}
               </span>
+              {benchmarkReturn !== undefined && (
+                <span>
+                  <i className="swatch benchmark" /> {benchmark?.label} {formatPercent(benchmarkReturn / 100)}
+                </span>
+              )}
               {from === 0 && (
                 <span>
                   <i className="swatch secondary" /> Simple {formatPercent(point.simpleReturn)}

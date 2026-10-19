@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type PortfolioDatabase } from '../data/db.ts'
+import { DEFAULT_BENCHMARK_ID } from '../market/benchmarks.ts'
 
 /** Stored only in this browser's IndexedDB. */
 export interface Settings {
@@ -7,6 +8,8 @@ export interface Settings {
   proxyUrl: string
   twelveDataKey: string
   alphaVantageKey: string
+  /** Id from BENCHMARKS, compared with the portfolio on the dashboard. */
+  benchmarkId: string
 }
 
 /** The project's own deployment of workers/price-proxy (Cloudflare Workers Builds from main). */
@@ -16,6 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   proxyUrl: DEFAULT_PROXY_URL,
   twelveDataKey: '',
   alphaVantageKey: '',
+  benchmarkId: DEFAULT_BENCHMARK_ID,
 }
 
 const SETTINGS_KEY = 'settings'
