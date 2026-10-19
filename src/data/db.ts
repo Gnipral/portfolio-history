@@ -47,6 +47,11 @@ export class PortfolioDatabase extends Dexie {
     this.version(3).stores({
       symbols: 'key',
     })
+    // Prices cached before splits after a sold position were fetched (#27) lack those splits.
+    // Resetting the coverage makes the next update fetch every range once more; cached closes stay.
+    this.version(4)
+      .stores({})
+      .upgrade((tx) => tx.table('coverage').clear())
   }
 }
 
