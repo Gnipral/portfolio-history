@@ -2,6 +2,9 @@ export type ThemePreference = 'system' | 'light' | 'dark'
 
 const STORAGE_KEY = 'theme'
 
+/** Fired on window when the preference changes, so every theme control shows the same value. */
+export const THEME_EVENT = 'themechange'
+
 export function readThemePreference(): ThemePreference {
   try {
     const value = localStorage.getItem(STORAGE_KEY)
@@ -27,6 +30,7 @@ export function storeThemePreference(preference: ThemePreference): void {
     // Not persisted; the choice still applies for this session.
   }
   applyTheme(preference)
+  window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: preference }))
 }
 
 export function applyStoredTheme(): void {

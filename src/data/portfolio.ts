@@ -28,3 +28,10 @@ export async function replacePortfolio(
     await database.imports.put(record)
   })
 }
+
+/** Deletes the portfolio, the cached market data and the settings (including API keys) from this browser. */
+export async function deleteAllData(database: PortfolioDatabase = db): Promise<void> {
+  await database.transaction('rw', database.tables, async () => {
+    await Promise.all(database.tables.map((table) => table.clear()))
+  })
+}
