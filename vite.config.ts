@@ -21,11 +21,13 @@ export default defineConfig({
         start_url: base,
         scope: base,
         display: 'standalone',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#0F1B2D',
+        background_color: '#0F1B2D',
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+        // Avatar and social preview are for GitHub, not for the app.
+        globIgnores: ['brand/*.png'],
         navigateFallback: `${base}index.html`,
         runtimeCaching: [
           {
