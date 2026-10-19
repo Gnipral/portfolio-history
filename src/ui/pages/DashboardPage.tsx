@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { DEFAULT_OPTIONS } from '../../engine/options.ts'
+import { positionsOn } from '../../engine/positions.ts'
 import type { ChartMode } from '../dashboard/chartData.ts'
 import { PortfolioChart } from '../dashboard/PortfolioChart.tsx'
+import { PositionsTable } from '../dashboard/PositionsTable.tsx'
 import { SummaryCards } from '../dashboard/SummaryCards.tsx'
 import { TimeControls } from '../dashboard/TimeControls.tsx'
 import { clampIndex, rangeChange, visibleRange, type RangeKey } from '../dashboard/timeRange.ts'
@@ -11,7 +13,7 @@ import { formatPercent, formatSignedEur, trendClass } from '../format.ts'
 
 export function DashboardPage() {
   const [options] = useState(DEFAULT_OPTIONS)
-  const { transactionCount, series, sync, syncProblems } = usePortfolio(options)
+  const { transactionCount, inputs, series, sync, syncProblems } = usePortfolio(options)
   const [range, setRange] = useState<RangeKey>('ALL')
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [mode, setMode] = useState<ChartMode>('eur')
@@ -22,6 +24,11 @@ export function DashboardPage() {
   const selected = clampIndex(selectedIndex, visible)
   const point = points[selected]
   const change = rangeChange(points, visible.from, visible.to)
+  const selectedDate = point?.date
+  const positions = useMemo(
+    () => (inputs && selectedDate ? positionsOn(inputs.transactions, inputs.prices, options, selectedDate) : []),
+    [inputs, options, selectedDate],
+  )
 
   if (transactionCount === undefined) return null
   if (transactionCount === 0) {
@@ -91,6 +98,8 @@ export function DashboardPage() {
             <span className={trendClass(change.twr)}>{formatPercent(change.twr)}</span>
           </p>
           <SummaryCards point={point} cashMode={series?.cashMode ?? false} />
+          <h3>Positions</h3>
+          <PositionsTable positions={positions} date={point.date} />
         </>
       )}
     </section>
