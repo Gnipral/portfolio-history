@@ -2,17 +2,27 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "target": "ES2023",
-    "lib": ["ES2023"],
+    "lib": [
+      "ES2023"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "verbatimModuleSyntax": true,
     "allowImportingTsExtensions": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "erasableSyntaxOnly": true,
+    "noUncheckedIndexedAccess": true
   },
-  "include": ["vite.config.ts", "pwa-assets.config.ts"]
+  "include": [
+    "vite.config.ts",
+    "pwa-assets.config.ts",
+    "scripts"
+  ]
 }
