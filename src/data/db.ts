@@ -1,6 +1,6 @@
 import { Dexie, type EntityTable, type Table } from 'dexie'
 import type { CapabilityReasons, Capabilities, ImportIssue } from '../import/types.ts'
-import type { FxDay, PriceCoverage, PricePoint, SplitEvent } from '../market/types.ts'
+import type { FxDay, PriceCoverage, PricePoint, SplitEvent, SymbolRecord } from '../market/types.ts'
 import type { Transaction } from '../model/transaction.ts'
 
 /** Metadata of the import currently loaded. There is at most one, with id `current`. */
@@ -28,6 +28,7 @@ export class PortfolioDatabase extends Dexie {
   fxDays!: EntityTable<FxDay, 'date'>
   splits!: EntityTable<SplitEvent, 'id'>
   kv!: EntityTable<KeyValue, 'key'>
+  symbols!: EntityTable<SymbolRecord, 'key'>
 
   constructor(name = 'portfolio-history') {
     super(name)
@@ -42,6 +43,9 @@ export class PortfolioDatabase extends Dexie {
       fxDays: 'date',
       splits: 'id, symbol',
       kv: 'key',
+    })
+    this.version(3).stores({
+      symbols: 'key',
     })
   }
 }
