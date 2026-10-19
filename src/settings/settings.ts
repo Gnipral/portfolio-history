@@ -9,8 +9,11 @@ export interface Settings {
   alphaVantageKey: string
 }
 
+/** The project's own deployment of workers/price-proxy (Cloudflare Workers Builds from main). */
+export const DEFAULT_PROXY_URL = 'https://portfolio-history-price-proxy.tibo-dhave.workers.dev'
+
 export const DEFAULT_SETTINGS: Settings = {
-  proxyUrl: '',
+  proxyUrl: DEFAULT_PROXY_URL,
   twelveDataKey: '',
   alphaVantageKey: '',
 }

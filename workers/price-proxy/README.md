@@ -14,14 +14,16 @@ Yahoo Finance and OpenFIGI do not allow requests from a browser (no CORS headers
 
 ## Deploy
 
-Needs a free Cloudflare account. From this folder:
+The project's proxy runs at **https://portfolio-history-price-proxy.tibo-dhave.workers.dev** and is the default in the app. Cloudflare Workers Builds is connected to this repository: every push to `main` that changes `workers/price-proxy/` deploys it again (root directory `/workers/price-proxy`, deploy command `npx wrangler deploy`, no build command).
+
+To deploy your own copy by hand, with a free Cloudflare account, from this folder:
 
 ```bash
 npx wrangler login
 npx wrangler deploy
 ```
 
-Wrangler prints the URL, e.g. `https://portfolio-history-price-proxy.<account>.workers.dev`. Enter it in the app under **Settings → Price proxy URL**.
+Wrangler prints the URL, e.g. `https://portfolio-history-price-proxy.<account>.workers.dev`. Enter it in the app under **Settings → Price proxy URL**, and add your site's origin to `ALLOWED_ORIGINS`.
 
 Optional, for a higher OpenFIGI rate limit (a free key from openfigi.com):
 

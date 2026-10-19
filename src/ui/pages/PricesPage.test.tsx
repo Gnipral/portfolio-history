@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../../data/db.ts'
 import { degiroAdapter } from '../../import/adapters/degiro/index.ts'
 import { SAMPLE_ROWS, table } from '../../import/adapters/degiro/fixtures.ts'
+import { saveSettings } from '../../settings/settings.ts'
 import { PricesPage } from './PricesPage.tsx'
 
 beforeEach(async () => {
@@ -22,7 +23,8 @@ function renderPage() {
 }
 
 describe('PricesPage', () => {
-  it('lists instruments and asks for a price source', async () => {
+  it('lists instruments and asks for a price source when none is set', async () => {
+    await saveSettings({ proxyUrl: '' })
     renderPage()
     expect(await screen.findByText('EXAMPLE INDUSTRIES CORP')).toBeTruthy()
     expect(screen.getByText(/No price source is configured yet/)).toBeTruthy()

@@ -90,7 +90,7 @@ describe('syncMarketData', () => {
   })
 
   it('explains what to do without a proxy', async () => {
-    const report = await run(DEFAULT_SETTINGS)
+    const report = await run({ ...DEFAULT_SETTINGS, proxyUrl: '' })
     expect(report.problems.US0000000002).toMatch(/price proxy URL/)
   })
 
