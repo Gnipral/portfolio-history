@@ -21,6 +21,7 @@ export interface Holding {
   lots: Lot[]
   /** EUR price per unit of the last trade, used when no market price is known. */
   lastTradePrice?: number
+  lastTradeDate?: string
   /** Profit realized on this instrument, in EUR. */
   realized: number
 }
@@ -83,6 +84,7 @@ export class Ledger {
         holding.cost += outlay
         holding.lots.push({ quantity: t.quantity, unitCost: outlay / t.quantity })
         holding.lastTradePrice = Math.abs(t.amountEur) / t.quantity
+        holding.lastTradeDate = t.date
         this.netInvestedInSecurities += outlay
         this.cash -= outlay
         flows.inflow += outlay
@@ -110,6 +112,7 @@ export class Ledger {
           holding.lots = []
         }
         holding.lastTradePrice = Math.abs(t.amountEur) / t.quantity
+        holding.lastTradeDate = t.date
         this.netInvestedInSecurities -= proceeds
         this.cash += proceeds
         flows.outflow += proceeds
@@ -208,6 +211,7 @@ export class Ledger {
     const movedCost = from.cost * share
     const movedLots = from.lots.map((lot) => ({ quantity: lot.quantity * share * ratio, unitCost: lot.unitCost / ratio }))
     const lastPrice = from.lastTradePrice
+    const lastDate = from.lastTradeDate
 
     from.quantity -= t.split.fromQuantity
     from.cost -= movedCost
@@ -222,6 +226,7 @@ export class Ledger {
     target.cost += movedCost
     target.lots.push(...movedLots)
     if (lastPrice !== undefined) target.lastTradePrice = lastPrice / ratio
+    if (lastDate !== undefined) target.lastTradeDate = lastDate
   }
 
   openHoldings(): Holding[] {
