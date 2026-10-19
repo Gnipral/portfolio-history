@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { DEFAULT_SETTINGS } from '../../settings/settings.ts'
 import { alphaVantageProvider, parseAlphaVantage } from './alphaVantage.ts'
 import { coinGeckoProvider, parseMarketChart } from './coinGecko.ts'
@@ -7,6 +7,7 @@ import { ProviderError } from './types.ts'
 import { parseYahooChart, yahooProxyProvider } from './yahooProxy.ts'
 
 const range = { from: '2026-06-30', to: '2026-07-03' }
+const sold2024 = { from: '2024-03-19', to: '2024-08-20' }
 
 describe('Yahoo via proxy', () => {
   // New York: gmtoffset -14400 in summer; bars stamped at the 09:30 open (13:30 UTC).
@@ -33,6 +34,23 @@ describe('Yahoo via proxy', () => {
       ],
       splits: [{ date: '2026-07-02', ratio: 4 }],
     })
+  })
+
+  it('keeps splits after the range: earlier closes are adjusted for them', () => {
+    const sold = { from: '2026-06-30', to: '2026-07-01' }
+    const result = parseYahooChart(body, sold)
+    expect(result.closes.map((c) => c.date)).toEqual(['2026-06-30', '2026-07-01'])
+    expect(result.splits).toEqual([{ date: '2026-07-02', ratio: 4 }])
+    expect(parseYahooChart(body, { from: '2026-07-03', to: '2026-07-03' }).splits).toEqual([])
+  })
+
+  it('asks for data up to now, also for a closed position', async () => {
+    const fetchMock = vi.fn(async (_url: string) => new Response(JSON.stringify(body)))
+    vi.stubGlobal('fetch', fetchMock)
+    await yahooProxyProvider.fetchDaily('CRWD', sold2024, { ...DEFAULT_SETTINGS, proxyUrl: 'https://p.example' })
+    const period2 = Number(new URL(fetchMock.mock.calls[0]?.[0] ?? '').searchParams.get('period2'))
+    expect(period2).toBeGreaterThan(Date.now() / 1000 - 60)
+    vi.unstubAllGlobals()
   })
 
   it('reports unknown symbols', () => {
