@@ -23,3 +23,21 @@ PWA icons are generated at build time from `public/icon.svg`.
 ## Deployment
 
 Every push to `main` is tested, built and deployed to GitHub Pages by `.github/workflows/deploy.yml`. Pull requests run tests and the build via `.github/workflows/ci.yml`.
+
+## Importing data
+
+Supported exports:
+
+| Broker | File | Status |
+|---|---|---|
+| DEGIRO | Transactions (Transacties), CSV or XLSX | Dutch verified with a real export; English headers still to be confirmed |
+
+Brokers are detected from the header row. Each broker is an adapter in `src/import/adapters/` that maps its rows to the normalized `Transaction` model (`src/model/transaction.ts`). Adding a broker means adding an adapter and registering it in `src/import/registry.ts`.
+
+To check a real export without committing it:
+
+```bash
+DEGIRO_SAMPLE=/path/to/Transactions.xlsx npx vitest run privateSample --silent=false
+```
+
+Never commit personal broker exports: this repository is public.
