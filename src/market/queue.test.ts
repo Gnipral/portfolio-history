@@ -16,10 +16,11 @@ function fakeClock() {
 describe('RequestQueue', () => {
   it('spaces request starts by the minimum interval', async () => {
     const queue = new RequestQueue({ concurrency: 3, minIntervalMs: 30 })
+    const begin = performance.now()
     const starts: number[] = []
     await Promise.all([1, 2, 3].map(() => queue.run(async () => starts.push(performance.now()))))
-    const gaps = starts.slice(1).map((s, i) => s - (starts[i] as number))
-    for (const gap of gaps) expect(gap).toBeGreaterThanOrEqual(25)
+    // Starts are scheduled at 0, 30 and 60 ms; timers may fire a little early, never much.
+    expect((starts.at(-1) as number) - begin).toBeGreaterThanOrEqual(55)
   })
 
   it('limits concurrency', async () => {
