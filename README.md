@@ -41,3 +41,23 @@ DEGIRO_SAMPLE=/path/to/Transactions.xlsx npx vitest run privateSample --silent=f
 ```
 
 Never commit personal broker exports: this repository is public.
+
+## Static market data
+
+`public/data/` holds FX rates and benchmark closes that the app reads before calling any live API:
+
+| File | Content | Source |
+|---|---|---|
+| `fx-rates.json` | ECB reference rates, units per 1 EUR, 14 currencies, from 2010 | Frankfurter |
+| `benchmark-iwda.json`, `benchmark-vwce.json`, `benchmark-sxr8.json` | Daily closes of the benchmark ETFs | Yahoo Finance |
+| `meta.json` | Last check, sources, row counts, errors | |
+
+The files are append-only: dates already stored are never rewritten. Update them locally with `npm run data:snapshot`.
+
+The **Daily data snapshot** workflow (`.github/workflows/data-snapshot.yml`) runs every day at 21:30 UTC and can be started by hand from the Actions tab. It:
+
+1. fetches the new data server side (Yahoo does not allow browser requests),
+2. commits the changes to `main`, with the commit author rotated daily through `.github/authors.json`; on days without new market data only `meta.json` changes,
+3. builds and deploys the site, because pushes made with `GITHUB_TOKEN` do not start other workflows.
+
+GitHub disables scheduled workflows in public repositories after 60 days without repository activity. The daily commits keep the schedule active; if it is ever disabled, re-enable it in the Actions tab.

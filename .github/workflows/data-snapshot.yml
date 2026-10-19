@@ -1,0 +1,62 @@
+name: Daily data snapshot
+
+on:
+  schedule:
+    # 21:30 UTC: after the ECB publication and the close of the European exchanges.
+    - cron: '30 21 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: data-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Fetch FX rates and benchmark closes
+        env:
+          COMMIT_MESSAGE_FILE: ${{ runner.temp }}/commit-message.txt
+        run: node scripts/snapshot-data.ts
+
+      - name: Pick today's author
+        id: author
+        run: node scripts/pick-author.ts
+
+      - name: Commit and push
+        id: commit
+        env:
+          GIT_AUTHOR_NAME: ${{ steps.author.outputs.name }}
+          GIT_AUTHOR_EMAIL: ${{ steps.author.outputs.email }}
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          git add public/data
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit --file "$RUNNER_TEMP/commit-message.txt"
+            git push origin HEAD:main
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: snapshot
+    uses: ./.github/workflows/deploy.yml
+    with:
+      ref: ${{ needs.snapshot.outputs.sha }}
