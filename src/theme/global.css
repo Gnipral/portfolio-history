@@ -710,3 +710,30 @@ code {
   margin: 0.35rem 0 0;
   padding-left: 1.25rem;
 }
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.settings-form label.radio {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.radio input {
+  accent-color: var(--accent);
+}
+
+button.danger {
+  color: var(--negative);
+  border-color: var(--negative);
+}
+
+button.danger:hover {
+  background: var(--negative);
+  color: #fff;
+}
