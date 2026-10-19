@@ -11,7 +11,10 @@ export function App() {
     <>
       <UpdateBanner />
       <header className="app-header">
-        <h1>Portfolio History</h1>
+        <h1 className="brand">
+          <img src={`${import.meta.env.BASE_URL}brand/gnipral-mark.svg`} alt="Gnipral" width={28} height={28} />
+          Portfolio History
+        </h1>
         <nav className="app-nav">
           <NavLink to="/" end>
             Dashboard

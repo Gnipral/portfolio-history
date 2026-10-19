@@ -312,6 +312,17 @@ details summary {
   border-color: var(--accent);
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brand img {
+  display: block;
+  border-radius: 6px;
+}
+
 .settings-form fieldset {
   border: 1px solid var(--border);
   border-radius: var(--radius);

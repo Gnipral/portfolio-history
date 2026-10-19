@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/gnipral-lockup-dark.svg">
+    <img src="public/brand/gnipral-lockup-light.svg" alt="Gnipral" width="320">
+  </picture>
+</p>
+
 # Portfolio History
 
 A Progressive Web App that reconstructs the value and profit of an investment portfolio over time from a broker export. Everything runs in the browser; portfolio data never leaves the device.
@@ -65,3 +72,7 @@ GitHub disables scheduled workflows in public repositories after 60 days without
 ## Price proxy
 
 Yahoo Finance and OpenFIGI block browser requests (no CORS). `workers/price-proxy/` is a small Cloudflare Worker that forwards only daily chart and ISIN-mapping requests from the app's own origin. See [its README](workers/price-proxy/README.md) for deployment. Without the proxy, the app can still use price APIs with your own key (Twelve Data, Alpha Vantage) and key-less CoinGecko for crypto.
+
+## Brand
+
+Logo files are in `public/brand/`: the mark (`gnipral-mark.svg`, also the app icon via `public/icon.svg`), the lockup for light and dark backgrounds, a 500×500 avatar and a 1280×640 social preview image.
