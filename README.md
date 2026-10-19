@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/gnipral-lockup-dark.svg">
+    <img src="public/brand/gnipral-lockup-light.svg" alt="Gnipral" width="320">
+  </picture>
+</p>
+
 # Portfolio History
 
 A Progressive Web App that reconstructs the value and profit of an investment portfolio over time from a broker export. Everything runs in the browser; portfolio data never leaves the device.
@@ -61,3 +68,7 @@ The **Daily data snapshot** workflow (`.github/workflows/data-snapshot.yml`) run
 3. builds and deploys the site, because pushes made with `GITHUB_TOKEN` do not start other workflows.
 
 GitHub disables scheduled workflows in public repositories after 60 days without repository activity. The daily commits keep the schedule active; if it is ever disabled, re-enable it in the Actions tab.
+
+## Brand
+
+Logo files are in `public/brand/`: the mark (`gnipral-mark.svg`, also the app icon via `public/icon.svg`), the lockup for light and dark backgrounds, a 500×500 avatar and a 1280×640 social preview image.
