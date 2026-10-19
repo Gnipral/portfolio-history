@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { BENCHMARKS } from '../../market/benchmarks.ts'
 import { DEFAULT_SETTINGS, saveSettings, useSettings, type Settings } from '../../settings/settings.ts'
 
 export function SettingsPage() {
@@ -48,6 +49,22 @@ export function SettingsPage() {
             Alpha Vantage API key
             <input type="password" autoComplete="off" {...field('alphaVantageKey')} />
             <span className="muted small">Free plan: 25 requests per day, last 100 trading days only.</span>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Benchmark</legend>
+          <label>
+            Compare the portfolio with
+            <select {...field('benchmarkId')}>
+              {BENCHMARKS.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} ({b.symbol})
+                </option>
+              ))}
+            </select>
+            <span className="muted small">
+              The dashboard shows what the same deposits and withdrawals, on the same days, would have become in this fund.
+            </span>
           </label>
         </fieldset>
         <div className="actions">

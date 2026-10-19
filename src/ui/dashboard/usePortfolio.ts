@@ -6,9 +6,10 @@ import type { EngineOptions } from '../../engine/options.ts'
 import { computeDailySeries, type SeriesResult } from '../../engine/series.ts'
 import { localToday } from '../../market/dates.ts'
 import { syncMarketData, type SyncProgress } from '../../market/sync.ts'
-import { loadSettings } from '../../settings/settings.ts'
+import { BENCHMARKS, DEFAULT_BENCHMARK_ID } from '../../market/benchmarks.ts'
+import { loadSettings, useSettings } from '../../settings/settings.ts'
 
-/** Prices are brought up to date once per day and import per session, not on every visit of the page. */
+/** Prices are brought up to date once per day, import and benchmark per session, not on every visit of the page. */
 let lastSyncKey: string | null = null
 
 export interface PortfolioState {
@@ -22,22 +23,24 @@ export interface PortfolioState {
 
 export function usePortfolio(options: EngineOptions): PortfolioState {
   const transactionCount = useLiveQuery(() => db.transactions.count())
+  const benchmarkId = useSettings()?.benchmarkId
   const [inputs, setInputs] = useState<EngineInputs | null>(null)
   const [sync, setSync] = useState<SyncProgress | null>(null)
   const [syncProblems, setSyncProblems] = useState(0)
 
   useEffect(() => {
-    if (!transactionCount) {
-      setInputs(null)
+    if (!transactionCount || !benchmarkId) {
+      if (transactionCount === 0) setInputs(null)
       return
     }
+    const benchmark = BENCHMARKS.find((b) => b.id === benchmarkId) ?? BENCHMARKS.find((b) => b.id === DEFAULT_BENCHMARK_ID)
     let cancelled = false
     void (async () => {
-      const loaded = await loadEngineInputs(db)
+      const loaded = await loadEngineInputs(db, benchmark)
       if (cancelled) return
       setInputs(loaded)
       const today = localToday()
-      const syncKey = `${today}:${transactionCount}`
+      const syncKey = `${today}:${transactionCount}:${benchmarkId}`
       if (lastSyncKey === syncKey) return
       lastSyncKey = syncKey
       const report = await syncMarketData({
@@ -46,18 +49,19 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
         settings: await loadSettings(),
         today,
         now: new Date(),
+        ...(benchmark ? { benchmarkIds: [benchmark.id] } : {}),
         onProgress: (progress) => {
           if (!cancelled) setSync(progress)
         },
       })
       if (cancelled) return
       setSyncProblems(Object.keys(report.problems).length)
-      setInputs(await loadEngineInputs(db))
+      setInputs(await loadEngineInputs(db, benchmark))
     })()
     return () => {
       cancelled = true
     }
-  }, [transactionCount])
+  }, [transactionCount, benchmarkId])
 
   const series = useMemo(
     () => (inputs ? computeDailySeries(inputs.transactions, inputs.prices, options, localToday()) : null),

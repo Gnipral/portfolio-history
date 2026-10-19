@@ -9,6 +9,7 @@ export interface ThemeColors {
   accent: string
   positive: string
   negative: string
+  benchmark: string
 }
 
 function read(): ThemeColors {
@@ -23,6 +24,8 @@ function read(): ThemeColors {
     accent: v('--accent'),
     positive: v('--positive'),
     negative: v('--negative'),
+    // Categorical slot 2 (orange): never a status color.
+    benchmark: v('--series-2'),
   }
 }
 
