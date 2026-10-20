@@ -8,6 +8,7 @@ import { localToday } from '../../market/dates.ts'
 import { syncMarketData, type SyncProgress } from '../../market/sync.ts'
 import { BENCHMARKS, DEFAULT_BENCHMARK_ID } from '../../market/benchmarks.ts'
 import { loadSettings, useSettings } from '../../settings/settings.ts'
+import { useOnline } from '../useOnline.ts'
 
 /** Prices are brought up to date once per day, import and benchmark per session, not on every visit of the page. */
 let lastSyncKey: string | null = null
@@ -27,6 +28,7 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
   const [inputs, setInputs] = useState<EngineInputs | null>(null)
   const [sync, setSync] = useState<SyncProgress | null>(null)
   const [syncProblems, setSyncProblems] = useState(0)
+  const online = useOnline()
 
   useEffect(() => {
     if (!transactionCount || !benchmarkId) {
@@ -41,7 +43,8 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
       setInputs(loaded)
       const today = localToday()
       const syncKey = `${today}:${transactionCount}:${benchmarkId}`
-      if (lastSyncKey === syncKey) return
+      // Offline: show what is stored and sync as soon as the connection is back.
+      if (!online || lastSyncKey === syncKey) return
       lastSyncKey = syncKey
       const report = await syncMarketData({
         database: db,
@@ -61,7 +64,7 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
     return () => {
       cancelled = true
     }
-  }, [transactionCount, benchmarkId])
+  }, [transactionCount, benchmarkId, online])
 
   const series = useMemo(
     () => (inputs ? computeDailySeries(inputs.transactions, inputs.prices, options, localToday()) : null),

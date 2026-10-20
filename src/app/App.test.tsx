@@ -1,11 +1,11 @@
 import 'fake-indexeddb/auto'
-import { cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { App } from './App.tsx'
 
 vi.mock('virtual:pwa-register/react', () => ({
-  useRegisterSW: () => ({ needRefresh: [false, () => {}], updateServiceWorker: async () => {} }),
+  useRegisterSW: () => ({ needRefresh: [false, () => {}], offlineReady: [false, () => {}], updateServiceWorker: async () => {} }),
 }))
 
 afterEach(cleanup)
@@ -32,5 +32,17 @@ describe('App shell', () => {
   it('redirects unknown routes to the dashboard', async () => {
     renderAt('/does-not-exist')
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeTruthy()
+  })
+
+  it('shows an offline badge while the connection is gone', () => {
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    renderAt('/import')
+    act(() => void window.dispatchEvent(new Event('offline')))
+    expect(screen.getByText('Offline')).toBeTruthy()
+
+    onLine.mockReturnValue(true)
+    act(() => void window.dispatchEvent(new Event('online')))
+    expect(screen.queryByText('Offline')).toBeNull()
+    onLine.mockRestore()
   })
 })
