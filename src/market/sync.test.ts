@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PortfolioDatabase } from '../data/db.ts'
 import { degiroAdapter } from '../import/adapters/degiro/index.ts'
 import { SAMPLE_ROWS, table } from '../import/adapters/degiro/fixtures.ts'
+import { tx } from '../engine/testing.ts'
 import { DEFAULT_SETTINGS } from '../settings/settings.ts'
 import { deriveInstruments } from './instruments.ts'
 import { loadSeries } from './priceCache.ts'
@@ -99,5 +100,23 @@ describe('syncMarketData', () => {
     const report = await run()
     expect((await database.symbols.get('US0000000002'))?.source).toBe('manual')
     expect(report.problems.US0000000002).toMatch(/No price source/)
+  })
+
+  it('uses the broker ticker for products without an ISIN', async () => {
+    const withTicker = tx('buy', '2026-03-02', { product: 'EXMP', ticker: 'EXMP', quantity: 1, amount: 100 })
+    const withoutTicker = tx('buy', '2026-03-02', { product: 'Unknown fund', quantity: 1, amount: 100 })
+    const report = await syncMarketData({
+      database,
+      transactions: [withTicker, withoutTicker],
+      settings: DEFAULT_SETTINGS,
+      today,
+      now,
+      benchmarkIds: [],
+      providers: [fake],
+      queues,
+    })
+    expect(await database.symbols.get('EXMP')).toMatchObject({ symbol: 'EXMP', source: 'broker' })
+    expect(report.problems.EXMP).toBeUndefined()
+    expect(report.problems['Unknown fund']).toMatch(/No ISIN/)
   })
 })

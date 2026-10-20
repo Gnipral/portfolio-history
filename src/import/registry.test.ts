@@ -73,7 +73,7 @@ describe('importTables', () => {
     expect(() =>
       importTables(
         [table(SAMPLE_ROWS), { fileName: 'other.csv', rows: [['OTHER']] }],
-        [other, ...adapters],
+        { candidates: [other, ...adapters] },
       ),
     ).toThrow('same broker')
   })

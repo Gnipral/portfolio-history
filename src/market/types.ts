@@ -43,7 +43,8 @@ export interface SymbolRecord {
   key: string
   symbol?: string
   kind: 'security' | 'crypto'
-  source: 'openfigi' | 'coingecko' | 'manual'
+  /** `broker`: the ticker from an export without ISIN, used as is. */
+  source: 'openfigi' | 'coingecko' | 'broker' | 'manual'
   name?: string
   error?: string
   resolvedAt: string

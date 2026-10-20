@@ -47,7 +47,16 @@ function toCell(value: unknown): Cell {
 
 export async function readTables(fileName: string, data: ArrayBuffer): Promise<RawTable[]> {
   if (SPREADSHEET_EXTENSIONS.includes(extension(fileName))) return readSpreadsheet(fileName, data)
-  return readCsv(fileName, new TextDecoder('utf-8').decode(data))
+  return readCsv(fileName, decodeText(data))
+}
+
+/** UTF-8, or Windows-1252 for files that are not valid UTF-8 (older Coinbase exports, Excel CSVs). */
+export function decodeText(data: ArrayBuffer): string {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(data)
+  } catch {
+    return new TextDecoder('windows-1252').decode(data)
+  }
 }
 
 export async function readFile(file: File): Promise<RawTable[]> {
