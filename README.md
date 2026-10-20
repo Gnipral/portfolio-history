@@ -9,27 +9,41 @@
 
 A Progressive Web App that reconstructs the value and profit of an investment portfolio over time from a broker export. Everything runs in the browser; portfolio data never leaves the device.
 
-Work is tracked in the [milestone issues](https://github.com/Gnipral/portfolio-history/issues?q=label%3Amilestone).
-
 Live app: https://gnipral.github.io/portfolio-history/
 
-## Development
+## What it does
 
-Requires Node.js 22 or newer.
+1. **Import** a broker export (CSV or XLSX). The file is read in the browser and stored in IndexedDB.
+2. **Prices** are fetched once per day for every product you ever held, together with splits and EUR exchange rates, and cached in the browser.
+3. The **dashboard** rebuilds the portfolio for every calendar day since the first transaction:
+   - a chart of value, invested capital and profit, in euros or percent, with a crosshair, a slider and a date picker that stay in sync, and quick ranges (1M, 3M, YTD, 1Y, ALL);
+   - cards for value, invested capital, profit/loss, simple return, time-weighted return (TWR) and money-weighted return (XIRR) on the selected day;
+   - the positions and an allocation chart for that day;
+   - a benchmark (MSCI World, FTSE All-World or S&P 500 ETF) bought and sold with exactly the same money on the same days;
+   - toggles to include or exclude dividends, transaction costs, taxes, FX costs and deposits. Options the export has no data for are disabled, with the reason.
+4. **Settings**: API keys, price proxy, cost basis (average or FIFO), benchmark, theme, and deleting all data.
 
-```bash
-npm install
-npm run dev       # local dev server
-npm test          # unit tests (Vitest)
-npm run build     # type-check + production build to dist/
-npm run preview   # serve the production build, including the service worker
-```
+### Privacy
 
-PWA icons are generated at build time from `public/icon.svg`.
+There is no backend and no account. Transactions, prices and settings live in your browser's IndexedDB and never leave the device. The only outgoing requests are for market data: tickers, ISINs and date ranges, never quantities or amounts. **Settings → Delete all data** wipes everything, including the price cache and API keys.
 
-## Deployment
+### Offline
 
-Every push to `main` is tested, built and deployed to GitHub Pages by `.github/workflows/deploy.yml`. Pull requests run tests and the build via `.github/workflows/ci.yml`.
+The app is a PWA: install it from the browser menu ("Install app" or "Add to Home Screen"). After the first visit, the app shell, the static market data and everything in IndexedDB work without a connection. While offline the header shows **Offline**, the dashboard is calculated from the stored prices, and new prices are fetched as soon as the connection is back. A new version is never activated by surprise: a banner asks to reload.
+
+### How the numbers are calculated
+
+| Measure | Definition |
+|---|---|
+| Invested capital | Net money put in: buys minus sells (or deposits minus withdrawals when deposits are included) |
+| Profit / loss | Realized plus unrealized result, after the included dividends and charges |
+| Simple return | Profit / loss divided by the highest invested capital so far |
+| TWR | Daily returns chain-linked; money coming in counts at the start of the day, money going out at the end, so the timing of your deposits does not affect it |
+| XIRR | The yearly rate at which all flows and the value on the selected day net to zero; it does depend on when you added money |
+
+Without deposits in the export, the portfolio is the securities alone and every buy, sell and dividend is a flow. With deposits included, cash is part of the portfolio and only deposits and withdrawals are flows. Cost basis (average or FIFO) decides how realized and unrealized results are split.
+
+Providers deliver split-adjusted prices; the app undoes later splits, so a quantity from before a split is valued at the price of that time. Products without any price are valued at their last trade price and listed on the **Prices** page, where a ticker or a split can be entered by hand.
 
 ## Importing data
 
@@ -75,6 +89,47 @@ GitHub disables scheduled workflows in public repositories after 60 days without
 ## Price proxy
 
 Yahoo Finance and OpenFIGI block browser requests (no CORS). `workers/price-proxy/` is a small Cloudflare Worker that forwards only daily chart and ISIN-mapping requests from the app's own origin. See [its README](workers/price-proxy/README.md) for deployment. Without the proxy, the app can still use price APIs with your own key (Twelve Data, Alpha Vantage) and key-less CoinGecko for crypto.
+
+## Development
+
+Requires Node.js 22 or newer (the scripts run TypeScript directly with Node's type stripping).
+
+```bash
+npm install
+npm run dev            # local dev server
+npm test               # unit tests (Vitest)
+npm run build          # type-check + production build to dist/
+npm run preview        # serve the production build, including the service worker
+npm run data:snapshot  # update public/data from the live sources
+npm run maintenance    # data-quality report and changelog
+```
+
+PWA icons are generated at build time from `public/icon.svg`. The service worker only runs in the production build, so test offline behaviour with `npm run build && npm run preview`.
+
+| Folder | Content |
+|---|---|
+| `src/import/` | File reading and one adapter per broker |
+| `src/model/` | The normalized `Transaction` |
+| `src/data/` | IndexedDB schema (Dexie) |
+| `src/market/` | Price providers, FX, ISIN resolution, caching and sync |
+| `src/engine/` | Pure calculation: ledger, daily series, returns, benchmark |
+| `src/ui/` | Pages and dashboard components |
+| `scripts/` | Daily snapshot and weekly maintenance, run by GitHub Actions |
+| `workers/price-proxy/` | Cloudflare Worker for Yahoo Finance and OpenFIGI |
+
+## Deployment
+
+Every push to `main` is tested, built and deployed to GitHub Pages by `.github/workflows/deploy.yml` (Pages source: GitHub Actions). Pull requests run tests and the build via `.github/workflows/ci.yml`. The Vite `base` is `/portfolio-history/`; change it in `vite.config.ts` for a fork with another name.
+
+## Contributing
+
+- One branch and one pull request per change, linked to an issue (`Closes #n`). Merge with a merge commit; squash merging is off.
+- Every pull request needs green CI: `npm test` and `npm run build` (strict TypeScript) must pass.
+- Add tests with every change in `src/engine`, `src/import`, `src/market` or `scripts`. The engine is pure: test it with hand-calculated scenarios.
+- **Never commit a real broker export or anything with personal data.** Fixtures are synthetic; check a real file locally with the `*_SAMPLE` environment variable as shown above.
+- New broker: open an issue with an anonymized sample (the header row plus a few rows with made-up numbers), then add an adapter in `src/import/adapters/<broker>/` and register it. Open broker requests have the [`broker`](https://github.com/Gnipral/portfolio-history/issues?q=is%3Aopen+label%3Abroker) label.
+- Don't edit `public/data/*` or `CHANGELOG.md` by hand; the workflows own them.
+- Commit with a noreply email address (GitHub → Settings → Emails → Keep my email addresses private).
 
 ## Brand
 
