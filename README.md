@@ -65,10 +65,10 @@ The files are append-only: dates already stored are never rewritten. Update them
 The **Daily data snapshot** workflow (`.github/workflows/data-snapshot.yml`) runs every day at 21:30 UTC and can be started by hand from the Actions tab. It:
 
 1. fetches the new data server side (Yahoo does not allow browser requests),
-2. commits the changes to `main`, with the commit author rotated daily through `.github/authors.json`; on days without new market data only `meta.json` changes,
+2. commits the changes to `main`, with the commit author taken from `.github/authors.json` (rotated daily when it lists more than one author); on days without new market data only `meta.json` changes,
 3. builds and deploys the site, because pushes made with `GITHUB_TOKEN` do not start other workflows.
 
-The **Weekly maintenance** workflow (`.github/workflows/weekly-maintenance.yml`) runs every Monday at 06:00 UTC, also with a rotating author. It writes `public/data/report.json` and regenerates [`CHANGELOG.md`](CHANGELOG.md) from the merged pull requests, then deploys when something changed. Warnings (a file that stopped updating, a gap of more than 6 days in the last 90 days, errors from the last daily snapshot) show up in the report and as annotations on the workflow run. Run it locally with `npm run maintenance`.
+The **Weekly maintenance** workflow (`.github/workflows/weekly-maintenance.yml`) runs every Monday at 06:00 UTC, with the same author list. It writes `public/data/report.json` and regenerates [`CHANGELOG.md`](CHANGELOG.md) from the merged pull requests, then deploys when something changed. Warnings (a file that stopped updating, a gap of more than 6 days in the last 90 days, errors from the last daily snapshot) show up in the report and as annotations on the workflow run. Run it locally with `npm run maintenance`.
 
 GitHub disables scheduled workflows in public repositories after 60 days without repository activity. The daily commits keep the schedule active; if it is ever disabled, re-enable it in the Actions tab.
 
