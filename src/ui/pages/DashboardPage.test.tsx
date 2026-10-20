@@ -1,10 +1,11 @@
 import 'fake-indexeddb/auto'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '../../data/db.ts'
 import { tx } from '../../engine/testing.ts'
 import { localToday, addDays } from '../../market/dates.ts'
+import { syncMarketData } from '../../market/sync.ts'
 import { resetSyncSession } from '../dashboard/usePortfolio.ts'
 import { DashboardPage } from './DashboardPage.tsx'
 
@@ -24,6 +25,7 @@ const start = addDays(today, -10)
 
 beforeEach(async () => {
   resetSyncSession()
+  vi.mocked(syncMarketData).mockClear()
   await Promise.all([db.transactions.clear(), db.symbols.clear(), db.prices.clear(), db.coverage.clear(), db.kv.clear(), db.imports.clear()])
 })
 afterEach(cleanup)
@@ -47,6 +49,20 @@ async function seed() {
 }
 
 describe('DashboardPage', () => {
+  it('shows stored prices offline and syncs once the connection is back', async () => {
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    await seed()
+    renderPage()
+    const card = (await screen.findByText('Value', { selector: '.card-label' })).closest('.card') as HTMLElement
+    expect(within(card).getByText('€1,100.00')).toBeTruthy()
+    expect(syncMarketData).not.toHaveBeenCalled()
+
+    onLine.mockReturnValue(true)
+    act(() => void window.dispatchEvent(new Event('online')))
+    await vi.waitFor(() => expect(syncMarketData).toHaveBeenCalledTimes(1))
+    onLine.mockRestore()
+  })
+
   it('asks for an import when there is no data', async () => {
     renderPage()
     expect(await screen.findByText(/No portfolio loaded yet/)).toBeTruthy()
