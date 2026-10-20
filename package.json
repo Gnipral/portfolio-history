@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc -b",
     "generate-pwa-assets": "pwa-assets-generator",
-    "data:snapshot": "node scripts/snapshot-data.ts"
+    "data:snapshot": "node scripts/snapshot-data.ts",
+    "maintenance": "node scripts/weekly-maintenance.ts"
   },
   "repository": {
     "type": "git",
