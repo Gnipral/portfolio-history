@@ -1,0 +1,49 @@
+{
+  "generated": "2026-10-20T01:50:22Z",
+  "status": "ok",
+  "warnings": [],
+  "files": {
+    "fx-rates.json": {
+      "rows": 4301,
+      "firstDate": "2010-01-04",
+      "lastDate": "2026-10-19",
+      "staleDays": 1,
+      "gaps": [],
+      "jumps": [],
+      "missingValues": 0
+    },
+    "benchmark-iwda.json": {
+      "rows": 4297,
+      "firstDate": "2010-01-04",
+      "lastDate": "2026-10-16",
+      "staleDays": 4,
+      "gaps": [],
+      "jumps": [],
+      "missingValues": 0
+    },
+    "benchmark-vwce.json": {
+      "rows": 1836,
+      "firstDate": "2019-07-29",
+      "lastDate": "2026-10-16",
+      "staleDays": 4,
+      "gaps": [],
+      "jumps": [],
+      "missingValues": 0
+    },
+    "benchmark-sxr8.json": {
+      "rows": 4170,
+      "firstDate": "2010-05-19",
+      "lastDate": "2026-10-16",
+      "staleDays": 4,
+      "gaps": [],
+      "jumps": [
+        {
+          "date": "2010-11-01",
+          "series": "SXR8.DE",
+          "change": -0.2464
+        }
+      ],
+      "missingValues": 0
+    }
+  }
+}

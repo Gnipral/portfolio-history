@@ -58,6 +58,7 @@ Never commit personal broker exports: this repository is public.
 | `fx-rates.json` | ECB reference rates, units per 1 EUR, 14 currencies, from 2010 | Frankfurter |
 | `benchmark-iwda.json`, `benchmark-vwce.json`, `benchmark-sxr8.json` | Daily closes of the benchmark ETFs | Yahoo Finance |
 | `meta.json` | Last check, sources, row counts, errors | |
+| `report.json` | Weekly data-quality report: stale files, gaps, large day-to-day moves, missing values | |
 
 The files are append-only: dates already stored are never rewritten. Update them locally with `npm run data:snapshot`.
 
@@ -66,6 +67,8 @@ The **Daily data snapshot** workflow (`.github/workflows/data-snapshot.yml`) run
 1. fetches the new data server side (Yahoo does not allow browser requests),
 2. commits the changes to `main`, with the commit author rotated daily through `.github/authors.json`; on days without new market data only `meta.json` changes,
 3. builds and deploys the site, because pushes made with `GITHUB_TOKEN` do not start other workflows.
+
+The **Weekly maintenance** workflow (`.github/workflows/weekly-maintenance.yml`) runs every Monday at 06:00 UTC, also with a rotating author. It writes `public/data/report.json` and regenerates [`CHANGELOG.md`](CHANGELOG.md) from the merged pull requests, then deploys when something changed. Warnings (a file that stopped updating, a gap of more than 6 days in the last 90 days, errors from the last daily snapshot) show up in the report and as annotations on the workflow run. Run it locally with `npm run maintenance`.
 
 GitHub disables scheduled workflows in public repositories after 60 days without repository activity. The daily commits keep the schedule active; if it is ever disabled, re-enable it in the Actions tab.
 
