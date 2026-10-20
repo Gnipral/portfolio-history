@@ -49,8 +49,8 @@ export function deriveInstruments(transactions: Transaction[], today: string): I
 
   for (const t of ordered) {
     const key = instrumentKey(t)
-    if (t.type === 'buy') touch(t, key).quantity += t.quantity
-    else if (t.type === 'sell') touch(t, key).quantity -= t.quantity
+    if (t.type === 'buy' || t.type === 'transferIn') touch(t, key).quantity += t.quantity
+    else if (t.type === 'sell' || t.type === 'transferOut') touch(t, key).quantity -= t.quantity
     else if (t.type === 'split' && t.split) {
       const from = instruments.get(t.split.fromIsin ?? key)
       if (from) from.quantity -= t.split.fromQuantity
