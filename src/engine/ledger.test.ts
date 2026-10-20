@@ -166,6 +166,34 @@ describe('Ledger: deposits and withdrawals', () => {
   })
 })
 
+describe('Ledger: transfers and free units', () => {
+  it('moves units out at their cost basis without realizing a gain', () => {
+    const { ledger, flows, holding } = replay([
+      tx('buy', '2026-01-02', { isin: A, quantity: 4, amount: 400 }),
+      tx('transferOut', '2026-02-02', { isin: A, quantity: 1 }),
+    ])
+    expect(holding(A)).toMatchObject({ quantity: 3, cost: 300 })
+    expect(ledger.realized).toBe(0)
+    expect(ledger.netInvestedInSecurities).toBe(300)
+    expect(flows[1]).toEqual({ inflow: 0, outflow: 100 })
+  })
+
+  it('adds received units at the value given, and counts them as a flow in cash mode', () => {
+    const { ledger, flows, holding } = replay([tx('transferIn', '2026-01-02', { isin: A, quantity: 2, amount: 50 })], {}, true)
+    expect(holding(A)).toMatchObject({ quantity: 2, cost: 50 })
+    expect(ledger.netDeposits).toBe(50)
+    expect(flows[0]).toEqual({ inflow: 50, outflow: 0 })
+  })
+
+  it('keeps the last trade price when free units arrive', () => {
+    const { holding } = replay([
+      tx('buy', '2026-01-02', { isin: A, quantity: 1, amount: 100 }),
+      tx('buy', '2026-02-02', { isin: A, quantity: 0.01, amount: 0 }),
+    ])
+    expect(holding(A)).toMatchObject({ quantity: 1.01, cost: 100, lastTradePrice: 100 })
+  })
+})
+
 describe('ledgerOn', () => {
   it('replays only up to the given date, in date order', () => {
     const trades = [

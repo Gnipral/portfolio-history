@@ -35,8 +35,8 @@ export function finalHoldings(transactions: Transaction[]): Holding[] {
   }
   for (const t of ordered) {
     const key = keyOf(t)
-    if (t.type === 'buy') holding(key, t).quantity += t.quantity
-    else if (t.type === 'sell') holding(key, t).quantity -= t.quantity
+    if (t.type === 'buy' || t.type === 'transferIn') holding(key, t).quantity += t.quantity
+    else if (t.type === 'sell' || t.type === 'transferOut') holding(key, t).quantity -= t.quantity
     else if (t.type === 'split' && t.split) {
       // The split replaces fromQuantity old units (possibly under the old ISIN) with t.quantity new units.
       const from = holdings.get(t.split.fromIsin ?? key)

@@ -21,7 +21,7 @@ export interface Slice {
 export function colorSlots(transactions: Transaction[]): Map<string, number> {
   const invested = new Map<string, number>()
   for (const t of transactions) {
-    if (t.type !== 'buy') continue
+    if (t.type !== 'buy' && t.type !== 'transferIn') continue
     const key = instrumentKey(t)
     invested.set(key, (invested.get(key) ?? 0) + Math.abs(t.amountEur))
   }
