@@ -24,7 +24,7 @@ const start = addDays(today, -10)
 
 beforeEach(async () => {
   resetSyncSession()
-  await Promise.all([db.transactions.clear(), db.symbols.clear(), db.prices.clear(), db.coverage.clear(), db.kv.clear()])
+  await Promise.all([db.transactions.clear(), db.symbols.clear(), db.prices.clear(), db.coverage.clear(), db.kv.clear(), db.imports.clear()])
 })
 afterEach(cleanup)
 
@@ -93,6 +93,30 @@ describe('DashboardPage', () => {
     // 1000 into IWDA at 50 = 20 units, worth 1050 today: +50, +5%
     expect(await screen.findByText(/The same money in IWDA/)).toBeTruthy()
     expect(screen.getByText('+€50.00')).toBeTruthy()
+  })
+
+  it('recalculates instantly when costs are excluded, and explains unavailable options', async () => {
+    await seed()
+    await db.transactions.clear()
+    await db.transactions.bulkAdd([tx('buy', start, { isin: A, quantity: 10, amount: 1000, costsEur: 5 })])
+    await db.imports.put({
+      id: 'current',
+      broker: 'TEST',
+      files: [],
+      importedAt: '',
+      capabilities: { transactionCosts: true, fxCosts: true, taxes: false, dividends: false, deposits: false },
+      missingReasons: { dividends: 'No dividends in this export.' },
+      issues: [],
+    })
+    renderPage()
+    await screen.findByText('Profit / loss')
+    const pnl = () => within(screen.getByText('Profit / loss').closest('.card') as HTMLElement)
+    // 1100 - (1000 + 5)
+    expect(await pnl().findByText('+€95.00')).toBeTruthy()
+    fireEvent.click(screen.getByLabelText('Transaction costs'))
+    expect(await pnl().findByText('+€100.00')).toBeTruthy()
+    expect((screen.getByLabelText('Dividends') as HTMLInputElement).disabled).toBe(true)
+    expect(screen.getByText(/No dividends in this export/)).toBeTruthy()
   })
 
   it('switches the chart unit', async () => {
