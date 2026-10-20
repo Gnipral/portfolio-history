@@ -1,6 +1,7 @@
 import { useState, type DragEvent } from 'react'
 import { Link } from 'react-router'
 import { hasPortfolio, replacePortfolio } from '../../data/portfolio.ts'
+import { loadImportContext } from '../../import/fxContext.ts'
 import { readFile } from '../../import/readFile.ts'
 import { ImportError, importTables } from '../../import/registry.ts'
 import type { ImportResult } from '../../import/types.ts'
@@ -16,6 +17,25 @@ type State =
 
 const ACCEPT = '.csv,.xlsx,.xls'
 
+/** Which file to export at each supported broker. */
+const BROKERS: [string, string][] = [
+  ['DEGIRO', 'Transactions and Account statement (Inbox → Transactions / Account), CSV or XLSX; one or both'],
+  ['Bolero', 'Transaction history (Excel)'],
+  ['Keytrade Bank', 'Transactions (CSV or Excel)'],
+  ['Saxo', 'Transactions (Excel)'],
+  ['Interactive Brokers / Lynx', 'Flex Queries: Trades, Cash Transactions and Corporate Actions (CSV)'],
+  ['Trade Republic', 'Transaction export (CSV)'],
+  ['Trading 212', 'History → Export (CSV)'],
+  ['Revolut', 'Trading account statement (CSV)'],
+  ['eToro', 'Account statement (Excel)'],
+  ['XTB', 'Account history, Cash Operations (CSV or Excel)'],
+  ['Bitvavo', 'Transaction history (CSV)'],
+  ['Coinbase', 'Transaction history report (CSV)'],
+  ['Binance', 'Transaction history statement (CSV or Excel)'],
+  ['Kraken', 'Ledgers (CSV)'],
+  ['Bitpanda', 'Transaction history (CSV)'],
+]
+
 export function ImportPage() {
   const [state, setState] = useState<State>({ phase: 'idle' })
   const [dragging, setDragging] = useState(false)
@@ -26,7 +46,7 @@ export function ImportPage() {
     setState({ phase: 'reading' })
     try {
       const tables = (await Promise.all(files.map(readFile))).flat()
-      const result = importTables(tables)
+      const result = importTables(tables, { context: await loadImportContext() })
       setState({ phase: 'preview', result, files: files.map((f) => f.name), confirmReplace: false })
     } catch (error) {
       if (error instanceof ImportError) setState({ phase: 'error', message: error.message, details: error.details })
@@ -58,9 +78,19 @@ export function ImportPage() {
     <section className="stack">
       <h2>Import</h2>
       <p className="muted">
-        Import the export of one broker. For DEGIRO, select the <strong>Transactions</strong> export (CSV or XLSX).
-        Your data is processed and stored only on this device.
+        Import the export of one broker; the broker is recognized from the file. Select several files at once when a
+        broker splits its history over more files. Your data is processed and stored only on this device.
       </p>
+      <details className="supported-brokers">
+        <summary>Supported brokers and which file to export</summary>
+        <ul>
+          {BROKERS.map(([broker, file]) => (
+            <li key={broker}>
+              <strong>{broker}:</strong> {file}
+            </li>
+          ))}
+        </ul>
+      </details>
 
       {(state.phase === 'idle' || state.phase === 'error' || state.phase === 'done') && (
         <label

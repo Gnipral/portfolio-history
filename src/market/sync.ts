@@ -103,7 +103,14 @@ async function resolveSymbols(
     }
   }
 
-  for (const instrument of pending.filter((i) => i.kind === 'security' && !i.isin)) {
+  // Without an ISIN, the broker's ticker is the best guess; it can be corrected on the Prices page.
+  const byTicker = pending.filter((i) => i.kind === 'security' && !i.isin && i.ticker)
+  if (byTicker.length > 0) {
+    await database.symbols.bulkPut(
+      byTicker.map((i): SymbolRecord => ({ key: i.key, kind: 'security', source: 'broker', resolvedAt, symbol: i.ticker as string })),
+    )
+  }
+  for (const instrument of pending.filter((i) => i.kind === 'security' && !i.isin && !i.ticker)) {
     problems[instrument.key] = 'No ISIN in the export: enter the symbol manually.'
   }
 }

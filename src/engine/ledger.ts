@@ -83,8 +83,11 @@ export class Ledger {
         holding.quantity += t.quantity
         holding.cost += outlay
         holding.lots.push({ quantity: t.quantity, unitCost: outlay / t.quantity })
-        holding.lastTradePrice = Math.abs(t.amountEur) / t.quantity
-        holding.lastTradeDate = t.date
+        // Free units (staking rewards, stock dividends) say nothing about the market price.
+        if (t.amountEur !== 0) {
+          holding.lastTradePrice = Math.abs(t.amountEur) / t.quantity
+          holding.lastTradeDate = t.date
+        }
         this.netInvestedInSecurities += outlay
         this.cash -= outlay
         flows.inflow += outlay
@@ -121,6 +124,37 @@ export class Ledger {
       case 'split':
         this.applySplit(t)
         break
+      case 'transferIn': {
+        // Units arrive from outside at the value the export gives them (0 when unknown).
+        const value = Math.abs(t.amountEur)
+        const holding = this.holding(t)
+        holding.quantity += t.quantity
+        holding.cost += value
+        holding.lots.push({ quantity: t.quantity, unitCost: value / t.quantity })
+        this.netInvestedInSecurities += value
+        this.netDeposits += value
+        flows.inflow += value
+        break
+      }
+      case 'transferOut': {
+        // Units leave without a sale: they take their cost basis with them, no profit is realized.
+        const holding = this.holding(t)
+        const quantity = Math.min(t.quantity, holding.quantity)
+        if (t.quantity > holding.quantity + EPSILON) {
+          this.issues.push({ date: t.date, message: `${t.product}: sent ${t.quantity} but only ${holding.quantity} held.` })
+        }
+        const cost = this.removeCost(holding, quantity)
+        holding.quantity -= quantity
+        if (holding.quantity < EPSILON) {
+          holding.quantity = 0
+          holding.cost = 0
+          holding.lots = []
+        }
+        this.netInvestedInSecurities -= cost
+        this.netDeposits -= cost
+        flows.outflow += cost
+        break
+      }
       case 'dividend': {
         if (!this.options.includeDividends) break
         const amount = Math.abs(t.amountEur) - (this.options.includeTaxes ? t.taxesEur : 0)
@@ -157,6 +191,8 @@ export class Ledger {
     if (this.cashMode) {
       if (t.type === 'deposit') return { inflow: Math.abs(t.amountEur), outflow: 0 }
       if (t.type === 'withdrawal') return { inflow: 0, outflow: Math.abs(t.amountEur) }
+      // Securities moving in or out from outside the account are external flows too.
+      if (t.type === 'transferIn' || t.type === 'transferOut') return flows
       return { inflow: 0, outflow: 0 }
     }
     return flows

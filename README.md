@@ -49,16 +49,29 @@ Providers deliver split-adjusted prices; the app undoes later splits, so a quant
 
 Supported exports:
 
-| Broker | File | Status |
+| Broker | File | Notes |
 |---|---|---|
-| DEGIRO | Transactions (Transacties), CSV or XLSX | Dutch verified with a real export; English headers still to be confirmed |
+| DEGIRO | Transactions and/or Account statement (Rekeningoverzicht), CSV or XLSX | The Account statement adds dividends, dividend tax, TOB, deposits and interest. Account statement in Dutch, English and Portuguese. |
+| Bolero | Transaction history (Excel) | Column names not yet confirmed with a real export; no ISIN, so symbols are entered on the Prices page |
+| Keytrade Bank | Transactions (CSV or Excel) | Column names not yet confirmed with a real export |
+| Saxo | Transactions (Excel) | Event text in the account's language (`Buy`/`Koop`) |
+| Interactive Brokers, Lynx | Flex Queries: Trades, Cash Transactions, Corporate Actions (CSV) | Columns are looked up by name; import the three together |
+| Trade Republic | Transaction export (CSV, `,` or `;`) | Card payments count as withdrawals |
+| Trading 212 | History → Export (CSV) | All column variants since 2023 |
+| Revolut | Trading account statement (CSV) | Identified by ticker only |
+| eToro | Account statement (Excel) | Account currency and ISINs from the other sheets |
+| XTB | Account history, Cash Operations (CSV or Excel) | Both layouts; tickers mapped to Yahoo symbols |
+| Bitvavo, Coinbase, Binance, Kraken, Bitpanda | Transaction history / ledgers (CSV or Excel) | Staking and rewards count as free coins; coin-to-coin conversions move the cost basis |
 
-Brokers are detected from the header row. Each broker is an adapter in `src/import/adapters/` that maps its rows to the normalized `Transaction` model (`src/model/transaction.ts`). Adding a broker means adding an adapter and registering it in `src/import/registry.ts`.
+PDF statements and contract notes are not supported.
 
-To check a real export without committing it:
+Brokers are detected from the header row, also after a few preamble lines. Each broker is an adapter in `src/import/adapters/` that maps its rows to the normalized `Transaction` model (`src/model/transaction.ts`), with shared helpers in `kit.ts`. Amounts in another currency than EUR are converted at the ECB rate of the day. Adding a broker means adding an adapter and registering it in `src/import/registry.ts`.
+
+To check real exports without committing them:
 
 ```bash
 DEGIRO_SAMPLE=/path/to/Transactions.xlsx npx vitest run privateSample --silent=false
+BROKER_EXPORTS=/path/to/folder npx vitest run brokerExports --silent=false   # every CSV/XLSX in a folder
 ```
 
 Never commit personal broker exports: this repository is public.

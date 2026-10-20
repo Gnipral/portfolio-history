@@ -39,10 +39,16 @@ export interface ImportResult {
   missingReasons: CapabilityReasons
 }
 
+/** What an adapter may need besides the files: exchange rates for exports without EUR amounts. */
+export interface ImportContext {
+  /** Converts an amount to EUR at the ECB rate of `date`; undefined when the rate is unknown. */
+  toEur(amount: number, currency: string, date: string): number | undefined
+}
+
 export interface BrokerAdapter {
   id: string
   label: string
   /** Confidence between 0 and 1 that this table comes from this broker. */
   detect(table: RawTable): number
-  parse(tables: RawTable[]): ImportResult
+  parse(tables: RawTable[], context?: ImportContext): ImportResult
 }

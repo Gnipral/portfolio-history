@@ -8,6 +8,10 @@ export type TransactionType =
   | 'tax'
   | 'fx'
   | 'split'
+  /** Units received without paying, e.g. from another wallet or broker. `amountEur` is their value when known, else 0. */
+  | 'transferIn'
+  /** Units sent away without being sold, e.g. to an own wallet. They leave at their cost basis. */
+  | 'transferOut'
   | 'other'
 
 export type AssetClass = 'stock' | 'etf' | 'fund' | 'bond' | 'crypto' | 'cash' | 'unknown'

@@ -1,8 +1,38 @@
+import { binanceAdapter } from './adapters/binance.ts'
+import { bitpandaAdapter } from './adapters/bitpanda.ts'
+import { bitvavoAdapter } from './adapters/bitvavo.ts'
+import { boleroAdapter } from './adapters/bolero.ts'
+import { coinbaseAdapter } from './adapters/coinbase.ts'
 import { degiroAdapter } from './adapters/degiro/index.ts'
-import type { BrokerAdapter, ImportResult, RawTable } from './types.ts'
+import { etoroAdapter } from './adapters/etoro.ts'
+import { interactiveBrokersAdapter } from './adapters/interactiveBrokers.ts'
+import { keytradeAdapter } from './adapters/keytrade.ts'
+import { krakenAdapter } from './adapters/kraken.ts'
+import { revolutAdapter } from './adapters/revolut.ts'
+import { saxoAdapter } from './adapters/saxo.ts'
+import { tradeRepublicAdapter } from './adapters/tradeRepublic.ts'
+import { trading212Adapter } from './adapters/trading212.ts'
+import { xtbAdapter } from './adapters/xtb.ts'
+import type { BrokerAdapter, ImportContext, ImportResult, RawTable } from './types.ts'
 
 /** Every supported broker. Adding a broker means adding its adapter here. */
-export const adapters: BrokerAdapter[] = [degiroAdapter]
+export const adapters: BrokerAdapter[] = [
+  degiroAdapter,
+  boleroAdapter,
+  keytradeAdapter,
+  saxoAdapter,
+  interactiveBrokersAdapter,
+  tradeRepublicAdapter,
+  trading212Adapter,
+  revolutAdapter,
+  etoroAdapter,
+  xtbAdapter,
+  bitvavoAdapter,
+  coinbaseAdapter,
+  binanceAdapter,
+  krakenAdapter,
+  bitpandaAdapter,
+]
 
 const MIN_CONFIDENCE = 0.5
 
@@ -35,12 +65,18 @@ function describe(table: RawTable): string {
   return table.sheetName ? `${table.fileName} (sheet "${table.sheetName}")` : table.fileName
 }
 
+export interface ImportOptions {
+  /** Exchange rates for brokers that report amounts in other currencies than EUR. */
+  context?: ImportContext
+  candidates?: BrokerAdapter[]
+}
+
 /**
  * Detects the broker of every table and parses them with that broker's adapter.
  * All recognized tables must come from the same broker; unrecognized sheets in a recognized
  * workbook are ignored, an entirely unrecognized file is an error.
  */
-export function importTables(tables: RawTable[], candidates: BrokerAdapter[] = adapters): ImportResult {
+export function importTables(tables: RawTable[], { context, candidates = adapters }: ImportOptions = {}): ImportResult {
   if (tables.length === 0) throw new ImportError('The selected file is empty.')
 
   const detections = tables.map((t) => detectTable(t, candidates))
@@ -67,5 +103,8 @@ export function importTables(tables: RawTable[], candidates: BrokerAdapter[] = a
     )
   }
   const adapter = brokers[0] as BrokerAdapter
-  return adapter.parse(recognized.map((d) => d.table))
+  return adapter.parse(
+    recognized.map((d) => d.table),
+    context,
+  )
 }
