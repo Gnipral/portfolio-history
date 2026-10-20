@@ -143,6 +143,14 @@ button:hover {
   color: #fff;
 }
 
+.offline-badge {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 640px) {
   .app-header,
   .app-main {

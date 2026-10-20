@@ -1,4 +1,5 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router'
+import { OfflineBadge } from '../ui/components/OfflineBadge.tsx'
 import { ThemeToggle } from '../ui/components/ThemeToggle.tsx'
 import { UpdateBanner } from '../ui/components/UpdateBanner.tsx'
 import { DashboardPage } from '../ui/pages/DashboardPage.tsx'
@@ -23,6 +24,7 @@ export function App() {
           <NavLink to="/prices">Prices</NavLink>
           <NavLink to="/settings">Settings</NavLink>
         </nav>
+        <OfflineBadge />
         <ThemeToggle />
       </header>
       <main className="app-main">
