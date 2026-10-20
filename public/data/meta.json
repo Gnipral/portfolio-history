@@ -1,5 +1,5 @@
 {
-  "lastCheck": "2026-10-19T14:39:15Z",
+  "lastCheck": "2026-10-20T00:30:48Z",
   "sources": {
     "fx-rates.json": "European Central Bank reference rates via Frankfurter (api.frankfurter.dev)",
     "benchmark-iwda.json": "Yahoo Finance daily closes (IWDA.AS)",
