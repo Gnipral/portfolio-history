@@ -29,7 +29,7 @@
   --chart-invested: #7d838c;
   --chart-positive: #1f9d5b;
   --chart-negative: #d0453f;
-  --chart-zero: #4b5563;
+  --chart-zero: #2d333b;
   --chart-grid: #eeeae2;
   --chart-separator: #b9b3a6;
   --shadow: 0 4px 20px -2px rgba(24, 61, 47, 0.06);
@@ -60,6 +60,13 @@
     --series-6: #a3e635;
     --series-7: #c084fc;
     --series-other: #5b6670;
+    --chart-value: #5cc8f0;
+    --chart-invested: #9aa5b1;
+    --chart-positive: #3ddc97;
+    --chart-negative: #ff7b7b;
+    --chart-zero: #e6eaef;
+    --chart-grid: #1c2229;
+    --chart-separator: #4a5561;
     --shadow: none;
     --glow: 0.07;
     color-scheme: dark;
@@ -90,7 +97,7 @@
   --chart-invested: #9aa5b1;
   --chart-positive: #3ddc97;
   --chart-negative: #ff7b7b;
-  --chart-zero: #c3cad3;
+  --chart-zero: #e6eaef;
   --chart-grid: #1c2229;
   --chart-separator: #4a5561;
   --shadow: none;
@@ -756,7 +763,57 @@ code {
 }
 
 .chart {
-  height: 420px;
+  height: 440px;
+}
+
+/* Full screen: the browser's own, or (iPhone) the chart filling the window. */
+.chart-wrapper:fullscreen,
+.chart-wrapper.expanded {
+  display: flex;
+  flex-direction: column;
+  border: none;
+  border-radius: 0;
+  background: var(--surface);
+}
+
+.chart-wrapper.expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.chart-wrapper:fullscreen .chart,
+.chart-wrapper.expanded .chart {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+/* Legend and full-screen button in a bar above the chart, so they never cover the lines or axis. */
+.chart-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.chart-expand {
+  flex: none;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  background: color-mix(in srgb, var(--surface-2) 90%, transparent);
+}
+
+.chart-expand svg {
+  width: 18px;
+  height: 18px;
 }
 
 .chart-legend,
@@ -766,24 +823,20 @@ code {
 }
 
 .chart-legend {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.9rem;
-  z-index: 2;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1rem;
-  font-size: 0.78rem;
-  pointer-events: none;
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
-  padding: 0.2rem 0.4rem;
-  border-radius: var(--radius-sm);
+  align-items: center;
+  gap: 0.25rem 1.1rem;
+  min-height: 2.25rem;
+  padding-left: 0.15rem;
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 .swatch {
   display: inline-block;
-  width: 10px;
-  height: 3px;
+  width: 14px;
+  height: 4px;
   border-radius: 2px;
   vertical-align: middle;
   margin-right: 0.15rem;
@@ -798,6 +851,18 @@ code {
   background: linear-gradient(90deg, var(--chart-positive) 50%, var(--chart-negative) 50%);
 }
 
+/* A solid band between the value and the profit pane: the chart's own separator is one pixel. */
+.pane-divider {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--chart-separator);
+  pointer-events: none;
+}
+
 /* Names the lower pane, so profit is not read as part of the value above it. */
 .pane-label {
   position: absolute;
@@ -806,8 +871,8 @@ code {
   padding: 0.1rem 0.4rem;
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--surface) 85%, transparent);
-  color: var(--text-muted);
-  font-size: 0.65rem;
+  color: var(--text);
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -944,7 +1009,7 @@ code {
 }
 
 .chart-placeholder {
-  height: 437px;
+  height: 510px;
 }
 
 .swatch.benchmark {
