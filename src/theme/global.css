@@ -807,3 +807,18 @@ button.danger:hover {
 .panel .table {
   width: 100%;
 }
+
+.tax-rules details summary {
+  cursor: pointer;
+}
+
+.tax-rules details summary .badge {
+  margin-left: 0.5rem;
+}
+
+.tax-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+}

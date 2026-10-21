@@ -5,7 +5,7 @@ import { simulateMix } from '../benchmark.ts'
 import { DEFAULT_OPTIONS } from '../options.ts'
 import { PriceBook } from '../priceBook.ts'
 import { tx } from '../testing.ts'
-import { belgianCapitalGains, BELGIAN_CGT } from './belgianTax.ts'
+import { capitalGainsTax, isAdjusted, presetOf, TAX_PRESETS, type CapitalGainsRules, type TaxPreset } from './capitalGains.ts'
 import { chargesByYear } from './charges.ts'
 import { incomeRows, incomeTotals } from './income.ts'
 import { positionSeries } from './positionSeries.ts'
@@ -94,57 +94,122 @@ describe('realized sales', () => {
   })
 })
 
-describe('Belgian capital gains tax', () => {
-  const priceOn = (prices: Record<string, number>) => (holding: { key: string }, date: string) =>
-    date === BELGIAN_CGT.referenceDate ? prices[holding.key] : undefined
+describe('capital gains tax', () => {
+  const rulesOf = (id: string, changes: Partial<CapitalGainsRules> = {}): CapitalGainsRules => ({
+    ...(TAX_PRESETS.find((p) => p.id === id) as TaxPreset).rules,
+    ...changes,
+  })
+  const priceOn = (date: string, prices: Record<string, number>) => (holding: { key: string }, day: string) =>
+    day === date ? prices[holding.key] : undefined
 
-  it('taxes only the gain made from 2026 on, above the exemption', () => {
-    const result = belgianCapitalGains(
-      [
-        tx('buy', '2020-01-02', { isin: A, quantity: 1000, amount: 50_000 }),
-        // Worth 80,000 on 31 December 2025: the 30,000 gain before 2026 is not taxed.
-        tx('sell', '2026-06-01', { isin: A, quantity: 1000, amount: 100_000 }),
-      ],
-      DEFAULT_OPTIONS,
-      priceOn({ [A]: 80 }),
-      '2026-10-21',
-    )
-    expect(result.sales[0]).toMatchObject({ cost: 80_000, gain: 20_000 })
-    expect(result.years).toEqual([{ year: '2026', gains: 20_000, losses: 0, net: 20_000, exemption: 10_000, taxable: 10_000, tax: 1000 }])
+  describe('Belgium', () => {
+    const BE = rulesOf('BE')
+
+    it('taxes only the gain made from 2026 on, above the exemption', () => {
+      const result = capitalGainsTax(
+        [
+          tx('buy', '2020-01-02', { isin: A, quantity: 1000, amount: 50_000 }),
+          // Worth 80,000 on 31 December 2025: the 30,000 gain before 2026 is not taxed.
+          tx('sell', '2026-06-01', { isin: A, quantity: 1000, amount: 100_000 }),
+        ],
+        BE,
+        priceOn('2025-12-31', { [A]: 80 }),
+        '2026-10-21',
+      )
+      expect(result.sales[0]).toMatchObject({ cost: 80_000, gain: 20_000 })
+      expect(result.years).toEqual([
+        { year: '2026', gains: 20_000, losses: 0, net: 20_000, lossesCarriedIn: 0, exemption: 10_000, taxable: 10_000, tax: 1000 },
+      ])
+    })
+
+    it('keeps the historical cost when it is higher, and nets losses within the year', () => {
+      const result = capitalGainsTax(
+        [
+          tx('buy', '2024-01-02', { isin: A, quantity: 100, amount: 10_000 }),
+          tx('buy', '2024-01-02', { isin: B, quantity: 100, amount: 10_000 }),
+          // A is worth 50 on the reference date (cost 100 kept); B is worth 150.
+          tx('sell', '2026-03-01', { isin: A, quantity: 100, amount: 9_000 }),
+          tx('sell', '2026-04-01', { isin: B, quantity: 100, amount: 40_000 }),
+        ],
+        BE,
+        priceOn('2025-12-31', { [A]: 50, [B]: 150 }),
+        '2026-12-31',
+      )
+      expect(result.sales.map((s) => s.gain)).toEqual([-1000, 25_000])
+      expect(result.years[0]).toMatchObject({ gains: 25_000, losses: 1000, net: 24_000, taxable: 14_000 })
+      expect(result.years[0]?.tax).toBeCloseTo(1400, 9)
+    })
+
+    it('carries an unused exemption over, up to 1,000 per year, and does not carry losses', () => {
+      const result = capitalGainsTax(
+        [
+          tx('buy', '2026-01-05', { isin: A, quantity: 100, amount: 10_000 }),
+          tx('buy', '2026-01-05', { isin: B, quantity: 100, amount: 10_000 }),
+          tx('sell', '2026-06-01', { isin: B, quantity: 100, amount: 5_000 }),
+          tx('sell', '2027-06-01', { isin: A, quantity: 100, amount: 22_000 }),
+        ],
+        BE,
+        () => undefined,
+        '2027-12-31',
+      )
+      expect(result.years.map((y) => [y.year, y.net, y.lossesCarriedIn, y.exemption, y.taxable])).toEqual([
+        ['2026', -5_000, 0, 10_000, 0],
+        ['2027', 12_000, 0, 11_000, 1000],
+      ])
+    })
   })
 
-  it('keeps the historical cost when it is higher, and nets losses within the year', () => {
-    const result = belgianCapitalGains(
+  it('Germany: FIFO, a small exemption and losses that carry forward without limit', () => {
+    const result = capitalGainsTax(
       [
-        tx('buy', '2024-01-02', { isin: A, quantity: 100, amount: 10_000 }),
-        tx('buy', '2024-01-02', { isin: B, quantity: 100, amount: 10_000 }),
-        // A is worth 50 on the reference date (cost 100 kept); B is worth 150.
-        tx('sell', '2026-03-01', { isin: A, quantity: 100, amount: 9_000 }),
-        tx('sell', '2026-04-01', { isin: B, quantity: 100, amount: 40_000 }),
+        tx('buy', '2024-01-02', { isin: A, quantity: 10, amount: 1_000 }),
+        tx('buy', '2024-06-03', { isin: A, quantity: 10, amount: 2_000 }),
+        // FIFO: the 10 units of 100 are sold.
+        tx('sell', '2024-09-02', { isin: A, quantity: 10, amount: 600 }),
+        tx('sell', '2026-03-02', { isin: A, quantity: 10, amount: 5_000 }),
       ],
-      DEFAULT_OPTIONS,
-      priceOn({ [A]: 50, [B]: 150 }),
+      rulesOf('DE'),
+      () => undefined,
       '2026-12-31',
     )
-    expect(result.sales.map((s) => s.gain)).toEqual([-1000, 25_000])
-    expect(result.years[0]).toMatchObject({ gains: 25_000, losses: 1000, net: 24_000, taxable: 14_000 })
-    expect(result.years[0]?.tax).toBeCloseTo(1400, 9)
+    expect(result.sales.map((s) => s.gain)).toEqual([-400, 3_000])
+    const last = result.years.at(-1)
+    expect(last).toMatchObject({ year: '2026', net: 3_000, lossesCarriedIn: 400, exemption: 1_000, taxable: 1_600 })
+    expect(last?.tax).toBeCloseTo(1_600 * 0.26375, 9)
   })
 
-  it('carries an unused exemption over, up to 1,000 per year', () => {
-    const result = belgianCapitalGains(
+  it('France: a loss expires after ten years', () => {
+    const trades = [
+      tx('buy', '2010-01-04', { isin: A, quantity: 10, amount: 1_000 }),
+      tx('sell', '2010-06-01', { isin: A, quantity: 10, amount: 500 }),
+      tx('buy', '2021-01-04', { isin: B, quantity: 10, amount: 1_000 }),
+      tx('sell', '2021-06-01', { isin: B, quantity: 10, amount: 2_000 }),
+    ]
+    const year2021 = (rules: CapitalGainsRules) => capitalGainsTax(trades, rules, () => undefined, '2021-12-31').years.at(-1)
+    expect(year2021(rulesOf('FR'))).toMatchObject({ lossesCarriedIn: 0, taxable: 1_000, tax: 300 })
+    // With an unlimited carry-forward the 2010 loss would still count.
+    expect(year2021(rulesOf('FR', { lossCarryForwardYears: 99 }))).toMatchObject({ lossesCarriedIn: 500, taxable: 500 })
+  })
+
+  it('applies own rules: rate, exemption and a step-up to the value of a date', () => {
+    const result = capitalGainsTax(
       [
-        tx('buy', '2026-01-05', { isin: A, quantity: 100, amount: 10_000 }),
-        tx('sell', '2027-06-01', { isin: A, quantity: 100, amount: 22_000 }),
+        tx('buy', '2020-01-02', { isin: A, quantity: 10, amount: 2_000 }),
+        // Worth less than its cost on the reference date: with "value" that lower value counts.
+        tx('sell', '2025-06-01', { isin: A, quantity: 10, amount: 2_500 }),
       ],
-      DEFAULT_OPTIONS,
-      () => undefined,
-      '2027-12-31',
+      rulesOf('custom', { rate: 0.2, yearlyExemption: 100, maxExemption: 100, referenceDate: '2023-12-31', stepUp: 'value' }),
+      priceOn('2023-12-31', { [A]: 150 }),
+      '2025-12-31',
     )
-    expect(result.years.map((y) => [y.year, y.net, y.exemption, y.taxable])).toEqual([
-      ['2026', 0, 10_000, 0],
-      ['2027', 12_000, 11_000, 1000],
-    ])
+    expect(result.sales[0]).toMatchObject({ cost: 1_500, gain: 1_000 })
+    expect(result.years.at(-1)).toMatchObject({ taxable: 900, tax: 180 })
+  })
+
+  it('names the preset and sees when the rules were changed', () => {
+    expect(presetOf(rulesOf('DE')).label).toBe('Germany')
+    expect(isAdjusted(rulesOf('DE'))).toBe(false)
+    expect(isAdjusted(rulesOf('DE', { rate: 0.28 }))).toBe(true)
   })
 })
 

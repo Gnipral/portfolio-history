@@ -9,7 +9,7 @@ import { RiskSection } from '../analysis/RiskSection.tsx'
 import { TaxesSection } from '../analysis/TaxesSection.tsx'
 import { engineOptions } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
-import { DEFAULT_SETTINGS, useSettings } from '../../settings/settings.ts'
+import { DEFAULT_SETTINGS, saveSettings, useSettings } from '../../settings/settings.ts'
 
 const TABS = [
   { key: 'taxes', label: 'Taxes' },
@@ -57,7 +57,9 @@ export function AnalysisPage() {
         <p role="status">Calculating…</p>
       ) : (
         <div role="tabpanel" className="stack">
-          {tab === 'taxes' && <TaxesSection inputs={inputs} options={options} />}
+          {tab === 'taxes' && (
+            <TaxesSection inputs={inputs} rules={settings.taxRules} onRulesChange={(taxRules) => void saveSettings({ taxRules })} />
+          )}
           {tab === 'dividends' && <DividendsSection inputs={inputs} options={options} />}
           {tab === 'realized' && <RealizedSection inputs={inputs} options={options} />}
           {tab === 'costs' && <CostsSection inputs={inputs} options={options} series={series} />}
