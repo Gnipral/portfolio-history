@@ -11,6 +11,10 @@ export interface Settings {
   alphaVantageKey: string
   /** Id from BENCHMARKS, compared with the portfolio on the dashboard. */
   benchmarkId: string
+  /** Other benchmarks shown next to the main one. */
+  extraBenchmarkIds: string[]
+  /** Percent per benchmark id of a mix shown as one more benchmark; empty or not 100 in total: no mix. */
+  benchmarkMix: Record<string, number>
   costBasis: CostBasisMethod
   /** Dashboard checkboxes; remembered between visits. */
   toggles: Toggles
@@ -29,6 +33,8 @@ export const DEFAULT_SETTINGS: Settings = {
   twelveDataKey: '',
   alphaVantageKey: '',
   benchmarkId: DEFAULT_BENCHMARK_ID,
+  extraBenchmarkIds: [],
+  benchmarkMix: {},
   costBasis: defaultCostBasis,
   toggles: defaultToggles,
 }

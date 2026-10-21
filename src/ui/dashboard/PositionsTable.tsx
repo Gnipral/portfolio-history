@@ -16,7 +16,15 @@ const COLUMNS: { key: PositionColumn; label: string; numeric: boolean }[] = [
 
 const quantityFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 6 })
 
-export function PositionsTable({ positions, date }: { positions: Position[]; date: string }) {
+interface Props {
+  positions: Position[]
+  date: string
+  /** Key of the position whose chart is open. */
+  selectedKey?: string | null
+  onSelect?: (key: string) => void
+}
+
+export function PositionsTable({ positions, date, selectedKey = null, onSelect }: Props) {
   const [sort, setSort] = useState<SortState>({ column: 'value', descending: true })
   const rows = useMemo(() => sortPositions(withWeights(positions), sort), [positions, sort])
 
@@ -42,9 +50,15 @@ export function PositionsTable({ positions, date }: { positions: Position[]; dat
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={row.key}>
+          <tr key={row.key} className={row.key === selectedKey ? 'selected' : undefined}>
             <td>
-              <div>{row.product}</div>
+              {onSelect ? (
+                <button type="button" className="link-button" aria-expanded={row.key === selectedKey} onClick={() => onSelect(row.key)}>
+                  {row.product}
+                </button>
+              ) : (
+                <div>{row.product}</div>
+              )}
               <div className="muted small">{[row.symbol, row.isin].filter(Boolean).join(' · ')}</div>
             </td>
             <td className="num">{quantityFormat.format(row.quantity)}</td>

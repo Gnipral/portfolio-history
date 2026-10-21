@@ -50,9 +50,9 @@ describe('chartData', () => {
       { date: '2026-10-16', value: 1050, pnl: 50, twr: 0.05 },
       { date: '2026-10-17', value: 1155, pnl: 155, twr: 0.155 },
     ]
-    expect(chartData(points, 1, 2, 'eur', benchmark).benchmark.map((p) => p.value)).toEqual([1050, 1155])
-    expect(chartData(points, 1, 2, 'percent', benchmark).benchmark.map((p) => p.value)).toEqual([5, 15.5])
-    expect(chartData(points, 0, 2, 'eur').benchmark).toEqual([])
+    expect(chartData(points, 1, 2, 'eur', [benchmark]).benchmarks[0]?.map((p) => p.value)).toEqual([1050, 1155])
+    expect(chartData(points, 1, 2, 'percent', [benchmark]).benchmarks[0]?.map((p) => p.value)).toEqual([5, 15.5])
+    expect(chartData(points, 0, 2, 'eur').benchmarks).toEqual([])
   })
 
   it('shows the simple return only for the full history', () => {

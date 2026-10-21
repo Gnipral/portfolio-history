@@ -18,10 +18,16 @@ Live app: https://gnipral.github.io/portfolio-history/
 3. The **dashboard** rebuilds the portfolio for every calendar day since the first transaction:
    - a chart of value, invested capital and profit, in euros or percent, with a crosshair, a slider and a date picker that stay in sync, and quick ranges (1M, 3M, YTD, 1Y, ALL);
    - cards for value, invested capital, profit/loss, simple return, time-weighted return (TWR) and money-weighted return (XIRR) on the selected day;
-   - the positions and an allocation chart for that day;
-   - a benchmark (MSCI World, FTSE All-World or S&P 500 ETF) bought and sold with exactly the same money on the same days;
+   - the positions and an allocation chart for that day, by position, type, currency or country of the ISIN; click a position for its own chart with its trades;
+   - benchmarks (MSCI World, FTSE All-World, S&P 500 ETF, or your own mix of them) bought and sold with exactly the same money on the same days;
    - toggles to include or exclude dividends, transaction costs, taxes, FX costs and deposits. Options the export has no data for are disabled, with the reason.
-4. **Settings**: API keys, price proxy, cost basis (average or FIFO), benchmark, theme, and deleting all data.
+4. **Analysis**, per year:
+   - **Taxes**: stock exchange tax (TOB) and withheld taxes paid, and an estimate of the Belgian tax on capital gains from 2026 (10% above the yearly exemption, with the value on 31 December 2025 as starting point);
+   - **Dividends**: per month, year, kind and position, gross and net, with the yield on cost;
+   - **Realized**: every sale with its cost basis and result;
+   - **Costs**: transaction costs, FX costs and taxes, and how much profit and time-weighted return they cost;
+   - **Risk**: largest fall and recovery, volatility, best and worst month, and the return of every month.
+5. **Settings**: API keys, price proxy, cost basis (average or FIFO), benchmarks and mix, theme, and deleting all data.
 
 ### Privacy
 
