@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DailyPoint } from '../../engine/series.ts'
 import { chartData } from './chartData.ts'
@@ -125,6 +125,17 @@ describe('PortfolioChart', () => {
     )
     rerender(<PortfolioChart points={points} from={0} to={2} selected={0} mode="eur" onHover={() => {}} />)
     expect(chartMock.state.crosshair.at(-1)?.slice(0, 2)).toEqual([1000, '2026-10-15'])
+  })
+
+  it('fills the window with the button or F, and leaves it with Esc', () => {
+    render(<PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} />)
+    const wrapper = () => screen.getByTestId('portfolio-chart').parentElement as HTMLElement
+    fireEvent.click(screen.getByRole('button', { name: 'Full screen' }))
+    expect(wrapper().classList.contains('expanded')).toBe(true)
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(wrapper().classList.contains('expanded')).toBe(false)
+    fireEvent.keyDown(document, { key: 'f' })
+    expect(screen.getByRole('button', { name: 'Exit full screen' })).toBeTruthy()
   })
 
   it('names the profit pane in EUR only', async () => {
