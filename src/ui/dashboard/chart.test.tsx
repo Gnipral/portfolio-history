@@ -68,12 +68,21 @@ const chartMock = vi.hoisted(() => {
     crosshair: [],
     data: [],
   }
-  const series = () => ({ setData: (d: unknown[]) => state.data.push(d), applyOptions: () => {} })
+  const series = () => ({
+    setData: (d: unknown[]) => state.data.push(d),
+    applyOptions: () => {},
+    createPriceLine: () => ({ applyOptions: () => {} }),
+    removePriceLine: () => {},
+    priceScale: () => ({ applyOptions: () => {} }),
+  })
   const chart = {
     addSeries: series,
     removeSeries: () => {},
     applyOptions: () => {},
-    panes: () => [{ setHeight: () => {} }, { setHeight: () => {} }],
+    panes: () => [
+      { setHeight: () => {}, getHeight: () => 300 },
+      { setHeight: () => {}, getHeight: () => 120 },
+    ],
     timeScale: () => ({ fitContent: () => {} }),
     subscribeCrosshairMove: (handler: Move) => {
       state.move = handler
@@ -92,7 +101,7 @@ vi.mock('lightweight-charts', () => ({
   BaselineSeries: {},
   ColorType: { Solid: 'solid' },
   CrosshairMode: { Magnet: 1 },
-  LineStyle: { Dashed: 2 },
+  LineStyle: { Solid: 0, Dashed: 2 },
 }))
 
 afterEach(cleanup)
@@ -116,5 +125,12 @@ describe('PortfolioChart', () => {
     )
     rerender(<PortfolioChart points={points} from={0} to={2} selected={0} mode="eur" onHover={() => {}} />)
     expect(chartMock.state.crosshair.at(-1)?.slice(0, 2)).toEqual([1000, '2026-10-15'])
+  })
+
+  it('names the profit pane in EUR only', async () => {
+    const { rerender } = render(<PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} />)
+    expect(await screen.findByText('Profit / loss')).toBeTruthy()
+    rerender(<PortfolioChart points={points} from={0} to={2} selected={2} mode="percent" onHover={() => {}} />)
+    expect(screen.queryByText('Profit / loss')).toBeNull()
   })
 })
