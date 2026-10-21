@@ -58,3 +58,24 @@ describe('AnalysisPage', () => {
     expect(await screen.findByText('Return per month')).toBeTruthy()
   })
 })
+
+describe('AnalysisPage tax rules', () => {
+  it('switches to the rules of another country and keeps an own change', async () => {
+    render(
+      <MemoryRouter>
+        <AnalysisPage />
+      </MemoryRouter>,
+    )
+    const country = (await screen.findByLabelText('Tax rules of')) as HTMLSelectElement
+    expect(country.value).toBe('BE')
+    expect(screen.getByText(/10.00% on the net gains of a year above an exemption of €10,000, from 2026 on/)).toBeTruthy()
+
+    fireEvent.change(country, { target: { value: 'DE' } })
+    expect(await screen.findByText(/26.38% on the net gains of a year above an exemption of €1,000\./)).toBeTruthy()
+
+    fireEvent.change(screen.getByLabelText(/Rate \(%\)/), { target: { value: '30' } })
+    expect(await screen.findByText(/30.00% on the net gains/)).toBeTruthy()
+    expect(screen.getByText('adjusted')).toBeTruthy()
+    expect((await db.kv.get('settings'))?.value).toContain('"rate":0.3')
+  })
+})
