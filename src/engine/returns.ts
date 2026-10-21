@@ -12,11 +12,15 @@ interface FlowDay {
   outflow: number
 }
 
+/** Below one cent the base of a day is a rounding residue, not money at risk. */
+const MIN_BASE = 0.01
+
 /**
  * Time-weighted return as a cumulative index (1 = start), chain-linked daily.
  * Inflows count at the start of the day, outflows at the end:
  *   r = (value + outflow) / (previous value + inflow) - 1
- * A day with nothing invested has a return of 0.
+ * A day with nothing (or only a rounding residue) invested has a return of 0, and so does a day
+ * whose value is negative, e.g. cash below zero because the export misses a deposit.
  */
 export function twrIndex(days: FlowDay[]): number[] {
   const index: number[] = []
@@ -24,7 +28,8 @@ export function twrIndex(days: FlowDay[]): number[] {
   let level = 1
   for (const day of days) {
     const base = previousValue + day.inflow
-    if (base > 0) level *= (day.value + day.outflow) / base
+    const end = day.value + day.outflow
+    if (base >= MIN_BASE && end >= 0) level *= end / base
     index.push(level)
     previousValue = day.value
   }

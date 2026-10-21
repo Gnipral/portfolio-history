@@ -241,7 +241,8 @@ export class Collector {
   /** Converts to EUR, or records an error and returns undefined when no rate is known. */
   toEur(amount: number, currency: string, date: string, row: number): number | undefined {
     if (amount === 0) return 0
-    const eur = this.context.toEur(amount, currency.toUpperCase(), date)
+    // GBp (pence) must not become GBP (pounds).
+    const eur = this.context.toEur(amount, currency === 'GBp' ? 'GBX' : currency.toUpperCase(), date)
     if (eur === undefined) this.issue('error', `No EUR exchange rate for ${currency} on ${date}; row skipped.`, row)
     return eur
   }

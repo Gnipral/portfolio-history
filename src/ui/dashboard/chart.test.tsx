@@ -18,6 +18,7 @@ function point(date: string, value: number, extra: Partial<DailyPoint> = {}): Da
     outflow: 0,
     estimated: 0,
     twr: value / 1000 - 1,
+    days: 0,
     ...extra,
   }
 }
