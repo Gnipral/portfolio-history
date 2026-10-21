@@ -6,6 +6,7 @@ import {
   LineSeries,
   LineStyle,
   createChart,
+  type AutoscaleInfo,
   type IChartApi,
   type IPriceLine,
   type ISeriesApi,
@@ -40,9 +41,6 @@ interface ChartRefs {
   zero: IPriceLine | null
 }
 
-/** Space between the top of the chart wrapper and the chart itself (its padding). */
-const WRAPPER_PADDING = 12
-
 function pnlColors({ chart }: ReturnType<typeof useThemeColors>) {
   return {
     topLineColor: chart.positive,
@@ -55,7 +53,25 @@ function pnlColors({ chart }: ReturnType<typeof useThemeColors>) {
 }
 
 function zeroLine({ chart }: ReturnType<typeof useThemeColors>) {
-  return { price: 0, color: chart.zero, lineWidth: 1 as const, lineStyle: LineStyle.Solid, axisLabelVisible: true, title: '' }
+  return { price: 0, color: chart.zero, lineWidth: 2 as const, lineStyle: LineStyle.Solid, axisLabelVisible: true, title: '' }
+}
+
+/** Keeps 0 in view on the profit scale, so the 0 line never sits on the edge or out of sight. */
+function withZero(base: () => AutoscaleInfo | null): AutoscaleInfo | null {
+  const info = base()
+  if (!info?.priceRange) return info
+  const { minValue, maxValue } = info.priceRange
+  return { ...info, priceRange: { minValue: Math.min(0, minValue), maxValue: Math.max(0, maxValue) } }
+}
+
+/** The profit pane: about a quarter of the chart, never smaller than 130px. */
+function profitHeight(chartHeight: number): number {
+  return Math.max(130, Math.round(chartHeight * 0.28))
+}
+
+/** Element full screen where the browser has it (not on iPhone); otherwise the chart fills the window. */
+function canFullscreen(element: HTMLElement | null): boolean {
+  return Boolean(element?.requestFullscreen && document.fullscreenEnabled)
 }
 
 /** The value of a CSS color variable such as `--series-2`; lightweight-charts needs the color itself. */
@@ -78,14 +94,48 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
   fromRef.current = from
   const benchmarksRef = useRef(benchmarks)
   benchmarksRef.current = benchmarks
-  // Where the profit pane starts, for its label; null without that pane.
-  const [profitTop, setProfitTop] = useState<number | null>(null)
+  // Where the profit pane starts, for the divider and its label; null without that pane.
+  const [dividerTop, setDividerTop] = useState<number | null>(null)
+  const wrapper = useRef<HTMLDivElement>(null)
+  const [expanded, setExpanded] = useState(false)
 
   function measurePanes() {
     const r = refs.current
     const top = r?.pnl ? r.chart.panes()[0]?.getHeight() : undefined
-    setProfitTop(top === undefined ? null : WRAPPER_PADDING + top + 6)
+    // Relative to the wrapper: the legend bar above the chart is part of the offset.
+    setDividerTop(top === undefined ? null : (container.current?.offsetTop ?? 0) + top)
   }
+
+  function toggleExpanded() {
+    const element = wrapper.current
+    if (expanded && !document.fullscreenElement) {
+      setExpanded(false)
+    } else if (canFullscreen(element)) {
+      if (document.fullscreenElement) void document.exitFullscreen()
+      // Refused (no user gesture, an iframe without permission): fill the window instead.
+      else element?.requestFullscreen().catch(() => setExpanded(true))
+    } else {
+      setExpanded((value) => !value)
+    }
+  }
+  const toggleRef = useRef(toggleExpanded)
+  toggleRef.current = toggleExpanded
+
+  // Full screen as in a video player: the button, F to toggle, Esc to leave.
+  useEffect(() => {
+    const onChange = () => setExpanded(document.fullscreenElement === wrapper.current && wrapper.current !== null)
+    const onKey = (e: KeyboardEvent) => {
+      const typing = e.target instanceof Element && e.target.closest('input, select, textarea, [contenteditable="true"]')
+      if (e.key.toLowerCase() === 'f' && !e.ctrlKey && !e.metaKey && !e.altKey && !typing) toggleRef.current()
+      else if (e.key === 'Escape' && !document.fullscreenElement) setExpanded(false)
+    }
+    document.addEventListener('fullscreenchange', onChange)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [])
 
   // Create the chart once.
   useEffect(() => {
@@ -95,16 +145,25 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
       // The app is in English, whatever the browser language.
       localization: { locale: 'en-GB' },
       crosshair: { mode: CrosshairMode.Magnet },
+      layout: { fontSize: 13, panes: { enableResize: false } },
       rightPriceScale: { borderVisible: false },
       timeScale: { borderVisible: false },
       handleScroll: false,
       handleScale: false,
     })
-    const main = chart.addSeries(AreaSeries, { lineWidth: 2, priceLineVisible: false })
+    const main = chart.addSeries(AreaSeries, { lineWidth: 3, priceLineVisible: false })
     const secondary = chart.addSeries(LineSeries, { lineWidth: 2, lineStyle: LineStyle.Dashed, priceLineVisible: false })
     refs.current = { chart, main, secondary, benchmarks: [], pnl: null, zero: null }
-    // Pane heights follow the size of the chart.
-    const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => measurePanes())
+    // A new size (full screen, rotation): refit the days to the width and grow the profit pane along.
+    const resize =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => {
+            const r = refs.current
+            if (r?.pnl) r.chart.panes()[1]?.setHeight(profitHeight(container.current?.clientHeight ?? 0))
+            chart.timeScale().fitContent()
+            requestAnimationFrame(measurePanes)
+          })
     resize?.observe(container.current)
 
     const handleMove = (param: MouseEventParams<Time>) => {
@@ -164,9 +223,15 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
     } else if (!percent) {
       if (!r.pnl) {
         if (r.zero) r.main.removePriceLine(r.zero)
-        const options = { baseValue: { type: 'price' as const, price: 0 }, lineWidth: 2 as const, priceLineVisible: false, ...pnlColors(colorsRef.current) }
+        const options = {
+          baseValue: { type: 'price' as const, price: 0 },
+          lineWidth: 3 as const,
+          priceLineVisible: false,
+          autoscaleInfoProvider: withZero,
+          ...pnlColors(colorsRef.current),
+        }
         r.pnl = r.chart.addSeries(BaselineSeries, options, 1)
-        r.chart.panes()[1]?.setHeight(120)
+        r.chart.panes()[1]?.setHeight(profitHeight(container.current?.clientHeight ?? 0))
         // Room above the curve for the pane label, and the 0 line clear of the time axis.
         r.pnl.priceScale().applyOptions({ scaleMargins: { top: 0.25, bottom: 0.1 } })
         r.zero = r.pnl.createPriceLine(zeroLine(colorsRef.current))
@@ -192,50 +257,67 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
     text: mode === 'eur' ? formatEur(b.points[selected]?.value ?? 0) : formatPercent((data.benchmarks[i]?.[selected - from]?.value ?? 0) / 100),
   }))
   return (
-    <div className="chart-wrapper">
-      {point && (
-        <div className="chart-legend" aria-live="polite">
-          <strong>{formatDate(point.date)}</strong>
-          {mode === 'eur' ? (
-            <>
-              <span>
-                <i className="swatch main" /> Value {formatEur(point.value)}
-              </span>
-              <span>
-                <i className="swatch secondary" /> Invested {formatEur(point.invested)}
-              </span>
-              {benchmarkLegend.map((b) => (
-                <span key={b.label}>
-                  <i className="swatch" style={{ background: `var(${b.color})` }} /> {b.label} {b.text}
-                </span>
-              ))}
-              <span>
-                <i className="swatch pnl" /> Profit {formatEur(point.pnl)}
-              </span>
-            </>
-          ) : (
-            <>
-              <span>
-                <i className="swatch main" /> Time-weighted {formatPercent((data.main[selected - from]?.value ?? 0) / 100)}
-              </span>
-              {benchmarkLegend.map((b) => (
-                <span key={b.label}>
-                  <i className="swatch" style={{ background: `var(${b.color})` }} /> {b.label} {b.text}
-                </span>
-              ))}
-              {from === 0 && (
+    <div ref={wrapper} className={`chart-wrapper${expanded ? ' expanded' : ''}`}>
+      <div className="chart-top">
+        {point && (
+          <div className="chart-legend" aria-live="polite">
+            <strong>{formatDate(point.date)}</strong>
+            {mode === 'eur' ? (
+              <>
                 <span>
-                  <i className="swatch secondary" /> Simple {formatPercent(point.simpleReturn)}
+                  <i className="swatch main" /> Value {formatEur(point.value)}
                 </span>
-              )}
-            </>
-          )}
-        </div>
-      )}
-      {mode === 'eur' && profitTop !== null && (
-        <span className="pane-label" style={{ top: profitTop }}>
-          Profit / loss
-        </span>
+                <span>
+                  <i className="swatch secondary" /> Invested {formatEur(point.invested)}
+                </span>
+                {benchmarkLegend.map((b) => (
+                  <span key={b.label}>
+                    <i className="swatch" style={{ background: `var(${b.color})` }} /> {b.label} {b.text}
+                  </span>
+                ))}
+                <span>
+                  <i className="swatch pnl" /> Profit {formatEur(point.pnl)}
+                </span>
+              </>
+            ) : (
+              <>
+                <span>
+                  <i className="swatch main" /> Time-weighted {formatPercent((data.main[selected - from]?.value ?? 0) / 100)}
+                </span>
+                {benchmarkLegend.map((b) => (
+                  <span key={b.label}>
+                    <i className="swatch" style={{ background: `var(${b.color})` }} /> {b.label} {b.text}
+                  </span>
+                ))}
+                {from === 0 && (
+                  <span>
+                    <i className="swatch secondary" /> Simple {formatPercent(point.simpleReturn)}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+        )}
+        <button
+          type="button"
+          className="chart-expand"
+          onClick={toggleExpanded}
+          aria-pressed={expanded}
+          aria-label={expanded ? 'Exit full screen' : 'Full screen'}
+          title={expanded ? 'Exit full screen (F)' : 'Full screen (F)'}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d={expanded ? 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5' : 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5'} />
+          </svg>
+        </button>
+      </div>
+      {mode === 'eur' && dividerTop !== null && (
+        <>
+          <div className="pane-divider" style={{ top: dividerTop - 2 }} aria-hidden="true" />
+          <span className="pane-label" style={{ top: dividerTop + 8 }}>
+            Profit / loss
+          </span>
+        </>
       )}
       <div ref={container} className="chart" data-testid="portfolio-chart" />
     </div>
