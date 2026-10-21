@@ -73,7 +73,7 @@ const chartMock = vi.hoisted(() => {
     applyOptions: () => {},
     createPriceLine: () => ({ applyOptions: () => {} }),
     removePriceLine: () => {},
-    priceScale: () => ({ applyOptions: () => {} }),
+    priceScale: () => ({ applyOptions: () => {}, width: () => 60 }),
   })
   const chart = {
     addSeries: series,

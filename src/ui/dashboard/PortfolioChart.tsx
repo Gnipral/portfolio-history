@@ -94,16 +94,23 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
   fromRef.current = from
   const benchmarksRef = useRef(benchmarks)
   benchmarksRef.current = benchmarks
-  // Where the profit pane starts, for the divider and its label; null without that pane.
-  const [dividerTop, setDividerTop] = useState<number | null>(null)
+  // The divider between the value and the profit pane: over the plot area only, never over the
+  // price axis and its labels. Null without the profit pane.
+  const [divider, setDivider] = useState<{ top: number; left: number; width: number } | null>(null)
   const wrapper = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
 
   function measurePanes() {
     const r = refs.current
     const top = r?.pnl ? r.chart.panes()[0]?.getHeight() : undefined
+    const element = container.current
+    if (!r?.pnl || top === undefined || !element) {
+      setDivider(null)
+      return
+    }
     // Relative to the wrapper: the legend bar above the chart is part of the offset.
-    setDividerTop(top === undefined ? null : (container.current?.offsetTop ?? 0) + top)
+    const width = Math.max(0, element.clientWidth - r.pnl.priceScale().width())
+    setDivider({ top: element.offsetTop + top, left: element.offsetLeft, width })
   }
 
   function toggleExpanded() {
@@ -152,6 +159,8 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
       handleScale: false,
     })
     const main = chart.addSeries(AreaSeries, { lineWidth: 3, priceLineVisible: false })
+    // Room under the value for the divider label.
+    main.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.12 } })
     const secondary = chart.addSeries(LineSeries, { lineWidth: 2, lineStyle: LineStyle.Dashed, priceLineVisible: false })
     refs.current = { chart, main, secondary, benchmarks: [], pnl: null, zero: null }
     // A new size (full screen, rotation): refit the days to the width and grow the profit pane along.
@@ -188,7 +197,8 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
         background: { type: ColorType.Solid, color: colors.surface },
         textColor: colors.textMuted,
         ...(colors.fontMono ? { fontFamily: colors.fontMono } : {}),
-        panes: { separatorColor: colors.chart.separator, separatorHoverColor: colors.chart.separator },
+        // The divider is drawn over the plot area; the chart's own 1px separator stays quiet.
+        panes: { separatorColor: colors.chart.grid, separatorHoverColor: colors.chart.grid },
       },
       grid: { vertLines: { visible: false }, horzLines: { color: colors.chart.grid } },
     })
@@ -311,13 +321,10 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
           </svg>
         </button>
       </div>
-      {mode === 'eur' && dividerTop !== null && (
-        <>
-          <div className="pane-divider" style={{ top: dividerTop - 2 }} aria-hidden="true" />
-          <span className="pane-label" style={{ top: dividerTop + 8 }}>
-            Profit / loss
-          </span>
-        </>
+      {mode === 'eur' && divider !== null && (
+        <div className="pane-divider" style={{ top: divider.top, left: divider.left, width: divider.width }}>
+          <span className="pane-label">Profit / loss</span>
+        </div>
       )}
       <div ref={container} className="chart" data-testid="portfolio-chart" />
     </div>
