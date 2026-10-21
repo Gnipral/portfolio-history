@@ -7,11 +7,12 @@ import {
   LineStyle,
   createChart,
   type IChartApi,
+  type IPriceLine,
   type ISeriesApi,
   type MouseEventParams,
   type Time,
 } from 'lightweight-charts'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { BenchmarkLine } from './benchmarkLines.ts'
 import type { DailyPoint } from '../../engine/series.ts'
 import { formatDate, formatEur, formatPercent } from '../format.ts'
@@ -35,17 +36,26 @@ interface ChartRefs {
   benchmarks: ISeriesApi<'Line'>[]
   /** Only in EUR mode; removing it also removes its pane. */
   pnl: ISeriesApi<'Baseline'> | null
+  /** The 0 line: on the profit in EUR, on the return in percent. */
+  zero: IPriceLine | null
 }
 
-function pnlColors(colors: ReturnType<typeof useThemeColors>) {
+/** Space between the top of the chart wrapper and the chart itself (its padding). */
+const WRAPPER_PADDING = 12
+
+function pnlColors({ chart }: ReturnType<typeof useThemeColors>) {
   return {
-    topLineColor: colors.positive,
-    topFillColor1: `${colors.positive}44`,
-    topFillColor2: `${colors.positive}05`,
-    bottomLineColor: colors.negative,
-    bottomFillColor1: `${colors.negative}05`,
-    bottomFillColor2: `${colors.negative}44`,
+    topLineColor: chart.positive,
+    topFillColor1: `${chart.positive}40`,
+    topFillColor2: `${chart.positive}08`,
+    bottomLineColor: chart.negative,
+    bottomFillColor1: `${chart.negative}08`,
+    bottomFillColor2: `${chart.negative}40`,
   }
+}
+
+function zeroLine({ chart }: ReturnType<typeof useThemeColors>) {
+  return { price: 0, color: chart.zero, lineWidth: 1 as const, lineStyle: LineStyle.Solid, axisLabelVisible: true, title: '' }
 }
 
 /** The value of a CSS color variable such as `--series-2`; lightweight-charts needs the color itself. */
@@ -68,6 +78,14 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
   fromRef.current = from
   const benchmarksRef = useRef(benchmarks)
   benchmarksRef.current = benchmarks
+  // Where the profit pane starts, for its label; null without that pane.
+  const [profitTop, setProfitTop] = useState<number | null>(null)
+
+  function measurePanes() {
+    const r = refs.current
+    const top = r?.pnl ? r.chart.panes()[0]?.getHeight() : undefined
+    setProfitTop(top === undefined ? null : WRAPPER_PADDING + top + 6)
+  }
 
   // Create the chart once.
   useEffect(() => {
@@ -83,8 +101,11 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
       handleScale: false,
     })
     const main = chart.addSeries(AreaSeries, { lineWidth: 2, priceLineVisible: false })
-    const secondary = chart.addSeries(LineSeries, { lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false })
-    refs.current = { chart, main, secondary, benchmarks: [], pnl: null }
+    const secondary = chart.addSeries(LineSeries, { lineWidth: 2, lineStyle: LineStyle.Dashed, priceLineVisible: false })
+    refs.current = { chart, main, secondary, benchmarks: [], pnl: null, zero: null }
+    // Pane heights follow the size of the chart.
+    const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => measurePanes())
+    resize?.observe(container.current)
 
     const handleMove = (param: MouseEventParams<Time>) => {
       if (param.time === undefined || param.logical === undefined) return
@@ -92,6 +113,7 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
     }
     chart.subscribeCrosshairMove(handleMove)
     return () => {
+      resize?.disconnect()
       chart.unsubscribeCrosshairMove(handleMove)
       chart.remove()
       refs.current = null
@@ -107,13 +129,14 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
         background: { type: ColorType.Solid, color: colors.surface },
         textColor: colors.textMuted,
         ...(colors.fontMono ? { fontFamily: colors.fontMono } : {}),
-        panes: { separatorColor: colors.border, separatorHoverColor: colors.border },
+        panes: { separatorColor: colors.chart.separator, separatorHoverColor: colors.chart.separator },
       },
-      grid: { vertLines: { visible: false }, horzLines: { color: colors.border } },
+      grid: { vertLines: { visible: false }, horzLines: { color: colors.chart.grid } },
     })
-    r.main.applyOptions({ lineColor: colors.accent, topColor: `${colors.accent}55`, bottomColor: `${colors.accent}05` })
-    r.secondary.applyOptions({ color: colors.textMuted })
+    r.main.applyOptions({ lineColor: colors.chart.value, topColor: `${colors.chart.value}40`, bottomColor: `${colors.chart.value}04` })
+    r.secondary.applyOptions({ color: colors.chart.invested })
     r.pnl?.applyOptions(pnlColors(colors))
+    r.zero?.applyOptions(zeroLine(colors))
   }, [colors])
 
   // Data and mode.
@@ -137,15 +160,22 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
     if (percent && r.pnl) {
       r.chart.removeSeries(r.pnl)
       r.pnl = null
+      r.zero = r.main.createPriceLine(zeroLine(colorsRef.current))
     } else if (!percent) {
       if (!r.pnl) {
-        const options = { baseValue: { type: 'price' as const, price: 0 }, priceLineVisible: false, ...pnlColors(colorsRef.current) }
+        if (r.zero) r.main.removePriceLine(r.zero)
+        const options = { baseValue: { type: 'price' as const, price: 0 }, lineWidth: 2 as const, priceLineVisible: false, ...pnlColors(colorsRef.current) }
         r.pnl = r.chart.addSeries(BaselineSeries, options, 1)
-        r.chart.panes()[1]?.setHeight(110)
+        r.chart.panes()[1]?.setHeight(120)
+        // Room above the curve for the pane label, and the 0 line clear of the time axis.
+        r.pnl.priceScale().applyOptions({ scaleMargins: { top: 0.25, bottom: 0.1 } })
+        r.zero = r.pnl.createPriceLine(zeroLine(colorsRef.current))
       }
       r.pnl.setData(data.pnl)
     }
+    if (percent && !r.zero) r.zero = r.main.createPriceLine(zeroLine(colorsRef.current))
     r.chart.timeScale().fitContent()
+    requestAnimationFrame(measurePanes)
   }, [data, mode, colors])
 
   // Show the crosshair on the selected day when it is chosen with the slider or date picker.
@@ -201,6 +231,11 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
             </>
           )}
         </div>
+      )}
+      {mode === 'eur' && profitTop !== null && (
+        <span className="pane-label" style={{ top: profitTop }}>
+          Profit / loss
+        </span>
       )}
       <div ref={container} className="chart" data-testid="portfolio-chart" />
     </div>

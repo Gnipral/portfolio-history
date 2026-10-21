@@ -24,6 +24,14 @@
   --series-6: #65a30d;
   --series-7: #7c3aed;
   --series-other: #94a3b8;
+  /* The chart: a calm blue for the value, so it stands apart from the green and red of the profit. */
+  --chart-value: #1170a6;
+  --chart-invested: #7d838c;
+  --chart-positive: #1f9d5b;
+  --chart-negative: #d0453f;
+  --chart-zero: #4b5563;
+  --chart-grid: #eeeae2;
+  --chart-separator: #b9b3a6;
   --shadow: 0 4px 20px -2px rgba(24, 61, 47, 0.06);
   --font: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Space Grotesk', var(--font);
@@ -78,6 +86,13 @@
   --series-6: #a3e635;
   --series-7: #c084fc;
   --series-other: #5b6670;
+  --chart-value: #5cc8f0;
+  --chart-invested: #9aa5b1;
+  --chart-positive: #3ddc97;
+  --chart-negative: #ff7b7b;
+  --chart-zero: #c3cad3;
+  --chart-grid: #1c2229;
+  --chart-separator: #4a5561;
   --shadow: none;
   --glow: 0.07;
   color-scheme: dark;
@@ -772,15 +787,31 @@ code {
   border-radius: 2px;
   vertical-align: middle;
   margin-right: 0.15rem;
-  background: var(--accent);
+  background: var(--chart-value);
 }
 
 .swatch.secondary {
-  background: var(--text-muted);
+  background: repeating-linear-gradient(90deg, var(--chart-invested) 0 3px, transparent 3px 5px);
 }
 
 .swatch.pnl {
-  background: var(--positive);
+  background: linear-gradient(90deg, var(--chart-positive) 50%, var(--chart-negative) 50%);
+}
+
+/* Names the lower pane, so profit is not read as part of the value above it. */
+.pane-label {
+  position: absolute;
+  left: 0.9rem;
+  z-index: 2;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
 }
 
 @media (max-width: 640px) {

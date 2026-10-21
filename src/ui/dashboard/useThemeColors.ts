@@ -11,6 +11,16 @@ export interface ThemeColors {
   negative: string
   benchmark: string
   fontMono: string
+  /** The chart's own palette: close to the app's, but softer and easier to tell apart. */
+  chart: {
+    value: string
+    invested: string
+    positive: string
+    negative: string
+    zero: string
+    grid: string
+    separator: string
+  }
 }
 
 function read(): ThemeColors {
@@ -28,6 +38,15 @@ function read(): ThemeColors {
     // Categorical slot 2 (orange): never a status color.
     benchmark: v('--series-2'),
     fontMono: v('--font-mono'),
+    chart: {
+      value: v('--chart-value'),
+      invested: v('--chart-invested'),
+      positive: v('--chart-positive'),
+      negative: v('--chart-negative'),
+      zero: v('--chart-zero'),
+      grid: v('--chart-grid'),
+      separator: v('--chart-separator'),
+    },
   }
 }
 
