@@ -1,10 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { simulateBenchmark } from '../../engine/benchmark.ts'
+import { positionSeries } from '../../engine/analysis/positionSeries.ts'
 import { db } from '../../data/db.ts'
 import { positionsOn } from '../../engine/positions.ts'
-import { allocationSlices, colorSlots } from '../dashboard/allocation.ts'
+import { allocationSlices, colorSlots, DIMENSIONS, groupedSlices, instrumentFacts, type AllocationDimension } from '../dashboard/allocation.ts'
+import { benchmarkLines } from '../dashboard/benchmarkLines.ts'
+import { localToday } from '../../market/dates.ts'
 import type { ChartMode } from '../dashboard/chartData.ts'
 import { PositionsTable } from '../dashboard/PositionsTable.tsx'
 import { SummaryCards } from '../dashboard/SummaryCards.tsx'
@@ -19,6 +21,7 @@ import { formatPercent, formatSignedEur, trendClass } from '../format.ts'
 // The chart libraries are large; load them only when the dashboard shows data.
 const PortfolioChart = lazy(() => import('../dashboard/PortfolioChart.tsx').then((m) => ({ default: m.PortfolioChart })))
 const AllocationChart = lazy(() => import('../dashboard/AllocationChart.tsx').then((m) => ({ default: m.AllocationChart })))
+const PositionChart = lazy(() => import('../dashboard/PositionChart.tsx').then((m) => ({ default: m.PositionChart })))
 
 export function DashboardPage() {
   const settings = useSettings() ?? DEFAULT_SETTINGS
@@ -30,6 +33,8 @@ export function DashboardPage() {
   const [range, setRange] = useState<RangeKey>('ALL')
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [mode, setMode] = useState<ChartMode>('eur')
+  const [dimension, setDimension] = useState<AllocationDimension>('position')
+  const [positionKey, setPositionKey] = useState<string | null>(null)
 
   const points = useMemo(() => series?.points ?? [], [series])
   const dates = useMemo(() => points.map((p) => p.date), [points])
@@ -42,19 +47,22 @@ export function DashboardPage() {
     () => (inputs && selectedDate ? positionsOn(inputs.transactions, inputs.prices, options, selectedDate) : []),
     [inputs, options, selectedDate],
   )
-  const benchmark = useMemo(
-    () =>
-      inputs?.benchmark
-        ? {
-            label: inputs.benchmark.info.symbol.split('.')[0] ?? inputs.benchmark.info.id,
-            points: simulateBenchmark(points, inputs.benchmark.series),
-          }
-        : undefined,
-    [inputs, points],
+  const { benchmarkId, extraBenchmarkIds, benchmarkMix } = settings
+  const benchmarks = useMemo(
+    () => benchmarkLines(points, inputs?.benchmarks ?? [], { benchmarkId, extraBenchmarkIds, benchmarkMix }),
+    [inputs, points, benchmarkId, extraBenchmarkIds, benchmarkMix],
   )
-  const benchmarkChange = benchmark ? rangeChange(benchmark.points, visible.from, visible.to) : undefined
   const slots = useMemo(() => colorSlots(inputs?.transactions ?? []), [inputs])
-  const slices = useMemo(() => allocationSlices(positions, slots), [positions, slots])
+  const facts = useMemo(() => instrumentFacts(inputs?.transactions ?? []), [inputs])
+  const slices = useMemo(
+    () => (dimension === 'position' ? allocationSlices(positions, slots) : groupedSlices(positions, dimension, facts)),
+    [positions, slots, facts, dimension],
+  )
+  const selectedPosition = positions.find((p) => p.key === positionKey)
+  const history = useMemo(
+    () => (inputs && positionKey ? positionSeries(inputs.transactions, inputs.prices, options, positionKey, localToday()) : null),
+    [inputs, options, positionKey],
+  )
 
   if (transactionCount === undefined) return null
   if (transactionCount === 0) {
@@ -122,30 +130,57 @@ export function DashboardPage() {
               selected={selected}
               mode={mode}
               onHover={setSelectedIndex}
-              {...(benchmark ? { benchmark } : {})}
+              benchmarks={benchmarks}
             />
           </Suspense>
           <p className="muted small">
             {range === 'ALL' ? 'Since the first transaction' : `Last ${range === 'YTD' ? 'year to date' : range}`}:{' '}
             <span className={trendClass(change.pnl)}>{formatSignedEur(change.pnl)}</span>, time-weighted{' '}
             <span className={trendClass(change.twr)}>{formatPercent(change.twr)}</span>
-            {benchmark && benchmarkChange && (
-              <>
-                . The same money in {benchmark.label}:{' '}
-                <span className={trendClass(benchmarkChange.pnl)}>{formatSignedEur(benchmarkChange.pnl)}</span>, time-weighted{' '}
-                <span className={trendClass(benchmarkChange.twr)}>{formatPercent(benchmarkChange.twr)}</span>
-              </>
-            )}
+            {benchmarks.map((line) => {
+              const lineChange = rangeChange(line.points, visible.from, visible.to)
+              return (
+                <span key={line.id}>
+                  . The same money in {line.label}:{' '}
+                  <span className={trendClass(lineChange.pnl)}>{formatSignedEur(lineChange.pnl)}</span>, time-weighted{' '}
+                  <span className={trendClass(lineChange.twr)}>{formatPercent(lineChange.twr)}</span>
+                </span>
+              )
+            })}
           </p>
           <SummaryCards point={point} cashMode={series?.cashMode ?? false} />
           <div className="dashboard-grid">
             <div className="panel">
               <h3>Positions</h3>
-              <PositionsTable positions={positions} date={point.date} />
+              <PositionsTable
+                positions={positions}
+                date={point.date}
+                selectedKey={positionKey}
+                onSelect={(key) => setPositionKey(key === positionKey ? null : key)}
+              />
+              {selectedPosition && history && (
+                <div className="stack position-detail">
+                  <h4>
+                    {selectedPosition.product} <span className="muted small">since the first transaction</span>
+                  </h4>
+                  <Suspense fallback={<div className="chart-wrapper chart-placeholder" />}>
+                    <PositionChart points={history.points} trades={history.trades} />
+                  </Suspense>
+                </div>
+              )}
             </div>
             {slices.length > 0 && (
               <div className="panel">
-                <h3>Allocation</h3>
+                <div className="panel-header">
+                  <h3>Allocation</h3>
+                  <div className="segmented" role="group" aria-label="Group the allocation by">
+                    {DIMENSIONS.map((d) => (
+                      <button key={d.key} type="button" aria-pressed={dimension === d.key} onClick={() => setDimension(d.key)}>
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <Suspense fallback={null}>
                   <AllocationChart slices={slices} />
                 </Suspense>

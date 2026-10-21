@@ -745,3 +745,65 @@ button.danger:hover {
   background: var(--negative);
   color: #fff;
 }
+
+/* Analysis and dashboard additions */
+
+.panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.panel-header .segmented button {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.85rem;
+}
+
+.table tr.selected td {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.table .link-button {
+  padding: 0;
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.position-detail h4 {
+  margin: 0;
+}
+
+.chart.position-chart {
+  height: 260px;
+}
+
+.income-chart {
+  height: 220px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.returns-table td,
+.returns-table th {
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+.mix-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.mix-grid input {
+  width: 100%;
+}
+
+.panel .table {
+  width: 100%;
+}

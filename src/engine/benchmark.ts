@@ -1,4 +1,5 @@
 import type { PriceSeries } from '../market/priceCache.ts'
+import { twrIndex } from './returns.ts'
 
 interface FlowPoint {
   date: string
@@ -47,4 +48,32 @@ export function simulateBenchmark(days: FlowPoint[], prices: PriceSeries): Bench
     points.push({ date: day.date, value, pnl: value + takenOut - paidIn, twr: price / firstPrice - 1 })
   }
   return points
+}
+
+export interface MixComponent {
+  prices: PriceSeries
+  /** Share of every euro, between 0 and 1; the shares add up to 1. */
+  weight: number
+}
+
+/**
+ * A mix of benchmarks: every inflow and outflow is split over the components by weight, and each
+ * part is invested as `simulateBenchmark` does, without rebalancing afterwards. The time-weighted
+ * return is chain-linked from the mix value and the flows.
+ */
+export function simulateMix(days: FlowPoint[], components: MixComponent[]): BenchmarkPoint[] {
+  const parts = components.map((c) =>
+    simulateBenchmark(
+      days.map((d) => ({ date: d.date, inflow: d.inflow * c.weight, outflow: d.outflow * c.weight })),
+      c.prices,
+    ),
+  )
+  const values = days.map((_, i) => parts.reduce((sum, part) => sum + (part[i]?.value ?? 0), 0))
+  const index = twrIndex(days.map((d, i) => ({ value: values[i] as number, inflow: d.inflow, outflow: d.outflow })))
+  return days.map((d, i) => ({
+    date: d.date,
+    value: values[i] as number,
+    pnl: parts.reduce((sum, part) => sum + (part[i]?.pnl ?? 0), 0),
+    twr: (index[i] as number) - 1,
+  }))
 }

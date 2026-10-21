@@ -11,6 +11,10 @@ const COST_BASIS: { value: CostBasisMethod; label: string; hint: string }[] = [
   { value: 'fifo', label: 'FIFO', hint: 'Sales use the oldest units first.' },
 ]
 
+function mixTotal(mix: Record<string, number>): number {
+  return Object.values(mix).reduce((sum, percent) => sum + percent, 0)
+}
+
 export function SettingsPage() {
   const stored = useSettings()
   const [form, setForm] = useState<Settings>(DEFAULT_SETTINGS)
@@ -92,6 +96,52 @@ export function SettingsPage() {
               The dashboard shows what the same deposits and withdrawals, on the same days, would have become in this fund.
             </span>
           </label>
+          <div className="stack" role="group" aria-label="Also show">
+            <span>Also show</span>
+            {BENCHMARKS.filter((b) => b.id !== form.benchmarkId).map((b) => (
+              <label key={b.id} className="radio">
+                <input
+                  type="checkbox"
+                  checked={form.extraBenchmarkIds.includes(b.id)}
+                  onChange={(e) => {
+                    setSaved(false)
+                    const others = form.extraBenchmarkIds.filter((id) => id !== b.id)
+                    setForm({ ...form, extraBenchmarkIds: e.target.checked ? [...others, b.id] : others })
+                  }}
+                />
+                <span>{b.name}</span>
+              </label>
+            ))}
+          </div>
+          <div className="stack" role="group" aria-label="Benchmark mix">
+            <span>Own mix in percent, shown as one more line when the parts add up to 100</span>
+            <div className="mix-grid">
+              {BENCHMARKS.map((b) => (
+                <label key={b.id}>
+                  {b.symbol}
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={5}
+                    inputMode="numeric"
+                    value={form.benchmarkMix[b.id] ?? ''}
+                    onChange={(e) => {
+                      setSaved(false)
+                      const percent = Number(e.target.value)
+                      const rest = Object.fromEntries(Object.entries(form.benchmarkMix).filter(([id]) => id !== b.id))
+                      setForm({ ...form, benchmarkMix: percent > 0 ? { ...rest, [b.id]: Math.min(percent, 100) } : rest })
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+            {mixTotal(form.benchmarkMix) > 0 && mixTotal(form.benchmarkMix) !== 100 && (
+              <span className="muted small" role="status">
+                The parts add up to {mixTotal(form.benchmarkMix)}%, not 100%: the mix is not shown.
+              </span>
+            )}
+          </div>
         </fieldset>
         <fieldset>
           <legend>Calculation</legend>
