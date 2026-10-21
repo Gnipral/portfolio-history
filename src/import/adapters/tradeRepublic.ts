@@ -1,3 +1,5 @@
+import { tradeRepublicPdf } from '../pdf/tradeRepublic.ts'
+import { withPdf } from '../pdf/kit.ts'
 import type { AssetClass } from '../../model/transaction.ts'
 import type { BrokerAdapter, ImportContext, RawTable } from '../types.ts'
 import { Collector, dataRows, detectByHeaders, findHeader, Holdings, parseDateTime, result, type ColumnSpec, type DateTime, type Row } from './kit.ts'
@@ -227,7 +229,7 @@ function withDate(row: Row<Key>) {
   return date ? { date, time: at?.time ?? '00:00' } : at
 }
 
-export const tradeRepublicAdapter: BrokerAdapter = {
+export const tradeRepublicAdapter: BrokerAdapter = withPdf({
   id: 'trade-republic',
   label: 'Trade Republic',
   detect,
@@ -242,4 +244,4 @@ export const tradeRepublicAdapter: BrokerAdapter = {
       { fxCosts: 'Trade Republic includes currency conversion in the price; there is no separate FX cost.' },
     )
   },
-}
+}, tradeRepublicPdf)

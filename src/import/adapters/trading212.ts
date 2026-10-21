@@ -1,3 +1,5 @@
+import { trading212Pdf } from '../pdf/trading212.ts'
+import { withPdf } from '../pdf/kit.ts'
 import { normalizeHeader } from '../parse.ts'
 import type { BrokerAdapter, ImportContext, RawTable } from '../types.ts'
 import { Collector, dataRows, detectByHeaders, findHeader, parseDateTime, result, type ColumnSpec, type DateTime, type Row } from './kit.ts'
@@ -148,7 +150,7 @@ function withholding(out: Collector, row: Row<Key>, at: DateTime, cashCurrency: 
   return out.convert(amount, currency, cashCurrency, at.date, row.number)
 }
 
-export const trading212Adapter: BrokerAdapter = {
+export const trading212Adapter: BrokerAdapter = withPdf({
   id: 'trading212',
   label: 'Trading 212',
   detect,
@@ -160,4 +162,4 @@ export const trading212Adapter: BrokerAdapter = {
       {},
     )
   },
-}
+}, trading212Pdf)

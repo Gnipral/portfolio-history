@@ -25,7 +25,9 @@ export default defineConfig({
         background_color: '#0F1B2D',
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+        // mjs: the pdf.js worker, so PDF statements can be imported offline too.
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,webmanifest}'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         // Avatar and social preview are for GitHub, not for the app.
         globIgnores: ['brand/*.png'],
         navigateFallback: `${base}index.html`,

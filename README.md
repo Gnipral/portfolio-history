@@ -13,7 +13,7 @@ Live app: https://gnipral.github.io/portfolio-history/
 
 ## What it does
 
-1. **Import** a broker export (CSV or XLSX). The file is read in the browser and stored in IndexedDB.
+1. **Import** a broker export (CSV, XLSX, XML or PDF). The file is read in the browser and stored in IndexedDB.
 2. **Prices** are fetched once per day for every product you ever held, together with splits and EUR exchange rates, and cached in the browser.
 3. The **dashboard** rebuilds the portfolio for every calendar day since the first transaction:
    - a chart of value, invested capital and profit, in euros or percent, with a crosshair, a slider and a date picker that stay in sync, and quick ranges (1M, 3M, YTD, 1Y, ALL);
@@ -51,27 +51,28 @@ Supported exports:
 
 | Broker | File | Notes |
 |---|---|---|
-| DEGIRO | Transactions and/or Account statement (Rekeningoverzicht), CSV or XLSX | The Account statement adds dividends, dividend tax, TOB, deposits and interest. Account statement in Dutch, English and Portuguese. |
-| Bolero | Transaction history (Excel) | Column names not yet confirmed with a real export; no ISIN, so symbols are entered on the Prices page |
-| Keytrade Bank | Transactions (CSV or Excel) | Column names not yet confirmed with a real export |
-| Saxo | Transactions (Excel) | Event text in the account's language (`Buy`/`Koop`) |
-| Interactive Brokers, Lynx | Flex Queries: Trades, Cash Transactions, Corporate Actions (CSV) | Columns are looked up by name; import the three together |
-| Trade Republic | Transaction export (CSV, `,` or `;`) | Card payments count as withdrawals |
-| Trading 212 | History → Export (CSV) | All column variants since 2023 |
-| Revolut | Trading account statement (CSV) | Identified by ticker only |
+| DEGIRO | Transactions and/or Account statement (Rekeningoverzicht), CSV, XLSX or PDF | The Account statement adds dividends, dividend tax, TOB, deposits and interest. PDFs in Dutch, English, German, French, Italian, Spanish and Portuguese; EUR accounts only. |
+| Bolero | Transaction history (Excel), or contract notes (borderellen) and account statements (PDF) | The Excel has no ISIN, so symbols are entered on the Prices page; the PDFs have ISINs, costs, TOB and withholding tax |
+| Keytrade Bank | Transactions (CSV or Excel), or contract notes and coupon notes (PDF, Dutch/French/German) | The CSV/Excel column names are not yet confirmed with a real export |
+| Saxo | Transactions (Excel), or Trade, Corporate Action, Cash Transfer and Cash Amount reports (PDF, English/German) | Event text in the account's language (`Buy`/`Koop`) |
+| Interactive Brokers, Lynx | Flex Queries: Trades, Cash Transactions, Corporate Actions (CSV or XML) | Columns are looked up by name; summary rows and cancelled trades are skipped |
+| Trade Republic | Transaction export (CSV, `,` or `;`), or settlements, dividend notes and the account statement (PDF) | Card payments count as withdrawals; a reversed dividend cancels the original |
+| Trading 212 | History → Export (CSV), or the activity statement (PDF) | All column variants since 2023 |
+| Revolut | Trading account statement (CSV or PDF), or trade confirmations (PDF) | Identified by ticker; the PDF statement links tickers to ISINs |
 | eToro | Account statement (Excel) | Account currency and ISINs from the other sheets |
-| XTB | Account history, Cash Operations (CSV or Excel) | Both layouts; tickers mapped to Yahoo symbols |
+| XTB | Account history, Cash Operations (CSV or Excel) | Both layouts; account currency from the file name (`EUR_…csv`); transfers between sub-accounts are skipped |
 | Bitvavo, Coinbase, Binance, Kraken, Bitpanda | Transaction history / ledgers (CSV or Excel) | Staking and rewards count as free coins; coin-to-coin conversions move the cost basis |
 
-PDF statements and contract notes are not supported.
+Import either the PDFs or the CSV of a broker, not both: they describe the same transactions. Trade Republic corporate action, tax and interest notes are not read; its CSV export covers them.
 
-Brokers are detected from the header row, also after a few preamble lines. Each broker is an adapter in `src/import/adapters/` that maps its rows to the normalized `Transaction` model (`src/model/transaction.ts`), with shared helpers in `kit.ts`. Amounts in another currency than EUR are converted at the ECB rate of the day. Adding a broker means adding an adapter and registering it in `src/import/registry.ts`.
+Brokers are detected from the header row, also after a few preamble lines, and PDFs from their text. Each broker is an adapter in `src/import/adapters/` that maps its rows to the normalized `Transaction` model (`src/model/transaction.ts`), with shared helpers in `kit.ts`; the PDF readers are in `src/import/pdf/`. The rules for each broker follow [Portfolio Performance](https://github.com/portfolio-performance/portfolio)'s importers, which are tested on many real documents. Amounts in another currency than EUR are converted at the ECB rate of the day. Adding a broker means adding an adapter and registering it in `src/import/registry.ts`.
 
 To check real exports without committing them:
 
 ```bash
 DEGIRO_SAMPLE=/path/to/Transactions.xlsx npx vitest run privateSample --silent=false
-BROKER_EXPORTS=/path/to/folder npx vitest run brokerExports --silent=false   # every CSV/XLSX in a folder
+BROKER_EXPORTS=/path/to/folder npx vitest run brokerExports --silent=false   # every CSV/XLSX/XML in a folder
+PDF_SAMPLES=/path/to/folder npx vitest run pdfSamples --silent=false         # every PDF, or PDF text dump (.txt)
 ```
 
 Never commit personal broker exports: this repository is public.

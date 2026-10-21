@@ -1,4 +1,5 @@
 import Papa from 'papaparse'
+import { readPdf } from './readPdf.ts'
 import type { Cell, RawTable } from './types.ts'
 
 const SPREADSHEET_EXTENSIONS = ['.xlsx', '.xls', '.ods']
@@ -86,6 +87,7 @@ export function readFlexXml(fileName: string, text: string): RawTable[] {
 export async function readTables(fileName: string, data: ArrayBuffer): Promise<RawTable[]> {
   if (SPREADSHEET_EXTENSIONS.includes(extension(fileName))) return readSpreadsheet(fileName, data)
   if (extension(fileName) === '.xml') return readFlexXml(fileName, decodeText(data))
+  if (extension(fileName) === '.pdf') return readPdf(fileName, data)
   return readCsv(fileName, decodeText(data))
 }
 
