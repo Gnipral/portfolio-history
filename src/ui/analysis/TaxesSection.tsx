@@ -1,32 +1,57 @@
 import { useMemo } from 'react'
-import { belgianCapitalGains, BELGIAN_CGT } from '../../engine/analysis/belgianTax.ts'
+import { capitalGainsTax, isAdjusted, presetOf, type CapitalGainsRules } from '../../engine/analysis/capitalGains.ts'
 import { chargesByYear } from '../../engine/analysis/charges.ts'
 import type { EngineInputs } from '../../engine/loadInputs.ts'
-import type { EngineOptions } from '../../engine/options.ts'
 import { localToday } from '../../market/dates.ts'
-import { formatDate, formatEur, formatSignedEur, trendClass } from '../format.ts'
+import { formatDate, formatEur, formatPercent, formatSignedEur, trendClass } from '../format.ts'
 import { SalesTable } from './SalesTable.tsx'
+import { TaxRulesForm } from './TaxRulesForm.tsx'
 
 interface Props {
   inputs: EngineInputs
-  options: EngineOptions
+  rules: CapitalGainsRules
+  onRulesChange: (rules: CapitalGainsRules) => void
 }
 
-/** Taxes paid per year, and an estimate of the Belgian tax on capital gains from 2026 on. */
-export function TaxesSection({ inputs, options }: Props) {
+/** The chosen rules in one sentence or two, so the result can be checked against them. */
+function describe(rules: CapitalGainsRules): string {
+  if (rules.rate === 0) return 'No tax on realized gains under these rules.'
+  const parts = [
+    `${formatPercent(rules.rate, false)} on the net gains of a year${rules.yearlyExemption > 0 ? ` above an exemption of ${formatEur(rules.yearlyExemption, true)}` : ''}${rules.firstTaxedYear ? `, from ${rules.firstTaxedYear} on` : ''}.`,
+  ]
+  if (rules.exemptionCarryOver > 0) {
+    parts.push(`An unused exemption carries over up to ${formatEur(rules.exemptionCarryOver, true)} a year, to at most ${formatEur(rules.maxExemption, true)}.`)
+  }
+  if (rules.referenceDate) {
+    parts.push(
+      `What you held on ${formatDate(rules.referenceDate)} counts at its value of that day${rules.stepUp === 'higher' ? ', or at its purchase price when that is higher' : ''}.`,
+    )
+  }
+  parts.push(
+    rules.lossCarryForwardYears === 0
+      ? 'Losses only offset gains of the same year.'
+      : `Losses offset gains of later years${rules.lossCarryForwardYears >= 99 ? '' : ` for ${rules.lossCarryForwardYears} years`}.`,
+  )
+  parts.push(`Units sold are matched ${rules.costBasis === 'fifo' ? 'first in, first out' : 'at their average purchase price'}.`)
+  return parts.join(' ')
+}
+
+/** Taxes paid per year, and an estimate of the tax on capital gains under the rules of a country. */
+export function TaxesSection({ inputs, rules, onRulesChange }: Props) {
   const charges = useMemo(() => chargesByYear(inputs.transactions), [inputs])
   const gains = useMemo(
     () =>
-      belgianCapitalGains(
+      capitalGainsTax(
         inputs.transactions,
-        options,
-        // The closing price of 31 December 2025; a trade price is no market value.
+        rules,
+        // The closing price of the reference date; a trade price is no market value.
         (holding, date) => inputs.prices.marketPrice(holding.key, date)?.eur,
         localToday(),
       ),
-    [inputs, options],
+    [inputs, rules],
   )
   const taxed = charges.filter((y) => y.tradeTaxes + y.incomeTaxes + y.otherTaxes > 0)
+  const preset = presetOf(rules)
 
   return (
     <>
@@ -59,58 +84,59 @@ export function TaxesSection({ inputs, options }: Props) {
           </table>
         )}
         <p className="muted small">
-          Withheld taxes are the foreign withholding tax and the Belgian withholding tax (roerende voorheffing) together, as the
-          broker booked them. Most exports do not tell them apart.
+          Withheld taxes are the foreign and the domestic withholding tax together, as the broker booked them. Most exports do not
+          tell them apart.
         </p>
       </div>
 
       <div className="panel">
-        <h3>Belgian tax on capital gains (estimate)</h3>
-        <p className="muted small">
-          From 2026, {BELGIAN_CGT.rate * 100}% on the net gains of a year above an exemption of {formatEur(BELGIAN_CGT.exemption, true)}.
-          An unused exemption carries over up to {formatEur(BELGIAN_CGT.carryOverPerYear, true)} a year, to at most{' '}
-          {formatEur(BELGIAN_CGT.maxExemption, true)}. What you held on {formatDate(BELGIAN_CGT.referenceDate)} counts at its value
-          on that day, or at its purchase price when that is higher, so gains made before 2026 are not taxed. Losses only offset
-          gains of the same year.
-        </p>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Year</th>
-              <th className="num">Gains</th>
-              <th className="num">Losses</th>
-              <th className="num">Net</th>
-              <th className="num">Exemption</th>
-              <th className="num">Taxable</th>
-              <th className="num">Estimated tax</th>
-            </tr>
-          </thead>
-          <tbody>
-            {gains.years.map((y) => (
-              <tr key={y.year}>
-                <td>{y.year}</td>
-                <td className="num positive">{formatEur(y.gains)}</td>
-                <td className="num negative">{formatEur(y.losses)}</td>
-                <td className={`num ${trendClass(y.net)}`}>{formatSignedEur(y.net)}</td>
-                <td className="num">{formatEur(y.exemption)}</td>
-                <td className="num">{formatEur(y.taxable)}</td>
-                <td className="num">
-                  <strong>{formatEur(y.tax)}</strong>
-                </td>
+        <h3>Tax on capital gains (estimate)</h3>
+        <TaxRulesForm rules={rules} onChange={onRulesChange} />
+        <p className="muted small">{describe(rules)}</p>
+        {gains.years.length === 0 ? (
+          <p className="muted">No taxed sales yet.</p>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th className="num">Gains</th>
+                <th className="num">Losses</th>
+                <th className="num">Net</th>
+                {rules.lossCarryForwardYears > 0 && <th className="num">Earlier losses used</th>}
+                <th className="num">Exemption</th>
+                <th className="num">Taxable</th>
+                <th className="num">Estimated tax</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {gains.withoutReference.length > 0 && (
+            </thead>
+            <tbody>
+              {gains.years.map((y) => (
+                <tr key={y.year}>
+                  <td>{y.year}</td>
+                  <td className="num positive">{formatEur(y.gains)}</td>
+                  <td className="num negative">{formatEur(y.losses)}</td>
+                  <td className={`num ${trendClass(y.net)}`}>{formatSignedEur(y.net)}</td>
+                  {rules.lossCarryForwardYears > 0 && <td className="num">{formatEur(y.lossesCarriedIn)}</td>}
+                  <td className="num">{formatEur(y.exemption)}</td>
+                  <td className="num">{formatEur(y.taxable)}</td>
+                  <td className="num">
+                    <strong>{formatEur(y.tax)}</strong>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {rules.referenceDate && gains.withoutReference.length > 0 && (
           <p className="callout warning small">
-            No market price on {formatDate(BELGIAN_CGT.referenceDate)} for {gains.withoutReference.join(', ')}: their purchase
-            price is used, which can overstate the gain. Add a ticker on the Prices page.
+            No market price on {formatDate(rules.referenceDate)} for {gains.withoutReference.join(', ')}: their purchase price is
+            used, which can make the gain look larger. Add a ticker on the Prices page.
           </p>
         )}
-        <p className="muted small">
-          An estimate, not tax advice: the exemption is indexed every year, the rules for sales from 2031 on and for some products
-          differ, and your tax return is what counts.
-        </p>
+        <ul className="muted small">
+          {!isAdjusted(rules) && preset.notes.map((note) => <li key={note}>{note}</li>)}
+          <li>An estimate, not tax advice: rates and exemptions change, and your tax return is what counts.</li>
+        </ul>
         {gains.sales.length > 0 && (
           <>
             <h4>Sales counted</h4>

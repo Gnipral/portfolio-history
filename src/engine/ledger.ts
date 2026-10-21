@@ -333,18 +333,20 @@ export class Ledger {
   }
 
   /**
-   * Raises the cost basis of every open position to at least `unitValue` per unit, lot by lot:
-   * the step-up of the Belgian capital gains tax, which only taxes gains made from 2026 on.
+   * Sets the cost basis of every open position to `unitValue` per unit, or with `higher` raises it to
+   * at least that, lot by lot: the step-up of a capital gains tax that only taxes gains made after a
+   * reference date.
    */
-  stepUp(unitValue: (holding: Holding) => number | undefined): void {
+  stepUp(unitValue: (holding: Holding) => number | undefined, mode: 'value' | 'higher' = 'higher'): void {
     for (const holding of this.openHoldings()) {
       const value = unitValue(holding)
       if (value === undefined) continue
-      for (const lot of holding.lots) lot.unitCost = Math.max(lot.unitCost, value)
+      for (const lot of holding.lots) lot.unitCost = mode === 'higher' ? Math.max(lot.unitCost, value) : value
+      const average = holding.cost / holding.quantity
       holding.cost =
         this.options.costBasis === 'fifo'
           ? holding.lots.reduce((sum, lot) => sum + lot.quantity * lot.unitCost, 0)
-          : Math.max(holding.cost, value * holding.quantity)
+          : (mode === 'higher' ? Math.max(average, value) : value) * holding.quantity
     }
   }
 
