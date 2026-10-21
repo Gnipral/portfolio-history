@@ -10,13 +10,14 @@ interface Card {
 
 /** Annualized from one year of history on; before that over the period, since a year's rate from a few weeks is meaningless. */
 function moneyWeighted(point: DailyPoint): Card {
-  const annual = point.days >= 365
+  const days = point.irrDays ?? 0
+  const annual = days >= 365
   const value = annual ? point.irr : point.irrPeriod
   return {
     label: 'Money-weighted return',
     value: value === undefined ? '–' : formatPercent(value),
     ...(value === undefined ? {} : { trend: value }),
-    hint: annual ? 'XIRR, per year' : `Over ${point.days} days, not per year`,
+    hint: annual ? 'XIRR, per year' : `Over ${days} days, not per year`,
   }
 }
 

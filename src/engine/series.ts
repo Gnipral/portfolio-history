@@ -29,13 +29,15 @@ export interface DailyPoint {
   estimated: number
   /** Time-weighted return since the first transaction. */
   twr: number
-  /** Annualized money-weighted return (XIRR) since the first transaction; undefined when not solvable. */
+  /** Annualized money-weighted return (XIRR) since the first flow; undefined when not solvable. */
   irr?: number
   /**
-   * The money-weighted return over the whole period, not annualized: shown instead of `irr` during
-   * the first year, when annualizing a few days or weeks gives meaningless numbers.
+   * The money-weighted return over `irrDays`, not annualized: shown instead of `irr` during the
+   * first year, when annualizing a few days or weeks gives meaningless numbers.
    */
   irrPeriod?: number
+  /** Days the money-weighted return covers: from the first flow to this day, or to the last sale once all is sold. */
+  irrDays?: number
   /** Calendar days since the first transaction. */
   days: number
 }
@@ -117,10 +119,11 @@ export function computeDailySeries(
   const irr = irrSeries(points)
   points.forEach((point, i) => {
     point.twr = (twr[i] as number) - 1
-    const value = irr[i]
-    if (value === undefined) return
-    point.irr = value
-    point.irrPeriod = (1 + value) ** (point.days / 365) - 1
+    const mwr = irr[i]
+    if (mwr === undefined) return
+    if (mwr.annual !== undefined) point.irr = mwr.annual
+    point.irrPeriod = mwr.period
+    point.irrDays = mwr.spanDays
   })
   return { points, cashMode, issues: ledger.issues }
 }
