@@ -19,7 +19,7 @@ function files(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) return files(path)
-    return /\.(csv|xlsx)$/i.test(name) && !name.startsWith('_') ? [path] : []
+    return /\.(csv|xlsx|xml)$/i.test(name) && !name.startsWith('_') ? [path] : []
   })
 }
 

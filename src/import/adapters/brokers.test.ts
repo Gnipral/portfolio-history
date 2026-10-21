@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Transaction } from '../../model/transaction.ts'
-import { readCsv } from '../readFile.ts'
+import { readCsv, readFlexXml } from '../readFile.ts'
 import { importTables } from '../registry.ts'
 import { finalHoldings } from '../summary.ts'
 import { fixedRates } from './kit.ts'
@@ -42,6 +42,36 @@ describe('Trade Republic', () => {
     expect(only(result.transactions, 'split')[0]).toMatchObject({ quantity: 16, split: { ratio: 4, fromQuantity: 4 } })
     expect(only(result.transactions, 'withdrawal')[0]?.amountEur).toBe(-20)
     expect(finalHoldings(result.transactions)[0]?.quantity).toBe(16)
+  })
+
+  const header = csv.split('\n')[0] as string
+  it('cancels a reversed dividend, also from a later file, and books a deposit fee separately', () => {
+    const first = [
+      header,
+      '"2025-01-02T09:00:00.000Z","2025-01-02","DEFAULT","CASH","CUSTOMER_INPAYMENT","","","","","","352.45","-2.45","","EUR","","","","Card top-up","b1"',
+      '"2025-03-01T07:30:00.000Z","2025-03-01","DEFAULT","CASH","DIVIDEND","STOCK","Example Corp","US0000000001","4.0000000000","","2.00","","-0.30","EUR","","","","Dividend","b2"',
+    ].join('\n')
+    const later = [
+      header,
+      '"2025-03-05T07:30:00.000Z","2025-03-01","DEFAULT","CASH","DIVIDEND","STOCK","Example Corp","US0000000001","4.0000000000","","-2.00","","0.30","EUR","","","","Dividend","b3"',
+      '"2025-03-05T07:31:00.000Z","2025-03-01","DEFAULT","CASH","DIVIDEND","STOCK","Example Corp","US0000000001","4.0000000000","","2.00","","-0.20","EUR","","","","Dividend","b4"',
+    ].join('\n')
+    const result = load('tr', first, later)
+    expect(only(result.transactions, 'dividend')).toEqual([expect.objectContaining({ amountEur: 2, taxesEur: 0.2 })])
+    expect(only(result.transactions, 'deposit')[0]?.amountEur).toBe(352.45)
+    expect(only(result.transactions, 'fee')[0]?.amountEur).toBe(-2.45)
+  })
+
+  it('books a bond redemption once: the CASH row pays, the CORPORATE_ACTION row only moves units', () => {
+    const bond = [
+      header,
+      '"2025-01-27T00:00:00.000Z","2025-01-27","DEFAULT","TRADING","BUY","BOND","Bond 2025","DE0000000002","20.0000000000","1.000000","-20.00","","","EUR","","","","BUY","c1"',
+      '"2025-03-13T00:00:00.000Z","2025-03-13","DEFAULT","CASH","FINAL_MATURITY","BOND","Bond 2025","DE0000000002","20.0000000000","","20.00","","","EUR","","","","Final Maturity","c2"',
+      '"2025-03-13T00:00:00.000Z","2025-03-13","DEFAULT","CORPORATE_ACTION","FINAL_MATURITY","BOND","Bond 2025","DE0000000002","-20.0000000000","","","","","","","","","FINAL_MATURITY","c3"',
+    ].join('\n')
+    const result = load('tr', bond)
+    expect(only(result.transactions, 'sell')).toEqual([expect.objectContaining({ quantity: 20, amountEur: 20 })])
+    expect(finalHoldings(result.transactions)).toEqual([])
   })
 })
 
@@ -92,6 +122,29 @@ describe('Interactive Brokers', () => {
     expect(only(result.transactions, 'tax')[0]?.amountEur).toBe(-0.6)
     expect(only(result.transactions, 'split')[0]).toMatchObject({ quantity: 40, split: { ratio: 4, fromQuantity: 10 } })
     expect(result.capabilities.dividends).toBe(true)
+  })
+
+  it('reads the Flex XML and skips summaries and cancelled trades', () => {
+    const xml = `<FlexQueryResponse><FlexStatements count="1"><FlexStatement accountId="U1">
+      <Trades>
+        <Trade currency="USD" assetCategory="STK" symbol="EXMP" description="EXAMPLE CORP" isin="US0000000001" tradeDate="20250103" tradeTime="150000" quantity="10" tradePrice="50" tradeMoney="500" ibCommission="-2" ibCommissionCurrency="USD" buySell="BUY" transactionID="1" levelOfDetail="EXECUTION" />
+        <Trade currency="USD" assetCategory="STK" symbol="EXMP" description="EXAMPLE CORP" isin="US0000000001" tradeDate="20250103" quantity="10" tradePrice="50" tradeMoney="500" buySell="BUY" levelOfDetail="SYMBOL_SUMMARY" />
+        <Trade currency="USD" assetCategory="STK" symbol="EXMP" description="EXAMPLE CORP" isin="US0000000001" tradeDate="20250104" tradeTime="100000" quantity="-5" tradePrice="55" tradeMoney="-275" buySell="SELL" transactionID="2" levelOfDetail="EXECUTION" />
+        <Trade currency="USD" assetCategory="STK" symbol="EXMP" description="EXAMPLE CORP" isin="US0000000001" tradeDate="20250104" tradeTime="100500" quantity="5" tradePrice="55" tradeMoney="275" buySell="SELL (Ca.)" transactionType="TradeCancel" origTransactionID="2" levelOfDetail="EXECUTION" />
+      </Trades>
+      <CashTransactions>
+        <CashTransaction currency="USD" symbol="EXMP" description="EXMP(US0000000001) CASH DIVIDEND USD 0.50 PER SHARE" isin="US0000000001" dateTime="2025-03-01, 20:20:00" amount="5" type="Dividends" levelOfDetail="DETAIL" />
+        <CashTransaction currency="USD" symbol="EXMP" description="EXMP(US0000000001) CASH DIVIDEND USD 0.50 PER SHARE" isin="US0000000001" dateTime="2025-03-02, 20:20:00" amount="-5" type="Dividends" levelOfDetail="DETAIL" />
+        <CashTransaction currency="USD" description="CASH RECEIPTS &amp; TRANSFERS" reportDate="20250102" amount="1000" type="Deposits/Withdrawals" levelOfDetail="DETAIL" />
+      </CashTransactions>
+    </FlexStatement></FlexStatements></FlexQueryResponse>`
+    const result = importTables(readFlexXml('flex.xml', xml), { context: RATES })
+    expect(result.broker).toBe('Interactive Brokers')
+    expect(errors(result)).toEqual([])
+    expect(only(result.transactions, 'buy')).toEqual([expect.objectContaining({ quantity: 10, amountEur: -400, costsEur: 1.6, dateTime: '2025-01-03T15:00' })])
+    expect(only(result.transactions, 'sell')).toEqual([])
+    expect(only(result.transactions, 'dividend')).toEqual([])
+    expect(only(result.transactions, 'deposit')[0]?.amountEur).toBe(800)
   })
 })
 
@@ -162,6 +215,18 @@ describe('XTB', () => {
     expect(errors(result)).toEqual([])
     expect(only(result.transactions, 'buy')[0]).toMatchObject({ quantity: 2, amountEur: -50.25, ticker: 'EXMP.DE' })
     expect(only(result.transactions, 'sell')[0]).toMatchObject({ quantity: 1, amountEur: 26 })
+  })
+
+  it('takes the account currency from the file name and skips transfers between sub-accounts', () => {
+    const lines = csv.split('\n')
+    const withTransfer = [
+      ...lines.slice(0, 4),
+      'Transfer;;;2025-01-06 08:40:00;5;5;Transfer between accounts;Investment Plans',
+      'Transfer;;;2025-01-06 08:40:00;-5;6;Transfer between accounts;My Trades',
+    ].join('\n')
+    const result = importTables(readCsv('USD_12345_2025.csv', withTransfer), { context: RATES })
+    expect(only(result.transactions, 'deposit')).toEqual([expect.objectContaining({ amountEur: 800, currency: 'USD' })])
+    expect(only(result.transactions, 'withdrawal')).toEqual([])
   })
 
   it('maps XTB symbols to Yahoo tickers', () => {
