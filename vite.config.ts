@@ -21,8 +21,8 @@ export default defineConfig({
         start_url: base,
         scope: base,
         display: 'standalone',
-        theme_color: '#0F1B2D',
-        background_color: '#0F1B2D',
+        theme_color: '#0B0E12',
+        background_color: '#0B0E12',
       },
       workbox: {
         // mjs: the pdf.js worker, so PDF statements can be imported offline too.
@@ -37,6 +37,16 @@ export default defineConfig({
             urlPattern: ({ url }) => url.pathname.startsWith(`${base}data/`),
             handler: 'StaleWhileRevalidate',
             options: { cacheName: 'static-data' },
+          },
+          {
+            // Web fonts: keep them offline; without them the system fonts take over.
+            urlPattern: ({ url }) => url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com',
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'fonts',
+              expiration: { maxEntries: 30, maxAgeSeconds: 365 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
           },
         ],
       },

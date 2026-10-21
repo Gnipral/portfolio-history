@@ -1,4 +1,5 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router'
+import { NavIcon } from '../ui/components/NavIcon.tsx'
 import { OfflineBadge } from '../ui/components/OfflineBadge.tsx'
 import { ThemeToggle } from '../ui/components/ThemeToggle.tsx'
 import { UpdateBanner } from '../ui/components/UpdateBanner.tsx'
@@ -19,12 +20,25 @@ export function App() {
         </h1>
         <nav className="app-nav">
           <NavLink to="/" end>
+            <NavIcon name="dashboard" />
             Dashboard
           </NavLink>
-          <NavLink to="/analysis">Analysis</NavLink>
-          <NavLink to="/import">Import</NavLink>
-          <NavLink to="/prices">Prices</NavLink>
-          <NavLink to="/settings">Settings</NavLink>
+          <NavLink to="/analysis">
+            <NavIcon name="analysis" />
+            Analysis
+          </NavLink>
+          <NavLink to="/import">
+            <NavIcon name="import" />
+            Import
+          </NavLink>
+          <NavLink to="/prices">
+            <NavIcon name="prices" />
+            Prices
+          </NavLink>
+          <NavLink to="/settings">
+            <NavIcon name="settings" />
+            Settings
+          </NavLink>
         </nav>
         <OfflineBadge />
         <ThemeToggle />

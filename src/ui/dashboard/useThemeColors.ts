@@ -10,6 +10,7 @@ export interface ThemeColors {
   positive: string
   negative: string
   benchmark: string
+  fontMono: string
 }
 
 function read(): ThemeColors {
@@ -26,6 +27,7 @@ function read(): ThemeColors {
     negative: v('--negative'),
     // Categorical slot 2 (orange): never a status color.
     benchmark: v('--series-2'),
+    fontMono: v('--font-mono'),
   }
 }
 
