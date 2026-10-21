@@ -851,32 +851,34 @@ code {
   background: linear-gradient(90deg, var(--chart-positive) 50%, var(--chart-negative) 50%);
 }
 
-/* A solid band between the value and the profit pane: the chart's own separator is one pixel. */
+/*
+ * The boundary between the value and the profit pane: a line over the plot area only (it stops
+ * where the price axis starts, so it never covers a label there) with the pane's name on it.
+ */
 .pane-divider {
   position: absolute;
-  left: 0.75rem;
-  right: 0.75rem;
   z-index: 2;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--chart-separator);
+  height: 0;
+  border-top: 2px solid var(--chart-separator);
+  transform: translateY(-1px);
   pointer-events: none;
 }
 
-/* Names the lower pane, so profit is not read as part of the value above it. */
 .pane-label {
   position: absolute;
-  left: 0.9rem;
-  z-index: 2;
-  padding: 0.1rem 0.4rem;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  top: 0;
+  left: 0.5rem;
+  transform: translateY(-50%);
+  padding: 0.1rem 0.55rem;
+  border: 2px solid var(--chart-separator);
+  border-radius: 999px;
+  background: var(--surface);
   color: var(--text);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  pointer-events: none;
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {
