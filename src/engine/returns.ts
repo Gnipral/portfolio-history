@@ -45,29 +45,65 @@ export function twrBetween(index: number[], from: number, to: number): number {
 const YEAR_DAYS = 365
 const MIN_RATE = -0.999999
 
-function npv(flows: { years: number; amount: number }[], rate: number): { value: number; derivative: number } {
+interface Timed {
+  /** Time since the first flow, in units of the span of all flows (0 to 1). */
+  time: number
+  amount: number
+}
+
+function npv(flows: Timed[], rate: number): { value: number; derivative: number } {
   let value = 0
   let derivative = 0
   for (const f of flows) {
-    const discount = (1 + rate) ** -f.years
+    const discount = (1 + rate) ** -f.time
     value += f.amount * discount
-    derivative -= f.years * f.amount * discount / (1 + rate)
+    derivative -= f.time * f.amount * discount / (1 + rate)
   }
   return { value, derivative }
 }
 
+export interface Mwr {
+  /** Money-weighted return over the span of the flows, not annualized. */
+  period: number
+  /** Calendar days from the first to the last non-zero flow. */
+  spanDays: number
+}
+
 /**
- * Annualized money-weighted return (XIRR). Newton-Raphson from `guess`, with bisection as a
- * fallback when Newton does not converge. Undefined when the flows have no solution
- * (no sign change, or all on one day).
+ * Money-weighted return over the span of the flows, from the first to the last non-zero flow.
+ * Time is measured in fractions of that span, so the rate solved for is the period return itself:
+ * solving for a yearly rate instead overflows, or falls below -99.9999%, for big moves in a few days.
+ * Undefined when the flows have no solution (no sign change, or all on one day).
  */
-export function xirr(cashFlows: CashFlow[], guess = 0.1): number | undefined {
+export function mwr(cashFlows: CashFlow[], guess = 0.1): Mwr | undefined {
   const flows = cashFlows.filter((f) => f.amount !== 0)
   if (flows.length < 2 || !flows.some((f) => f.amount > 0) || !flows.some((f) => f.amount < 0)) return undefined
-  const first = flows.reduce((min, f) => (f.date < min ? f.date : min), (flows[0] as CashFlow).date)
-  const timed = flows.map((f) => ({ years: daysBetween(first, f.date) / YEAR_DAYS, amount: f.amount }))
-  if (timed.every((f) => f.years === 0)) return undefined
+  let first = (flows[0] as CashFlow).date
+  let last = first
+  for (const f of flows) {
+    if (f.date < first) first = f.date
+    if (f.date > last) last = f.date
+  }
+  const spanDays = daysBetween(first, last)
+  if (spanDays === 0) return undefined
+  const timed = flows.map((f) => ({ time: daysBetween(first, f.date) / spanDays, amount: f.amount }))
+  const period = solve(timed, guess)
+  return period === undefined ? undefined : { period, spanDays }
+}
 
+/** Annualized money-weighted return (XIRR); undefined when not solvable or too large to represent. */
+export function xirr(cashFlows: CashFlow[], guess = 0.1): number | undefined {
+  const result = mwr(cashFlows, guess)
+  return result && annualize(result)
+}
+
+function annualize({ period, spanDays }: Mwr): number | undefined {
+  const annual = (1 + period) ** (YEAR_DAYS / spanDays) - 1
+  return Number.isFinite(annual) ? annual : undefined
+}
+
+/** Newton-Raphson from `guess`, with bisection as a fallback when Newton does not converge. */
+function solve(timed: Timed[], guess: number): number | undefined {
   let rate = Math.max(guess, MIN_RATE + 1e-6)
   for (let i = 0; i < 50; i++) {
     const { value, derivative } = npv(timed, rate)
@@ -81,7 +117,7 @@ export function xirr(cashFlows: CashFlow[], guess = 0.1): number | undefined {
   return bisect(timed)
 }
 
-function bisect(flows: { years: number; amount: number }[]): number | undefined {
+function bisect(flows: Timed[]): number | undefined {
   let low = MIN_RATE
   let high = 1
   const valueAt = (rate: number) => npv(flows, rate).value
@@ -103,20 +139,29 @@ interface IrrDay extends FlowDay {
   date: string
 }
 
+export interface MwrPoint extends Mwr {
+  /** Annualized (XIRR); undefined when too large to represent. */
+  annual?: number
+}
+
 /**
- * XIRR for every day: the flows up to that day plus the value as if sold that evening.
- * Each day starts from the previous day's answer, which keeps Newton fast and stable.
+ * Money-weighted return for every day: the flows up to that day plus the value as if sold that
+ * evening. Once everything is sold the span ends at the last sale, so idle days change nothing.
+ * Each day starts from the previous day's answer scaled to the new span, which keeps Newton fast.
  */
-export function irrSeries(days: IrrDay[]): (number | undefined)[] {
+export function irrSeries(days: IrrDay[]): (MwrPoint | undefined)[] {
   const flows: CashFlow[] = []
-  const result: (number | undefined)[] = []
-  let guess = 0.1
+  const result: (MwrPoint | undefined)[] = []
+  let previous: Mwr | undefined
   for (const day of days) {
     if (day.inflow) flows.push({ date: day.date, amount: -day.inflow })
     if (day.outflow) flows.push({ date: day.date, amount: day.outflow })
-    const irr = xirr([...flows, { date: day.date, amount: day.value }], guess)
-    if (irr !== undefined) guess = irr
-    result.push(irr)
+    const span = flows[0] ? daysBetween(flows[0].date, day.date) : 0
+    const scaled = previous && span > 0 ? (1 + previous.period) ** (span / previous.spanDays) - 1 : 0.1
+    const current = mwr([...flows, { date: day.date, amount: day.value }], Number.isFinite(scaled) ? scaled : 0.1)
+    if (current) previous = current
+    const annual = current && annualize(current)
+    result.push(current && (annual === undefined ? current : { ...current, annual }))
   }
   return result
 }
