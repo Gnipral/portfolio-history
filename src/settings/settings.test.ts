@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { afterEach, describe, expect, it } from 'vitest'
 import { PortfolioDatabase } from '../data/db.ts'
-import { DEFAULT_PROXY_URL, loadSettings, saveSettings } from './settings.ts'
+import { DEFAULT_PROXY_URL, loadSettings, saveSettings, updateSettings } from './settings.ts'
 
 const database = new PortfolioDatabase('test-settings')
 afterEach(async () => {
@@ -20,5 +20,11 @@ describe('settings', () => {
 
     await saveSettings({ proxyUrl: '' }, database)
     expect((await loadSettings(database)).proxyUrl).toBe('')
+  })
+
+  it('applies quick updates one after the other, each on the stored settings', async () => {
+    const add = (id: string) => (current: { extraBenchmarkIds: string[] }) => ({ extraBenchmarkIds: [...current.extraBenchmarkIds, id] })
+    await Promise.all([updateSettings(add('vwce'), database), updateSettings(add('sxr8'), database)])
+    expect((await loadSettings(database)).extraBenchmarkIds).toEqual(['vwce', 'sxr8'])
   })
 })
