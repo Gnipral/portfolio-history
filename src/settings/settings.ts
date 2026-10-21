@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type PortfolioDatabase } from '../data/db.ts'
+import { DEFAULT_TAX_RULES, type CapitalGainsRules } from '../engine/analysis/capitalGains.ts'
 import { DEFAULT_OPTIONS, type CostBasisMethod, type Toggles } from '../engine/options.ts'
 import { DEFAULT_BENCHMARK_ID } from '../market/benchmarks.ts'
 
@@ -18,6 +19,8 @@ export interface Settings {
   costBasis: CostBasisMethod
   /** Dashboard checkboxes; remembered between visits. */
   toggles: Toggles
+  /** Rules of the capital gains tax estimate: a country's preset, possibly adjusted. */
+  taxRules: CapitalGainsRules
 }
 
 /** Settings edited as text in the settings form. */
@@ -37,6 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
   benchmarkMix: {},
   costBasis: defaultCostBasis,
   toggles: defaultToggles,
+  taxRules: DEFAULT_TAX_RULES,
 }
 
 const SETTINGS_KEY = 'settings'
@@ -46,7 +50,12 @@ export async function loadSettings(database: PortfolioDatabase = db): Promise<Se
   if (!stored) return DEFAULT_SETTINGS
   try {
     const parsed = JSON.parse(stored) as Partial<Settings>
-    return { ...DEFAULT_SETTINGS, ...parsed, toggles: { ...DEFAULT_SETTINGS.toggles, ...parsed.toggles } }
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      toggles: { ...DEFAULT_SETTINGS.toggles, ...parsed.toggles },
+      taxRules: { ...DEFAULT_SETTINGS.taxRules, ...parsed.taxRules },
+    }
   } catch {
     return DEFAULT_SETTINGS
   }
