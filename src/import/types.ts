@@ -7,6 +7,8 @@ export interface RawTable {
   fileName: string
   sheetName?: string
   rows: Cell[][]
+  /** Text of a PDF, one line per text line; `rows` is empty then. */
+  text?: string
 }
 
 export type IssueSeverity = 'error' | 'warning' | 'info'

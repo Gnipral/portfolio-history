@@ -1,3 +1,5 @@
+import { saxoPdf } from '../pdf/saxo.ts'
+import { withPdf } from '../pdf/kit.ts'
 import type { BrokerAdapter, ImportContext, RawTable } from '../types.ts'
 import { parseNumber } from '../parse.ts'
 import { Collector, dataRows, detectByHeaders, findHeader, guessAssetClass, parseDateTime, result, type ColumnSpec } from './kit.ts'
@@ -84,7 +86,7 @@ function parseTable(table: RawTable, context?: ImportContext) {
   return out
 }
 
-export const saxoAdapter: BrokerAdapter = {
+export const saxoAdapter: BrokerAdapter = withPdf({
   id: 'saxo',
   label: 'Saxo',
   detect,
@@ -99,4 +101,4 @@ export const saxoAdapter: BrokerAdapter = {
       },
     )
   },
-}
+}, saxoPdf)

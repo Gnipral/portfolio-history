@@ -1,4 +1,5 @@
 import Papa from 'papaparse'
+import { readPdf } from './readPdf.ts'
 import type { Cell, RawTable } from './types.ts'
 
 const SPREADSHEET_EXTENSIONS = ['.xlsx', '.xls', '.ods']
@@ -45,8 +46,48 @@ function toCell(value: unknown): Cell {
   return null
 }
 
+/** Flex Query sections that become a table each, named after their section. */
+const FLEX_SECTIONS: Record<string, string> = {
+  Trade: 'Trades',
+  CashTransaction: 'Cash Transactions',
+  CorporateAction: 'Corporate Actions',
+}
+
+const XML_ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }
+
+function decodeXml(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi, (entity, name: string) => {
+    if (/^#x/i.test(name)) return String.fromCodePoint(parseInt(name.slice(2), 16))
+    if (name.startsWith('#')) return String.fromCodePoint(Number(name.slice(1)))
+    return XML_ENTITIES[name] ?? entity
+  })
+}
+
+/**
+ * Interactive Brokers Flex Query XML: one table per section, with the attribute names as header row,
+ * so the Flex CSV adapter reads both formats. Several statements (accounts) end up in the same tables.
+ */
+export function readFlexXml(fileName: string, text: string): RawTable[] {
+  const sections = new Map<string, Record<string, string>[]>()
+  for (const element of text.matchAll(/<(\w+)\s([^<>]*?)\/?>/g)) {
+    const sheetName = FLEX_SECTIONS[element[1] as string]
+    if (!sheetName) continue
+    const attributes: Record<string, string> = {}
+    for (const [, name, value] of (element[2] as string).matchAll(/([\w:.-]+)="([^"]*)"/g)) attributes[name as string] = decodeXml(value as string)
+    sections.set(sheetName, [...(sections.get(sheetName) ?? []), attributes])
+  }
+  if (sections.size === 0) return [{ fileName, rows: [] }]
+  return [...sections].map(([sheetName, elements]) => {
+    const header = [...new Set(elements.flatMap((e) => Object.keys(e)))]
+    const rows = elements.map((e) => header.map((name): Cell => e[name] || null))
+    return { fileName, sheetName, rows: [header, ...rows] }
+  })
+}
+
 export async function readTables(fileName: string, data: ArrayBuffer): Promise<RawTable[]> {
   if (SPREADSHEET_EXTENSIONS.includes(extension(fileName))) return readSpreadsheet(fileName, data)
+  if (extension(fileName) === '.xml') return readFlexXml(fileName, decodeText(data))
+  if (extension(fileName) === '.pdf') return readPdf(fileName, data)
   return readCsv(fileName, decodeText(data))
 }
 
