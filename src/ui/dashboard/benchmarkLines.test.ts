@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { LoadedBenchmark } from '../../engine/loadInputs.ts'
 import { BENCHMARKS } from '../../market/benchmarks.ts'
 import { PriceSeries } from '../../market/priceCache.ts'
-import { benchmarkLines, mixWeights } from './benchmarkLines.ts'
+import { benchmarkLines, mixWeights, toggleBenchmark } from './benchmarkLines.ts'
 
 const loaded: LoadedBenchmark[] = BENCHMARKS.map((info, i) => ({
   info,
@@ -28,5 +28,25 @@ describe('benchmarkLines', () => {
   it('has no mix when the parts do not add up to 100%', () => {
     expect(mixWeights({ iwda: 60, vwce: 30 }, loaded)).toBeNull()
     expect(benchmarkLines(days, loaded, { benchmarkId: 'iwda', extraBenchmarkIds: [], benchmarkMix: { iwda: 60, vwce: 30 } })).toHaveLength(1)
+  })
+})
+
+describe('switching benchmarks on the dashboard', () => {
+  const none = { benchmarkId: '', extraBenchmarkIds: [] }
+
+  it('adds and removes benchmarks; the first one left is the main one', () => {
+    const one = toggleBenchmark(none, 'vwce', true)
+    expect(one).toEqual({ benchmarkId: 'vwce', extraBenchmarkIds: [] })
+    const two = toggleBenchmark(one, 'iwda', true)
+    expect(two).toEqual({ benchmarkId: 'vwce', extraBenchmarkIds: ['iwda'] })
+    expect(toggleBenchmark(two, 'vwce', false)).toEqual({ benchmarkId: 'iwda', extraBenchmarkIds: [] })
+    expect(toggleBenchmark(one, 'vwce', false)).toEqual(none)
+  })
+
+  it('draws nothing with every benchmark off, and hides the mix without losing it', () => {
+    expect(benchmarkLines(days, loaded, { ...none, benchmarkMix: {} })).toEqual([])
+    const mix = { iwda: 50, vwce: 50 }
+    expect(benchmarkLines(days, loaded, { ...none, benchmarkMix: mix }).map((l) => l.id)).toEqual(['mix'])
+    expect(benchmarkLines(days, loaded, { ...none, benchmarkMix: mix, benchmarkMixShown: false })).toEqual([])
   })
 })

@@ -17,8 +17,8 @@ interface FlowPoint {
   outflow: number
 }
 
-/** Categorical slots for benchmark lines; slot 1 is close to the portfolio's own color. */
-const COLORS = ['--series-2', '--series-4', '--series-7', '--series-5']
+/** Categorical slots for benchmark lines; never cyan or blue, which is the portfolio's own value line. */
+const COLORS = ['--series-2', '--series-7', '--series-5', '--series-6']
 
 export function shortLabel(benchmark: LoadedBenchmark): string {
   return benchmark.info.symbol.split('.')[0] ?? benchmark.info.id
@@ -33,18 +33,32 @@ export function mixWeights(mix: Record<string, number>, loaded: LoadedBenchmark[
   return resolved.every((p) => p.benchmark) ? (resolved as { benchmark: LoadedBenchmark; weight: number }[]) : null
 }
 
-/** The main benchmark, the extra ones and the mix, as chosen in the settings. */
-export function benchmarkLines(
-  days: FlowPoint[],
-  loaded: LoadedBenchmark[],
-  settings: Pick<Settings, 'benchmarkId' | 'extraBenchmarkIds' | 'benchmarkMix'>,
-): BenchmarkLine[] {
-  const ids = [settings.benchmarkId, ...settings.extraBenchmarkIds.filter((id) => id !== settings.benchmarkId)]
+type BenchmarkChoice = Pick<Settings, 'benchmarkId' | 'extraBenchmarkIds' | 'benchmarkMix'> & Partial<Pick<Settings, 'benchmarkMixShown'>>
+
+/** The benchmark ids switched on, the main one first. */
+export function chosenBenchmarkIds(settings: Pick<Settings, 'benchmarkId' | 'extraBenchmarkIds'>): string[] {
+  return [settings.benchmarkId, ...settings.extraBenchmarkIds.filter((id) => id !== settings.benchmarkId)].filter(Boolean)
+}
+
+/** Switches one benchmark on or off; the first one left on becomes the main one, none left: no benchmark. */
+export function toggleBenchmark(
+  settings: Pick<Settings, 'benchmarkId' | 'extraBenchmarkIds'>,
+  id: string,
+  on: boolean,
+): Pick<Settings, 'benchmarkId' | 'extraBenchmarkIds'> {
+  const others = chosenBenchmarkIds(settings).filter((chosen) => chosen !== id)
+  const ids = on ? [...others, id] : others
+  return { benchmarkId: ids[0] ?? '', extraBenchmarkIds: ids.slice(1) }
+}
+
+/** The main benchmark, the extra ones and the mix, as chosen in the settings or on the dashboard. */
+export function benchmarkLines(days: FlowPoint[], loaded: LoadedBenchmark[], settings: BenchmarkChoice): BenchmarkLine[] {
+  const ids = chosenBenchmarkIds(settings)
   const lines: BenchmarkLine[] = ids.flatMap((id) => {
     const benchmark = loaded.find((b) => b.info.id === id)
     return benchmark ? [{ id, label: shortLabel(benchmark), points: simulateBenchmark(days, benchmark.series), color: '' }] : []
   })
-  const mix = mixWeights(settings.benchmarkMix, loaded)
+  const mix = settings.benchmarkMixShown === false ? null : mixWeights(settings.benchmarkMix, loaded)
   if (mix) {
     lines.push({
       id: 'mix',

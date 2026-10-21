@@ -1197,3 +1197,50 @@ button.danger:hover {
 progress {
   accent-color: var(--accent);
 }
+
+/* Benchmarks under the chart: one chip per fund, colored like its line when switched on. */
+.benchmark-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: -0.25rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.chip[aria-pressed='true'] {
+  color: var(--text);
+  border-color: var(--chart-separator);
+  background: var(--surface-2);
+}
+
+.chip-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+  flex: none;
+}
+
+/* On but without a line yet (prices still loading): a grey dot until the line's color is known. */
+.chip[aria-pressed='true'] .chip-dot {
+  border-color: transparent;
+  background: var(--text-muted);
+}
