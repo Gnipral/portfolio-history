@@ -10,12 +10,14 @@ export interface Settings {
   proxyUrl: string
   twelveDataKey: string
   alphaVantageKey: string
-  /** Id from BENCHMARKS, compared with the portfolio on the dashboard. */
+  /** Id from BENCHMARKS, compared with the portfolio on the dashboard; empty: no benchmark. */
   benchmarkId: string
   /** Other benchmarks shown next to the main one. */
   extraBenchmarkIds: string[]
   /** Percent per benchmark id of a mix shown as one more benchmark; empty or not 100 in total: no mix. */
   benchmarkMix: Record<string, number>
+  /** Whether the mix is drawn; switched on the dashboard without losing its percentages. */
+  benchmarkMixShown: boolean
   costBasis: CostBasisMethod
   /** Dashboard checkboxes; remembered between visits. */
   toggles: Toggles
@@ -38,6 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
   benchmarkId: DEFAULT_BENCHMARK_ID,
   extraBenchmarkIds: [],
   benchmarkMix: {},
+  benchmarkMixShown: true,
   costBasis: defaultCostBasis,
   toggles: defaultToggles,
   taxRules: DEFAULT_TAX_RULES,
@@ -67,6 +70,18 @@ export async function saveSettings(changes: Partial<Settings>, database: Portfol
   next.twelveDataKey = next.twelveDataKey.trim()
   next.alphaVantageKey = next.alphaVantageKey.trim()
   await database.kv.put({ key: SETTINGS_KEY, value: JSON.stringify(next) })
+  return next
+}
+
+let updates: Promise<unknown> = Promise.resolve()
+
+/**
+ * Changes settings based on what is stored at that moment, one update after the other: two quick
+ * clicks then both count, where two saves from the same rendered settings would lose the first.
+ */
+export function updateSettings(change: (current: Settings) => Partial<Settings>, database: PortfolioDatabase = db): Promise<Settings> {
+  const next = updates.then(async () => saveSettings(change(await loadSettings(database)), database))
+  updates = next.catch(() => undefined)
   return next
 }
 

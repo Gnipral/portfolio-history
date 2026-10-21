@@ -86,6 +86,7 @@ export function SettingsPage() {
           <label>
             Compare the portfolio with
             <select {...field('benchmarkId')}>
+              <option value="">Nothing</option>
               {BENCHMARKS.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name} ({b.symbol})

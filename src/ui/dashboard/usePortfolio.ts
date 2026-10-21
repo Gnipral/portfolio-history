@@ -31,7 +31,8 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
   const online = useOnline()
 
   useEffect(() => {
-    if (!transactionCount || !benchmarkId) {
+    // benchmarkId is undefined while the settings load, and empty when every benchmark is off.
+    if (!transactionCount || benchmarkId === undefined) {
       if (transactionCount === 0) setInputs(null)
       return
     }
