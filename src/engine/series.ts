@@ -1,4 +1,4 @@
-import { addDays } from '../market/dates.ts'
+import { addDays, daysBetween } from '../market/dates.ts'
 import type { Transaction } from '../model/transaction.ts'
 import { Ledger, hasDeposits, sortTransactions, type LedgerIssue } from './ledger.ts'
 import type { EngineOptions } from './options.ts'
@@ -31,6 +31,13 @@ export interface DailyPoint {
   twr: number
   /** Annualized money-weighted return (XIRR) since the first transaction; undefined when not solvable. */
   irr?: number
+  /**
+   * The money-weighted return over the whole period, not annualized: shown instead of `irr` during
+   * the first year, when annualizing a few days or weeks gives meaningless numbers.
+   */
+  irrPeriod?: number
+  /** Calendar days since the first transaction. */
+  days: number
 }
 
 export interface SeriesResult {
@@ -67,7 +74,7 @@ export function computeDailySeries(
 ): SeriesResult {
   const ordered = sortTransactions(transactions)
   const cashMode = options.includeDeposits && hasDeposits(ordered)
-  const ledger = new Ledger(options, cashMode)
+  const ledger = new Ledger(options, cashMode, { transactions: ordered, priceOf: (holding, date) => prices.price(holding, date)?.eur })
   const points: DailyPoint[] = []
   const first = ordered[0]?.date
   if (!first) return { points, cashMode, issues: [] }
@@ -102,6 +109,7 @@ export function computeDailySeries(
       outflow,
       estimated: holdings.estimated,
       twr: 0,
+      days: daysBetween(first, date),
     })
   }
 
@@ -110,7 +118,9 @@ export function computeDailySeries(
   points.forEach((point, i) => {
     point.twr = (twr[i] as number) - 1
     const value = irr[i]
-    if (value !== undefined) point.irr = value
+    if (value === undefined) return
+    point.irr = value
+    point.irrPeriod = (1 + value) ** (point.days / 365) - 1
   })
   return { points, cashMode, issues: ledger.issues }
 }

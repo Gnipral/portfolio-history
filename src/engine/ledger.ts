@@ -39,6 +39,14 @@ export interface LedgerIssue {
   message: string
 }
 
+/** What the ledger needs to know besides the transaction it applies. */
+export interface LedgerContext {
+  /** All transactions, to recognize the withholding tax that belongs to a dividend. */
+  transactions?: Transaction[]
+  /** Market price in EUR per unit on a date, to value units transferred without a value. */
+  priceOf?: (holding: Holding, date: string) => number | undefined
+}
+
 /**
  * Replays transactions in order and keeps positions, cost basis, realized profit and cash.
  * Pure bookkeeping: market prices are applied by the caller.
@@ -55,11 +63,17 @@ export class Ledger {
   /** Cash balance, only meaningful when the import contains deposits. */
   cash = 0
 
+  /** Instrument and day of every dividend, as `key|date`. */
+  private readonly dividendDays: Set<string>
+
   constructor(
     private readonly options: EngineOptions,
     /** Whether the portfolio includes cash, with deposits and withdrawals as the only external flows. */
     readonly cashMode: boolean,
-  ) {}
+    private readonly context: LedgerContext = {},
+  ) {
+    this.dividendDays = new Set((context.transactions ?? []).filter((t) => t.type === 'dividend').map((t) => `${instrumentKey(t)}|${t.date}`))
+  }
 
   private holding(t: Transaction, key = instrumentKey(t)): Holding {
     let holding = this.holdings.get(key)
@@ -78,6 +92,10 @@ export class Ledger {
 
     switch (t.type) {
       case 'buy': {
+        if (!(t.quantity > 0)) {
+          this.issues.push({ date: t.date, message: `${t.product}: buy without a quantity skipped.` })
+          break
+        }
         const outlay = Math.abs(t.amountEur) + charges
         const holding = this.holding(t)
         holding.quantity += t.quantity
@@ -94,6 +112,10 @@ export class Ledger {
         break
       }
       case 'sell': {
+        if (!(t.quantity > 0)) {
+          this.issues.push({ date: t.date, message: `${t.product}: sale without a quantity skipped.` })
+          break
+        }
         const proceeds = Math.abs(t.amountEur) - charges
         const holding = this.holding(t)
         let quantity = t.quantity
@@ -125,9 +147,11 @@ export class Ledger {
         this.applySplit(t)
         break
       case 'transferIn': {
-        // Units arrive from outside at the value the export gives them (0 when unknown).
-        const value = Math.abs(t.amountEur)
+        if (!(t.quantity > 0)) break
+        // Units arrive from outside at the value the export gives them, else at the market price of
+        // that day: they were the investor's already, so their value is money put in, not profit.
         const holding = this.holding(t)
+        const value = Math.abs(t.amountEur) || (this.context.priceOf?.(holding, t.date) ?? 0) * t.quantity
         holding.quantity += t.quantity
         holding.cost += value
         holding.lots.push({ quantity: t.quantity, unitCost: value / t.quantity })
@@ -137,27 +161,33 @@ export class Ledger {
         break
       }
       case 'transferOut': {
-        // Units leave without a sale: they take their cost basis with them, no profit is realized.
+        // Units leave without a sale at their market value: that value is money taken out, and the
+        // profit made on them so far stays in the result instead of vanishing with the units.
         const holding = this.holding(t)
         const quantity = Math.min(t.quantity, holding.quantity)
         if (t.quantity > holding.quantity + EPSILON) {
           this.issues.push({ date: t.date, message: `${t.product}: sent ${t.quantity} but only ${holding.quantity} held.` })
         }
+        const price = this.context.priceOf?.(holding, t.date)
         const cost = this.removeCost(holding, quantity)
+        const value = price === undefined ? cost : price * quantity
+        holding.realized += value - cost
+        this.realized += value - cost
         holding.quantity -= quantity
         if (holding.quantity < EPSILON) {
           holding.quantity = 0
           holding.cost = 0
           holding.lots = []
         }
-        this.netInvestedInSecurities -= cost
-        this.netDeposits -= cost
-        flows.outflow += cost
+        this.netInvestedInSecurities -= value
+        this.netDeposits -= value
+        flows.outflow += value
         break
       }
       case 'dividend': {
         if (!this.options.includeDividends) break
-        const amount = Math.abs(t.amountEur) - (this.options.includeTaxes ? t.taxesEur : 0)
+        // Net of the withholding tax, collection costs and conversion costs on the payment that count.
+        const amount = Math.abs(t.amountEur) - charges
         this.holding(t).realized += amount
         this.realized += amount
         this.cash += amount
@@ -167,8 +197,15 @@ export class Ledger {
       case 'fee':
       case 'tax':
       case 'fx': {
+        // A withholding tax booked as its own row (DEGIRO, IBKR, XTB) belongs to the dividend of
+        // that day: without dividends it never happened either.
+        const dividendTax = t.type === 'tax' && this.dividendDays.has(`${instrumentKey(t)}|${t.date}`)
         const counts =
-          t.type === 'fee' ? this.options.includeCosts : t.type === 'tax' ? this.options.includeTaxes : this.options.includeFxCosts
+          t.type === 'fee'
+            ? this.options.includeCosts
+            : t.type === 'tax'
+              ? this.options.includeTaxes && (this.options.includeDividends || !dividendTax)
+              : this.options.includeFxCosts
         // Standalone charges: the row amount itself, or the FX cost of a conversion row.
         const amount = counts ? (t.type === 'fx' ? t.fxCostsEur : Math.abs(t.amountEur)) : 0
         this.realized -= amount
@@ -271,8 +308,14 @@ export class Ledger {
 }
 
 /** Replays all transactions up to and including `date`. */
-export function ledgerOn(transactions: Transaction[], date: string, options: EngineOptions, cashMode: boolean): Ledger {
-  const ledger = new Ledger(options, cashMode)
+export function ledgerOn(
+  transactions: Transaction[],
+  date: string,
+  options: EngineOptions,
+  cashMode: boolean,
+  priceOf?: LedgerContext['priceOf'],
+): Ledger {
+  const ledger = new Ledger(options, cashMode, { transactions, ...(priceOf ? { priceOf } : {}) })
   for (const t of sortTransactions(transactions)) {
     if (t.date > date) break
     ledger.apply(t)

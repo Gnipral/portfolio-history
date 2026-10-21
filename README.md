@@ -39,9 +39,9 @@ The app is a PWA: install it from the browser menu ("Install app" or "Add to Hom
 | Profit / loss | Realized plus unrealized result, after the included dividends and charges |
 | Simple return | Profit / loss divided by the highest invested capital so far |
 | TWR | Daily returns chain-linked; money coming in counts at the start of the day, money going out at the end, so the timing of your deposits does not affect it |
-| XIRR | The yearly rate at which all flows and the value on the selected day net to zero; it does depend on when you added money |
+| XIRR | The yearly rate at which all flows and the value on the selected day net to zero; it does depend on when you added money. During the first year it is shown over the period instead, because a yearly rate from a few weeks is meaningless |
 
-Without deposits in the export, the portfolio is the securities alone and every buy, sell and dividend is a flow. With deposits included, cash is part of the portfolio and only deposits and withdrawals are flows. Cost basis (average or FIFO) decides how realized and unrealized results are split.
+Without deposits in the export, the portfolio is the securities alone and every buy, sell and dividend is a flow. With deposits included, cash is part of the portfolio and only deposits and withdrawals are flows. Cost basis (average or FIFO) decides how realized and unrealized results are split. Dividends count net of withholding tax and collection costs; a withholding tax booked as its own row is left out together with the dividends. Securities transferred in or out without a sale count at their market value of that day: received units are money put in, not profit, and the profit on units sent away stays in the result.
 
 Providers deliver split-adjusted prices; the app undoes later splits, so a quantity from before a split is valued at the price of that time. Products without any price are valued at their last trade price and listed on the **Prices** page, where a ticker or a split can be entered by hand.
 

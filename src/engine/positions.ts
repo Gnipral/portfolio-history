@@ -32,7 +32,7 @@ export function positionsOn(
   options: EngineOptions,
   date: string,
 ): Position[] {
-  const ledger = ledgerOn(transactions, date, options, options.includeDeposits && hasDeposits(transactions))
+  const ledger = ledgerOn(transactions, date, options, options.includeDeposits && hasDeposits(transactions), (holding, day) => prices.price(holding, day)?.eur)
   return valueHoldings(ledger, prices, date).priced.map(({ holding, price, value }) => {
     const symbol = prices.symbolOf(holding.key)
     return {

@@ -8,6 +8,18 @@ interface Card {
   hint?: string
 }
 
+/** Annualized from one year of history on; before that over the period, since a year's rate from a few weeks is meaningless. */
+function moneyWeighted(point: DailyPoint): Card {
+  const annual = point.days >= 365
+  const value = annual ? point.irr : point.irrPeriod
+  return {
+    label: 'Money-weighted return',
+    value: value === undefined ? '–' : formatPercent(value),
+    ...(value === undefined ? {} : { trend: value }),
+    hint: annual ? 'XIRR, per year' : `Over ${point.days} days, not per year`,
+  }
+}
+
 export function SummaryCards({ point, cashMode }: { point: DailyPoint; cashMode: boolean }) {
   const cards: Card[] = [
     { label: 'Value', value: formatEur(point.value), hint: cashMode ? 'Securities and cash' : 'Securities' },
@@ -26,12 +38,7 @@ export function SummaryCards({ point, cashMode }: { point: DailyPoint; cashMode:
       hint: 'Profit / highest invested capital',
     },
     { label: 'Time-weighted return', value: formatPercent(point.twr), trend: point.twr, hint: 'TWR, independent of deposits' },
-    {
-      label: 'Money-weighted return',
-      value: point.irr === undefined ? '–' : formatPercent(point.irr),
-      ...(point.irr === undefined ? {} : { trend: point.irr }),
-      hint: 'XIRR, per year',
-    },
+    moneyWeighted(point),
   ]
 
   return (

@@ -58,3 +58,10 @@ describe('Collector', () => {
     expect(out.convert(10, 'CHF', 'USD', '2026-01-02', 2)).toBeCloseTo(12.5)
   })
 })
+
+describe('Collector currencies', () => {
+  it('converts an amount in pence (GBp) as pence, not as pounds', () => {
+    const out = new Collector('test', 'file', fixedRates({ GBX: 85 }))
+    expect(out.toEur(850, 'GBp', '2026-01-02', 2)).toBe(10)
+  })
+})
