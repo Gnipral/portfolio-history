@@ -21,9 +21,22 @@ function moneyWeighted(point: DailyPoint): Card {
   }
 }
 
+/** The portfolio value, large, with the result so far as a pill under it. */
+function ValueCard({ point, cashMode }: { point: DailyPoint; cashMode: boolean }) {
+  return (
+    <div className="card hero">
+      <span className="card-label">Value</span>
+      <span className="card-value">{formatEur(point.value)}</span>
+      <span className={`pill ${trendClass(point.pnl)}`} title="Profit / loss and simple return">
+        {point.pnl < 0 ? '▼' : '▲'} {formatSignedEur(point.pnl)} ({formatPercent(point.simpleReturn)})
+      </span>
+      <span className="muted small">{cashMode ? 'Securities and cash' : 'Securities'}</span>
+    </div>
+  )
+}
+
 export function SummaryCards({ point, cashMode }: { point: DailyPoint; cashMode: boolean }) {
   const cards: Card[] = [
-    { label: 'Value', value: formatEur(point.value), hint: cashMode ? 'Securities and cash' : 'Securities' },
     {
       label: 'Invested',
       value: formatEur(point.invested),
@@ -46,6 +59,7 @@ export function SummaryCards({ point, cashMode }: { point: DailyPoint; cashMode:
     <div className="stack">
       <h3 className="cards-title">{formatDate(point.date)}</h3>
       <div className="cards">
+        <ValueCard point={point} cashMode={cashMode} />
         {cards.map((card) => (
           <div className="card" key={card.label}>
             <span className="card-label">{card.label}</span>

@@ -103,8 +103,13 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
     const r = refs.current
     if (!r) return
     r.chart.applyOptions({
-      layout: { background: { type: ColorType.Solid, color: colors.surface }, textColor: colors.textMuted },
-      grid: { vertLines: { color: colors.border }, horzLines: { color: colors.border } },
+      layout: {
+        background: { type: ColorType.Solid, color: colors.surface },
+        textColor: colors.textMuted,
+        ...(colors.fontMono ? { fontFamily: colors.fontMono } : {}),
+        panes: { separatorColor: colors.border, separatorHoverColor: colors.border },
+      },
+      grid: { vertLines: { visible: false }, horzLines: { color: colors.border } },
     })
     r.main.applyOptions({ lineColor: colors.accent, topColor: `${colors.accent}55`, bottomColor: `${colors.accent}05` })
     r.secondary.applyOptions({ color: colors.textMuted })
