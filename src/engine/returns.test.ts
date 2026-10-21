@@ -155,3 +155,42 @@ describe('daily series with returns', () => {
     expect(last?.simpleReturn).toBeCloseTo(0.1, 12)
   })
 })
+
+describe('twrIndex: data gaps', () => {
+  it('ignores a day with a negative value or a rounding residue as base', () => {
+    const index = twrIndex([
+      { value: 1000, inflow: 1000, outflow: 0 },
+      // Cash below zero because the export misses a deposit.
+      { value: -50, inflow: 0, outflow: 0 },
+      { value: 1100, inflow: 0, outflow: 0 },
+      // Everything sold except a residue of a thousandth of a cent.
+      { value: 0.00001, inflow: 0, outflow: 1100 },
+      { value: 0.5, inflow: 0, outflow: 0 },
+    ])
+    expect(index.every((level) => level > 0 && level < 10)).toBe(true)
+    expect(index.at(-1)).toBe(index.at(-2))
+  })
+})
+
+describe('money-weighted return in the first year', () => {
+  it('is given over the period, next to the annual rate', () => {
+    const A = 'XA0000000001'
+    const prices = new PriceBook({
+      symbols: new Map([[A, 'AAA']]),
+      series: new Map([
+        ['AAA', PriceSeries.fromPoints('AAA', [
+          { symbol: 'AAA', date: '2026-01-01', close: 100 },
+          { symbol: 'AAA', date: '2026-01-31', close: 105 },
+        ])],
+      ]),
+      currencies: new Map([['AAA', 'EUR']]),
+      splits: new Map(),
+      fx: new FxRates([]),
+    })
+    const { points } = computeDailySeries([tx('buy', '2026-01-01', { isin: A, quantity: 10, amount: 1000 })], prices, DEFAULT_OPTIONS, '2026-01-31')
+    const last = points.at(-1)
+    expect(last?.days).toBe(30)
+    expect(last?.irrPeriod).toBeCloseTo(0.05, 9)
+    expect(last?.irr).toBeGreaterThan(0.7)
+  })
+})

@@ -204,3 +204,51 @@ describe('ledgerOn', () => {
     expect(ledgerOn(trades, '2026-03-02', DEFAULT_OPTIONS, false).holdings.get(A)?.quantity).toBe(5)
   })
 })
+
+describe('Ledger: corrections', () => {
+  it('takes collection costs on a dividend off the payment (Bolero, Keytrade)', () => {
+    const { ledger, flows } = replay([
+      tx('buy', '2026-01-02', { isin: A, quantity: 10, amount: 1000 }),
+      tx('dividend', '2026-06-01', { isin: A, amount: 30, taxesEur: 9, costsEur: 1.5 }),
+    ])
+    expect(ledger.realized).toBe(19.5)
+    expect(flows[1]).toEqual({ inflow: 0, outflow: 19.5 })
+  })
+
+  it('leaves out the separate withholding tax of a dividend when dividends are excluded', () => {
+    const trades = [
+      tx('buy', '2026-01-02', { isin: A, quantity: 10, amount: 1000 }),
+      tx('dividend', '2026-06-01', { isin: A, amount: 30 }),
+      tx('tax', '2026-06-01', { isin: A, amount: 4.5 }),
+      tx('tax', '2026-06-02', { isin: A, amount: 2 }),
+    ]
+    const ledger = new Ledger({ ...DEFAULT_OPTIONS, includeDividends: false }, false, { transactions: trades })
+    for (const t of trades) ledger.apply(t)
+    // Only the tax that is not part of a dividend (the TOB of 2 June) still counts.
+    expect(ledger.realized).toBe(-2)
+  })
+
+  it('values received units without a value at the market price, so they are not counted as profit', () => {
+    const ledger = new Ledger(DEFAULT_OPTIONS, true, { priceOf: () => 120 })
+    const flows = ledger.apply(tx('transferIn', '2026-01-02', { isin: A, quantity: 2 }))
+    expect(ledger.holdings.get(A)).toMatchObject({ quantity: 2, cost: 240 })
+    expect(ledger.netDeposits).toBe(240)
+    expect(flows).toEqual({ inflow: 240, outflow: 0 })
+  })
+
+  it('takes sent units out at their market value and keeps the profit made on them', () => {
+    const ledger = new Ledger(DEFAULT_OPTIONS, false, { priceOf: () => 150 })
+    ledger.apply(tx('buy', '2026-01-02', { isin: A, quantity: 4, amount: 400 }))
+    const flows = ledger.apply(tx('transferOut', '2026-02-02', { isin: A, quantity: 1 }))
+    expect(ledger.holdings.get(A)).toMatchObject({ quantity: 3, cost: 300 })
+    expect(ledger.realized).toBe(50)
+    expect(ledger.netInvestedInSecurities).toBe(250)
+    expect(flows).toEqual({ inflow: 0, outflow: 150 })
+  })
+
+  it('skips a buy or sale without a quantity instead of dividing by zero', () => {
+    const { ledger, holding } = replay([tx('buy', '2026-01-02', { isin: A, quantity: 0, amount: 100 })])
+    expect(holding(A)).toBeUndefined()
+    expect(ledger.issues).toHaveLength(1)
+  })
+})
