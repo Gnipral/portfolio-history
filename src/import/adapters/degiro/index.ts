@@ -1,14 +1,16 @@
+import { degiroPdfTable, detectDegiroPdf } from '../../pdf/degiro.ts'
 import type { BrokerAdapter, ImportResult } from '../../types.ts'
 import { result } from '../kit.ts'
 import { detectAccount, isAccountTable, parseAccount } from './account.ts'
 import { detectTransactions, parseTransactions } from './transactions.ts'
 
-/** DEGIRO: the Transactions export, the Account statement, or both together. */
+/** DEGIRO: the Transactions export, the Account statement, or both together, as CSV, Excel or PDF. */
 export const degiroAdapter: BrokerAdapter = {
   id: 'degiro',
   label: 'DEGIRO',
-  detect: (table) => Math.max(detectTransactions(table), detectAccount(table)),
-  parse(tables, context): ImportResult {
+  detect: (table) => (table.text === undefined ? Math.max(detectTransactions(table), detectAccount(table)) : detectDegiroPdf(table.text)),
+  parse(allTables, context): ImportResult {
+    const tables = allTables.map((t) => (t.text === undefined ? t : degiroPdfTable(t)))
     const accounts = tables.filter(isAccountTable)
     const trades = tables.filter((t) => !isAccountTable(t))
     const outputs = [

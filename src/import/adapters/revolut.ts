@@ -1,3 +1,5 @@
+import { revolutPdf } from '../pdf/revolut.ts'
+import { withPdf } from '../pdf/kit.ts'
 import type { BrokerAdapter, ImportContext, RawTable } from '../types.ts'
 import { Collector, currencyOf, dataRows, detectByHeaders, findHeader, Holdings, parseDateTime, result, type ColumnSpec } from './kit.ts'
 
@@ -89,7 +91,7 @@ function parseTable(table: RawTable, context?: ImportContext) {
   return out
 }
 
-export const revolutAdapter: BrokerAdapter = {
+export const revolutAdapter: BrokerAdapter = withPdf({
   id: 'revolut',
   label: 'Revolut',
   detect,
@@ -105,4 +107,4 @@ export const revolutAdapter: BrokerAdapter = {
       },
     )
   },
-}
+}, revolutPdf)

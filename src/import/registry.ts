@@ -89,6 +89,10 @@ export function importTables(tables: RawTable[], { context, candidates = adapter
       'File not recognized as a supported broker export.',
       unrecognizedFiles.flatMap((f) => {
         const table = tables.find((t) => t.fileName === f)
+        if (table?.text !== undefined) {
+          const start = table.text.split('\n').find((line) => line.trim())?.trim() ?? ''
+          return [`${f}: no supported broker recognized this PDF.`, `First line: ${start || '(no text: a scanned PDF cannot be read)'}`]
+        }
         const header = table?.rows[0]?.filter((c) => c !== null).join(', ') ?? ''
         return [`${f}: no supported broker matched the header row.`, `Header found: ${header || '(empty)'}`]
       }),

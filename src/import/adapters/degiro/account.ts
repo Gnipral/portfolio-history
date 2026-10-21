@@ -27,22 +27,31 @@ export function detectAccount(table: RawTable): number {
 
 /**
  * `Koop 30 @ 22,5 EUR`, `PRODUCTWIJZIGING : Verkoop 500 @ 0 EUR`, and in older or other-language
- * statements `Buy 5 HP Inc@21.31 USD (US40434L1052)` or `Compra 1 VANGUARD S&P500@77,3 EUR (...)`.
+ * statements `Buy 5 HP Inc@21.31 USD (US40434L1052)`, `Compra 1 VANGUARD S&P500@77,3 EUR (...)` or
+ * `Kauf 1 zu je 177,5 USD`. The words in other languages follow Portfolio Performance's DegiroPDFExtractor.
  */
 const TRADE =
-  /^(?:([a-zà-ÿ -]+?)\s*:\s*)?(koop|verkoop|buy|sell|compra|venda|achat|vente|kauf|verkauf)\s+(\d[\d.,  ]*?)(?:\s+[^@]+?)?\s*@\s*([\d.,]+)\s*([A-Z]{3})/i
-const SELL = /^(verkoop|sell|venda|vente|verkauf)$/i
+  /^(?:([a-zà-ÿ -]+?)\s*:\s*)?(koop|verkoop|buy|sell|compra|venda|venta|achat|vente|kauf|verkauf|acquisto|vendita)\s+(\d[\d.,  ]*?)(?:\s+[^@]+?)?\s*(?:@|zu je)\s*([\d.,]+)\s*([A-Z]{3})/i
+const SELL = /^(verkoop|sell|venda|venta|vente|verkauf|vendita)$/i
 const FEE =
-  /transactiekosten|transaction (and\/or third party )?fees?|comiss|custos? de transa|frais|aansluitingskosten|connection fee|conectividade|corporate action kosten|corporate action fee|kosten|fee/i
-const DIVIDEND_TAX = /dividendbelasting|dividend tax|imposto sobre dividendo|imp[oô]ts? sur dividende|quellensteuer/i
-const DIVIDEND = /dividend|dividendo|fondsuitkering|fund distribution|kapitaalterugbetaling|capital return/i
-const STOCK_TAX = /transactiebelasting|financial transaction tax|beurstaks|stock exchange tax|imposto|taxe sur les transactions/i
-const WITHDRAWAL = /withdrawal|terugstorting|opname|levantamento|retrait|retirada/i
-const DEPOSIT = /storting|deposit|depósito|ideal|sofort|bancontact|ingreso|versement|einzahlung/i
-const INTEREST = /interest|rente|juros|intérêts/i
-const INCOME = /courtesy|compensatie|compensation|bonus/i
-const IGNORED =
-  /valuta (creditering|debitering)|fx (credit|debit)|divisa|devises|cash sweep|geldmarktfonds|money market|fonds mon[ée]taires|overboeking (van|naar) uw geldrekening|reservation|reservering/i
+  /transactiekosten|transaction (and\/or third party )?fees?|comiss|custos? de transa|costes|frais|aansluitingskosten|connection fee|conectividade|corporate action kosten|corporate action fee|kosten|fee|gebühr|einrichtung von|costi|commissioni/i
+const DIVIDEND_TAX = /dividendbelasting|dividend tax|imposto sobre dividendo|imp[oô]ts? sur dividende|quellensteuer|dividendensteuer|ritenuta|retenci[oó]n/i
+const DIVIDEND = /dividend|dividendo|fondsuitkering|fund distribution|kapitaalterugbetaling|capital return|kapitalrückzahlung|aussch[uü]ttung/i
+const STOCK_TAX = /transactiebelasting|financial transaction tax|beurstaks|stock exchange tax|imposto|taxe sur les transactions|finanztransaktionssteuer|transaction tax|transaktionssteuer/i
+const WITHDRAWAL = /withdrawal|terugstorting|opname|levantamento|retrait|retirada|auszahlung|prelievo(?! fx)/i
+const DEPOSIT = /storting|deposit|depósito|deposito|dépôt|ideal|sofort|bancontact|ingreso|versement|einzahlung|vklad/i
+const INTEREST = /interest|rente|juros|intérêts|zinsen|interess[ei]/i
+const INCOME = /courtesy|compensatie|compensation|bonus|promotionnelle|promotion|neukundenaktion/i
+/** Units of the money market fund that holds uninvested cash: not an investment of the user. */
+const MONEY_MARKET = /geldmarktfonds|money market|fonds mon[ée]taires|fondo comune monetario|pen[eě]žního fondu/i
+const IGNORED = new RegExp(
+  String.raw`valuta (creditering|debitering)|fx (credit|debit)|credito fx|prelievo fx|fx vyúčtování|divisa|devises|op[ée]ration de change|währungswechsel|cash sweep|overboeking (van|naar) uw geldrekening|transfer (to|from) your cash account|transferir (a|desde) su|trasferisci|virement (de|vers)|überweisung (auf|von) ihr geldkonto|reservation|reservering|${MONEY_MARKET.source}`,
+  'i',
+)
+
+function tradeOf(description: string): RegExpExecArray | null {
+  return MONEY_MARKET.test(description) ? null : TRADE.exec(description)
+}
 
 interface Row {
   number: number
@@ -105,7 +114,7 @@ export function parseAccount(
   // Corporate actions book the old line as a sell and the new one as a buy, without money, in either order.
   const corporateSells: { row: Row; quantity: number; label: string; paired: boolean }[] = []
   for (const row of rows) {
-    const trade = TRADE.exec(row.description)
+    const trade = tradeOf(row.description)
     if (trade?.[1] && !(Math.abs(row.amount) > 0) && SELL.test(trade[2] as string)) {
       corporateSells.push({ row, quantity: parseNumber(trade[3] as string) ?? 0, label: trade[1].toLowerCase(), paired: false })
     }
@@ -124,7 +133,7 @@ export function parseAccount(
       amount: Number.isFinite(row.amount) ? row.amount : 0,
       orderId: row.orderId,
     } satisfies Partial<Draft>
-    const trade = TRADE.exec(description)
+    const trade = tradeOf(description)
 
     if (trade) {
       if (!withTrades) continue

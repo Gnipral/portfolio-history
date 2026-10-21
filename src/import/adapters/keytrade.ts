@@ -1,3 +1,5 @@
+import { keytradePdf } from '../pdf/keytrade.ts'
+import { withPdf } from '../pdf/kit.ts'
 import type { BrokerAdapter, ImportContext, RawTable } from '../types.ts'
 import { Collector, dataRows, detectByHeaders, findHeader, guessAssetClass, parseDateTime, result, type ColumnSpec } from './kit.ts'
 
@@ -79,7 +81,7 @@ function parseTable(table: RawTable, context?: ImportContext) {
   return out
 }
 
-export const keytradeAdapter: BrokerAdapter = {
+export const keytradeAdapter: BrokerAdapter = withPdf({
   id: 'keytrade',
   label: 'Keytrade Bank',
   detect,
@@ -91,4 +93,4 @@ export const keytradeAdapter: BrokerAdapter = {
       { fxCosts: 'Keytrade includes currency conversion in the net amount.' },
     )
   },
-}
+}, keytradePdf)
