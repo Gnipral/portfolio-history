@@ -107,7 +107,43 @@ describe('irrSeries and irrBetween', () => {
   it('gives the return to date for every day', () => {
     const irr = irrSeries(days)
     expect(irr[0]).toBeUndefined() // nothing has happened yet
-    expect(irr[2]).toBeCloseTo(0.1, 9)
+    expect(irr[2]?.annual).toBeCloseTo(0.1, 9)
+    expect(irr[2]?.period).toBeCloseTo(0.1, 9)
+    expect(irr[2]?.spanDays).toBe(365)
+  })
+
+  it('counts the period from the first flow, not from the first day', () => {
+    // A day without flows (a deposit outside cash mode) comes a month before the first buy.
+    const irr = irrSeries([
+      { date: '2025-01-01', value: 0, inflow: 0, outflow: 0 },
+      { date: '2025-02-01', value: 1000, inflow: 1000, outflow: 0 },
+      { date: '2025-03-03', value: 1050, inflow: 0, outflow: 0 },
+    ])
+    expect(irr[2]?.spanDays).toBe(30)
+    expect(irr[2]?.period).toBeCloseTo(0.05, 9)
+  })
+
+  it('stops the period at the last sale once everything is sold', () => {
+    const irr = irrSeries([
+      { date: '2025-01-01', value: 1000, inflow: 1000, outflow: 0 },
+      { date: '2025-04-11', value: 0, inflow: 0, outflow: 1100 },
+      { date: '2025-04-12', value: 0, inflow: 0, outflow: 0 },
+      { date: '2025-12-31', value: 0, inflow: 0, outflow: 0 },
+    ])
+    for (const day of irr.slice(1)) {
+      expect(day?.spanDays).toBe(100)
+      expect(day?.period).toBeCloseTo(0.1, 9)
+    }
+  })
+
+  it('solves big moves over a few days without overflow or underflow', () => {
+    const irr = irrSeries([
+      { date: '2025-01-01', value: 1000, inflow: 1000, outflow: 0 },
+      { date: '2025-01-02', value: 700, inflow: 0, outflow: 0 },
+      { date: '2025-01-03', value: 3000, inflow: 0, outflow: 0 },
+    ])
+    expect(irr[1]?.period).toBeCloseTo(-0.3, 9)
+    expect(irr[2]?.period).toBeCloseTo(2, 9)
   })
 
   it('computes the return of a range, starting from the value before it', () => {
@@ -190,6 +226,7 @@ describe('money-weighted return in the first year', () => {
     const { points } = computeDailySeries([tx('buy', '2026-01-01', { isin: A, quantity: 10, amount: 1000 })], prices, DEFAULT_OPTIONS, '2026-01-31')
     const last = points.at(-1)
     expect(last?.days).toBe(30)
+    expect(last?.irrDays).toBe(30)
     expect(last?.irrPeriod).toBeCloseTo(0.05, 9)
     expect(last?.irr).toBeGreaterThan(0.7)
   })
