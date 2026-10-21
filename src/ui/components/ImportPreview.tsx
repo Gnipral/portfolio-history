@@ -4,8 +4,8 @@ import { formatDate } from '../format.ts'
 
 const CAPABILITY_LABELS: Record<keyof Capabilities, string> = {
   transactionCosts: 'Transaction costs',
-  fxCosts: 'FX costs',
-  taxes: 'Taxes (TOB)',
+  fxCosts: 'Currency conversion costs',
+  taxes: 'Taxes',
   dividends: 'Dividends',
   deposits: 'Deposits and withdrawals',
 }
