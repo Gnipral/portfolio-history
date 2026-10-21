@@ -1,6 +1,6 @@
 import type { BrokerAdapter, ImportContext, RawTable } from '../types.ts'
 import { parseNumber } from '../parse.ts'
-import { Collector, dataRows, detectByHeaders, findHeader, guessAssetClass, parseDateTime, result, type ColumnSpec } from './kit.ts'
+import { Collector, dataRows, detectByHeaders, findHeader, guessAssetClass, parseDateTime, result, type ColumnSpec, type Row } from './kit.ts'
 
 /**
  * XTB account history, "Cash Operations" (xStation CSV or Excel sheet), in the current layout
@@ -16,6 +16,7 @@ const COLUMNS = {
   id: ['id'],
   comment: ['comment'],
 } satisfies ColumnSpec<string>
+type Key = keyof typeof COLUMNS
 
 const TRADE = /(OPEN|CLOSE) (BUY|SELL) ([\d.]+)(?:\/[\d.]+)? @ ([\d.]+)/i
 
@@ -38,6 +39,29 @@ function detect(table: RawTable): number {
   return 0
 }
 
+/**
+ * A transfer between two XTB sub-accounts (My Trades ↔ Investment Plans) is a pair of rows with the
+ * same time and comment and opposite amounts. No money enters or leaves, so both rows are skipped.
+ */
+function internalTransfers(rows: Row<Key>[]): Set<Row<Key>> {
+  const paired = new Set<Row<Key>>()
+  const isTransfer = (row: Row<Key>) => /^(subaccount )?transfer$/i.test(row.text('type'))
+  for (const outgoing of rows) {
+    const amount = outgoing.money('amount') ?? 0
+    if (!isTransfer(outgoing) || amount >= 0 || paired.has(outgoing)) continue
+    const incoming = rows.find(
+      (r) =>
+        !paired.has(r) &&
+        r.text('type') === outgoing.text('type') &&
+        r.text('time') === outgoing.text('time') &&
+        r.text('comment') === outgoing.text('comment') &&
+        Math.abs((r.money('amount') ?? 0) + amount) < 1e-9,
+    )
+    if (incoming) paired.add(outgoing).add(incoming)
+  }
+  return paired
+}
+
 function parseTable(table: RawTable, context?: ImportContext) {
   const out = new Collector('xtb', table.fileName, context)
   const header = findHeader(table, COLUMNS, ['type', 'time', 'amount', 'comment'])
@@ -45,8 +69,12 @@ function parseTable(table: RawTable, context?: ImportContext) {
     out.issue('error', 'Missing XTB columns.')
     return out
   }
-  for (const row of dataRows(table, header)) {
-    if (row.text('type').toLowerCase() === 'total') continue
+  // XTB names the export after the account currency (`EUR_account_123.csv`); amounts are in it.
+  const currency = /(?:^|[\\/])([A-Z]{3})_[^\\/]*$/i.exec(table.fileName)?.[1]?.toUpperCase() ?? 'EUR'
+  const rows = dataRows(table, header)
+  const internal = internalTransfers(rows)
+  for (const row of rows) {
+    if (row.text('type').toLowerCase() === 'total' || internal.has(row)) continue
     // Some exports write a three-digit day ("010.09.2024").
     const at = parseDateTime(row.text('time').replace(/^0(\d{2}\.)/, '$1'))
     if (!at) {
@@ -64,7 +92,7 @@ function parseTable(table: RawTable, context?: ImportContext) {
       product: row.text('instrument') || symbol || 'Cash',
       ...(ticker ? { ticker } : {}),
       assetClass: guessAssetClass(row.text('instrument')),
-      cashCurrency: 'EUR',
+      cashCurrency: currency,
       amount,
       orderId: row.text('id'),
     }

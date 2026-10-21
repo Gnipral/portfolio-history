@@ -111,7 +111,7 @@ export function ImportPage() {
               e.target.value = ''
             }}
           />
-          <span>Drop a CSV or XLSX file here, or click to choose</span>
+          <span>Drop a CSV, XLSX, XML or PDF file here, or click to choose</span>
         </label>
       )}
 

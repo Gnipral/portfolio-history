@@ -1,3 +1,5 @@
+import { boleroPdf } from '../pdf/bolero.ts'
+import { withPdf } from '../pdf/kit.ts'
 import type { BrokerAdapter, ImportContext, RawTable } from '../types.ts'
 import { Collector, dataRows, detectByHeaders, findHeader, guessAssetClass, parseDateTime, result, type ColumnSpec } from './kit.ts'
 
@@ -63,7 +65,7 @@ function parseTable(table: RawTable, context?: ImportContext) {
   return out
 }
 
-export const boleroAdapter: BrokerAdapter = {
+export const boleroAdapter: BrokerAdapter = withPdf({
   id: 'bolero',
   label: 'Bolero',
   detect,
@@ -76,4 +78,4 @@ export const boleroAdapter: BrokerAdapter = {
       { transactionCosts: reason, fxCosts: reason, taxes: reason },
     )
   },
-}
+}, boleroPdf)
