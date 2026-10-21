@@ -39,6 +39,23 @@ export interface LedgerIssue {
   message: string
 }
 
+/** One sale with its result, in EUR. */
+export interface Sale {
+  date: string
+  key: string
+  product: string
+  isin?: string
+  quantity: number
+  /** What the sale paid, after the charges that count. */
+  proceeds: number
+  /** Cost basis of the units sold. */
+  cost: number
+  /** proceeds - cost */
+  gain: number
+  /** Costs, taxes and FX costs of the sale that count. */
+  charges: number
+}
+
 /** What the ledger needs to know besides the transaction it applies. */
 export interface LedgerContext {
   /** All transactions, to recognize the withholding tax that belongs to a dividend. */
@@ -62,6 +79,8 @@ export class Ledger {
   netDeposits = 0
   /** Cash balance, only meaningful when the import contains deposits. */
   cash = 0
+  /** Every sale so far, oldest first. */
+  readonly sales: Sale[] = []
 
   /** Instrument and day of every dividend, as `key|date`. */
   private readonly dividendDays: Set<string>
@@ -128,6 +147,17 @@ export class Ledger {
         }
         const costSold = this.removeCost(holding, quantity)
         const gain = proceeds - costSold
+        this.sales.push({
+          date: t.date,
+          key: holding.key,
+          product: t.product,
+          ...(holding.isin ? { isin: holding.isin } : {}),
+          quantity,
+          proceeds,
+          cost: costSold,
+          gain,
+          charges,
+        })
         holding.realized += gain
         this.realized += gain
         holding.quantity -= quantity
@@ -300,6 +330,22 @@ export class Ledger {
     target.lots.push(...movedLots)
     if (lastPrice !== undefined) target.lastTradePrice = lastPrice / ratio
     if (lastDate !== undefined) target.lastTradeDate = lastDate
+  }
+
+  /**
+   * Raises the cost basis of every open position to at least `unitValue` per unit, lot by lot:
+   * the step-up of the Belgian capital gains tax, which only taxes gains made from 2026 on.
+   */
+  stepUp(unitValue: (holding: Holding) => number | undefined): void {
+    for (const holding of this.openHoldings()) {
+      const value = unitValue(holding)
+      if (value === undefined) continue
+      for (const lot of holding.lots) lot.unitCost = Math.max(lot.unitCost, value)
+      holding.cost =
+        this.options.costBasis === 'fifo'
+          ? holding.lots.reduce((sum, lot) => sum + lot.quantity * lot.unitCost, 0)
+          : Math.max(holding.cost, value * holding.quantity)
+    }
   }
 
   openHoldings(): Holding[] {

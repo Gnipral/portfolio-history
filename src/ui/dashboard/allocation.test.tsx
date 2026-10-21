@@ -2,7 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { tx } from '../../engine/testing.ts'
 import type { Position } from '../../engine/positions.ts'
-import { allocationSlices, colorSlots, SERIES_SLOTS } from './allocation.ts'
+import { allocationSlices, colorSlots, groupedSlices, instrumentFacts, SERIES_SLOTS } from './allocation.ts'
 import { AllocationChart } from './AllocationChart.tsx'
 
 const position = (key: string, value: number): Position => ({
@@ -71,5 +71,22 @@ describe('AllocationChart', () => {
     expect(screen.getByText('Beta')).toBeTruthy()
     expect(screen.getByText('62.50%')).toBeTruthy()
     expect(screen.getByRole('img', { name: /Allocation/ })).toBeTruthy()
+  })
+})
+
+describe('groupedSlices', () => {
+  it('groups the positions by type, currency or the country of the ISIN', () => {
+    const facts = instrumentFacts([
+      tx('buy', '2026-01-02', { isin: 'IE00B4L5Y983', assetClass: 'etf', currency: 'EUR', quantity: 1, amount: 1 }),
+      tx('buy', '2026-01-02', { isin: 'US0378331005', assetClass: 'stock', currency: 'USD', quantity: 1, amount: 1 }),
+      tx('buy', '2026-01-02', { isin: 'BE0003565737', assetClass: 'stock', currency: 'EUR', quantity: 1, amount: 1 }),
+    ])
+    const positions = [position('IE00B4L5Y983', 600), position('US0378331005', 300), position('BE0003565737', 100)]
+    expect(groupedSlices(positions, 'assetClass', facts).map((s) => [s.label, s.share])).toEqual([
+      ['ETFs', 0.6],
+      ['Stocks', 0.4],
+    ])
+    expect(groupedSlices(positions, 'currency', facts).map((s) => s.label)).toEqual(['EUR', 'USD'])
+    expect(groupedSlices(positions, 'country', facts).map((s) => s.label)).toEqual(['Ireland', 'United States', 'Belgium'])
   })
 })

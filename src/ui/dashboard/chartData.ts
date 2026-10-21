@@ -15,8 +15,8 @@ export interface ChartData {
   secondary: LinePoint[]
   /** Lower pane: profit/loss in EUR; empty in percent mode. */
   pnl: LinePoint[]
-  /** Benchmark bought with the same money: value (EUR) or its return from the first visible day (percent). */
-  benchmark: LinePoint[]
+  /** Per benchmark, bought with the same money: value (EUR) or its return from the first visible day (percent). */
+  benchmarks: LinePoint[][]
 }
 
 /**
@@ -29,22 +29,23 @@ export function chartData(
   from: number,
   to: number,
   mode: ChartMode,
-  benchmarkPoints: BenchmarkPoint[] = [],
+  benchmarkLines: BenchmarkPoint[][] = [],
 ): ChartData {
   const visible = points.slice(from, to + 1)
-  const benchmark = benchmarkPoints.slice(from, to + 1)
   if (mode === 'eur') {
     return {
-      benchmark: benchmark.map((p) => ({ time: p.date, value: round(p.value) })),
+      benchmarks: benchmarkLines.map((line) => line.slice(from, to + 1).map((p) => ({ time: p.date, value: round(p.value) }))),
       main: visible.map((p) => ({ time: p.date, value: round(p.value) })),
       secondary: visible.map((p) => ({ time: p.date, value: round(p.invested) })),
       pnl: visible.map((p) => ({ time: p.date, value: round(p.pnl) })),
     }
   }
   const base = 1 + (from > 0 ? (points[from - 1]?.twr ?? 0) : 0)
-  const benchmarkBase = 1 + (from > 0 ? (benchmarkPoints[from - 1]?.twr ?? 0) : 0)
   return {
-    benchmark: benchmark.map((p) => ({ time: p.date, value: round(((1 + p.twr) / benchmarkBase - 1) * 100) })),
+    benchmarks: benchmarkLines.map((line) => {
+      const lineBase = 1 + (from > 0 ? (line[from - 1]?.twr ?? 0) : 0)
+      return line.slice(from, to + 1).map((p) => ({ time: p.date, value: round(((1 + p.twr) / lineBase - 1) * 100) }))
+    }),
     main: visible.map((p) => ({ time: p.date, value: round(((1 + p.twr) / base - 1) * 100) })),
     secondary: from === 0 ? visible.map((p) => ({ time: p.date, value: round(p.simpleReturn * 100) })) : [],
     pnl: [],
