@@ -5,6 +5,7 @@ import { positionSeries } from '../../engine/analysis/positionSeries.ts'
 import { db } from '../../data/db.ts'
 import { positionsOn } from '../../engine/positions.ts'
 import { allocationSlices, colorSlots, DIMENSIONS, groupedSlices, instrumentFacts, type AllocationDimension } from '../dashboard/allocation.ts'
+import { BenchmarkPicker } from '../dashboard/BenchmarkPicker.tsx'
 import { benchmarkLines } from '../dashboard/benchmarkLines.ts'
 import { localToday } from '../../market/dates.ts'
 import type { ChartMode } from '../dashboard/chartData.ts'
@@ -15,7 +16,7 @@ import { clampIndex, rangeChange, visibleRange, type RangeKey } from '../dashboa
 import { ToggleBar } from '../dashboard/ToggleBar.tsx'
 import { engineOptions, toggleStates } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
-import { DEFAULT_SETTINGS, saveSettings, useSettings } from '../../settings/settings.ts'
+import { DEFAULT_SETTINGS, saveSettings, updateSettings, useSettings } from '../../settings/settings.ts'
 import { formatPercent, formatSignedEur, trendClass } from '../format.ts'
 
 // The chart libraries are large; load them only when the dashboard shows data.
@@ -47,10 +48,10 @@ export function DashboardPage() {
     () => (inputs && selectedDate ? positionsOn(inputs.transactions, inputs.prices, options, selectedDate) : []),
     [inputs, options, selectedDate],
   )
-  const { benchmarkId, extraBenchmarkIds, benchmarkMix } = settings
+  const { benchmarkId, extraBenchmarkIds, benchmarkMix, benchmarkMixShown } = settings
   const benchmarks = useMemo(
-    () => benchmarkLines(points, inputs?.benchmarks ?? [], { benchmarkId, extraBenchmarkIds, benchmarkMix }),
-    [inputs, points, benchmarkId, extraBenchmarkIds, benchmarkMix],
+    () => benchmarkLines(points, inputs?.benchmarks ?? [], { benchmarkId, extraBenchmarkIds, benchmarkMix, benchmarkMixShown }),
+    [inputs, points, benchmarkId, extraBenchmarkIds, benchmarkMix, benchmarkMixShown],
   )
   const slots = useMemo(() => colorSlots(inputs?.transactions ?? []), [inputs])
   const facts = useMemo(() => instrumentFacts(inputs?.transactions ?? []), [inputs])
@@ -133,6 +134,7 @@ export function DashboardPage() {
               benchmarks={benchmarks}
             />
           </Suspense>
+          <BenchmarkPicker settings={settings} lines={benchmarks} onChange={(change) => void updateSettings(change)} />
           <p className="muted small">
             {range === 'ALL' ? 'Since the first transaction' : `Last ${range === 'YTD' ? 'year to date' : range}`}:{' '}
             <span className={trendClass(change.pnl)}>{formatSignedEur(change.pnl)}</span>, time-weighted{' '}
