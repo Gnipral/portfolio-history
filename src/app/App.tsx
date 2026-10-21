@@ -2,6 +2,7 @@ import { NavLink, Navigate, Route, Routes } from 'react-router'
 import { OfflineBadge } from '../ui/components/OfflineBadge.tsx'
 import { ThemeToggle } from '../ui/components/ThemeToggle.tsx'
 import { UpdateBanner } from '../ui/components/UpdateBanner.tsx'
+import { AnalysisPage } from '../ui/pages/AnalysisPage.tsx'
 import { DashboardPage } from '../ui/pages/DashboardPage.tsx'
 import { ImportPage } from '../ui/pages/ImportPage.tsx'
 import { PricesPage } from '../ui/pages/PricesPage.tsx'
@@ -20,6 +21,7 @@ export function App() {
           <NavLink to="/" end>
             Dashboard
           </NavLink>
+          <NavLink to="/analysis">Analysis</NavLink>
           <NavLink to="/import">Import</NavLink>
           <NavLink to="/prices">Prices</NavLink>
           <NavLink to="/settings">Settings</NavLink>
@@ -30,6 +32,7 @@ export function App() {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<DashboardPage />} />
+          <Route path="/analysis" element={<AnalysisPage />} />
           <Route path="/import" element={<ImportPage />} />
           <Route path="/prices" element={<PricesPage />} />
           <Route path="/settings" element={<SettingsPage />} />

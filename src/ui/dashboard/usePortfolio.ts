@@ -35,10 +35,12 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
       if (transactionCount === 0) setInputs(null)
       return
     }
-    const benchmark = BENCHMARKS.find((b) => b.id === benchmarkId) ?? BENCHMARKS.find((b) => b.id === DEFAULT_BENCHMARK_ID)
+    // Every benchmark is loaded: they are small, and the dashboard can show several or a mix.
+    const main = BENCHMARKS.find((b) => b.id === benchmarkId) ?? BENCHMARKS.find((b) => b.id === DEFAULT_BENCHMARK_ID)
+    const benchmarks = [...(main ? [main] : []), ...BENCHMARKS.filter((b) => b !== main)]
     let cancelled = false
     void (async () => {
-      const loaded = await loadEngineInputs(db, benchmark)
+      const loaded = await loadEngineInputs(db, benchmarks)
       if (cancelled) return
       setInputs(loaded)
       const today = localToday()
@@ -52,14 +54,14 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
         settings: await loadSettings(),
         today,
         now: new Date(),
-        ...(benchmark ? { benchmarkIds: [benchmark.id] } : {}),
+        benchmarkIds: benchmarks.map((b) => b.id),
         onProgress: (progress) => {
           if (!cancelled) setSync(progress)
         },
       })
       if (cancelled) return
       setSyncProblems(Object.keys(report.problems).length)
-      setInputs(await loadEngineInputs(db, benchmark))
+      setInputs(await loadEngineInputs(db, benchmarks))
     })()
     return () => {
       cancelled = true

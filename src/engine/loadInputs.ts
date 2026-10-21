@@ -6,15 +6,21 @@ import type { PricePoint } from '../market/types.ts'
 import type { Transaction } from '../model/transaction.ts'
 import { PriceBook, type SplitAdjustment } from './priceBook.ts'
 
+export interface LoadedBenchmark {
+  info: Benchmark
+  /** Closes in EUR. */
+  series: PriceSeries
+}
+
 export interface EngineInputs {
   transactions: Transaction[]
   prices: PriceBook
-  /** Closes of the chosen benchmark (EUR), when loaded. */
-  benchmark?: { info: Benchmark; series: PriceSeries }
+  /** The benchmarks asked for that have closes, in the order asked. */
+  benchmarks: LoadedBenchmark[]
 }
 
 /** Reads everything the engine needs from IndexedDB in one go. */
-export async function loadEngineInputs(database: PortfolioDatabase, benchmark?: Benchmark): Promise<EngineInputs> {
+export async function loadEngineInputs(database: PortfolioDatabase, benchmarks: Benchmark[] = []): Promise<EngineInputs> {
   const [transactions, symbolRecords, coverage, fxDays, splitRows] = await Promise.all([
     database.transactions.toArray(),
     database.symbols.toArray(),
@@ -24,7 +30,7 @@ export async function loadEngineInputs(database: PortfolioDatabase, benchmark?: 
   ])
 
   const symbols = new Map(symbolRecords.flatMap((r) => (r.symbol ? [[r.key, r.symbol] as const] : [])))
-  const wanted = [...new Set([...symbols.values(), ...(benchmark ? [benchmark.symbol] : [])])]
+  const wanted = [...new Set([...symbols.values(), ...benchmarks.map((b) => b.symbol)])]
   const points = await database.prices.where('symbol').anyOf(wanted).toArray()
   const bySymbol = new Map<string, PricePoint[]>()
   for (const p of points) {
@@ -46,12 +52,12 @@ export async function loadEngineInputs(database: PortfolioDatabase, benchmark?: 
     },
     transactions,
   )
-  const benchmarkPoints = benchmark ? bySymbol.get(benchmark.symbol) : undefined
   return {
     transactions,
     prices,
-    ...(benchmark && benchmarkPoints?.length
-      ? { benchmark: { info: benchmark, series: PriceSeries.fromPoints(benchmark.symbol, benchmarkPoints) } }
-      : {}),
+    benchmarks: benchmarks.flatMap((info) => {
+      const list = bySymbol.get(info.symbol)
+      return list?.length ? [{ info, series: PriceSeries.fromPoints(info.symbol, list) }] : []
+    }),
   }
 }
