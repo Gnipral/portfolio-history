@@ -1,5 +1,5 @@
 {
-  "lastCheck": "2026-10-23T00:04:24Z",
+  "lastCheck": "2026-10-23T23:54:38Z",
   "sources": {
     "fx-rates.json": "European Central Bank reference rates via Frankfurter (api.frankfurter.dev)",
     "benchmark-iwda.json": "Yahoo Finance daily closes (IWDA.AS)",
@@ -8,24 +8,24 @@
   },
   "files": {
     "fx-rates.json": {
-      "rows": 4304,
+      "rows": 4305,
+      "firstDate": "2010-01-04",
+      "lastDate": "2026-10-23"
+    },
+    "benchmark-iwda.json": {
+      "rows": 4301,
       "firstDate": "2010-01-04",
       "lastDate": "2026-10-22"
     },
-    "benchmark-iwda.json": {
-      "rows": 4300,
-      "firstDate": "2010-01-04",
-      "lastDate": "2026-10-21"
-    },
     "benchmark-vwce.json": {
-      "rows": 1839,
+      "rows": 1840,
       "firstDate": "2019-07-29",
-      "lastDate": "2026-10-21"
+      "lastDate": "2026-10-22"
     },
     "benchmark-sxr8.json": {
-      "rows": 4173,
+      "rows": 4174,
       "firstDate": "2010-05-19",
-      "lastDate": "2026-10-21"
+      "lastDate": "2026-10-22"
     }
   },
   "errors": []
