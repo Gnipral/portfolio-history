@@ -4,6 +4,23 @@ Generated every week from the merged pull requests by the weekly maintenance wor
 
 ## Week of 2026-10-19
 
+- feat: choose benchmarks on the dashboard (#60) by @SausMeesterXIV
+- fix: chart divider never covers the price axis (#59) by @SausMeesterXIV
+- feat: bolder chart with full screen (#58) by @SausMeesterXIV
+- feat: easier to read portfolio chart (#57) by @SausMeesterXIV
+- feat: terminal-style redesign (#56) by @SausMeesterXIV
+- feat: clearer include options on the dashboard (#55) by @SausMeesterXIV
+- fix: money-weighted return over the span of the actual flows (#54) by @SausMeesterXIV
+- Capital gains tax rules per country (#53) by @SausMeesterXIV
+- Analysis page, position charts, allocation groups and benchmark mixes (#52) by @SausMeesterXIV
+- Fix portfolio calculations (#51) by @SausMeesterXIV
+- Broker import: PDFs and fixes, following Portfolio Performance (#50) by @SausMeesterXIV
+- Import all supported brokers, not only DEGIRO (#49) by @SausMeesterXIV
+- M10: Offline behaviour, polish and README (#48) by @SausMeesterXIV
+- chore: scheduled data commits by the maintainer only (#47) by @SausMeesterXIV
+- M9: Weekly maintenance with data-quality report and changelog (#46) by @SausMeesterXIV
+- M8 (2/2): Settings for cost basis, theme and deleting all data (#45) by @SausMeesterXIV
+- M8 (1/2): Include/exclude toggles that recalculate instantly (#44) by @SausMeesterXIV
 - fix: refetch price ranges once after the split fix (#34) by @ruizverbeke-dotcom
 - M7 (3/3): Benchmark bought with the same money (#32) by @SausMeesterXIV
 - M7 (2/3): Allocation donut for the selected day (#31) by @SausMeesterXIV
