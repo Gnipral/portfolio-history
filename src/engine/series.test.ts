@@ -204,3 +204,20 @@ describe('daily series: a broker with deposits and one without', () => {
     expect(day['2026-01-07']).toMatchObject({ value: 1100, invested: 900, pnl: 200 })
   })
 })
+
+describe('daily series: a deposit that waits as cash', () => {
+  const trades = [
+    tx('deposit', '2026-01-05', { amount: 1000 }),
+    tx('buy', '2026-01-05', { isin: A, quantity: 10, amount: 1000 }),
+    tx('deposit', '2026-01-07', { amount: 5000 }),
+  ]
+  const prices = book([['2026-01-05', 100], ['2026-01-06', 110], ['2026-01-08', 121]])
+  const day = byDate(computeDailySeries(trades, prices, DEFAULT_OPTIONS, '2026-01-08').points)
+
+  it('leaves the percentage to the securities: +10% and +10% make +21%, whatever was deposited', () => {
+    expect(day['2026-01-06']?.twr).toBeCloseTo(0.1, 10)
+    expect(day['2026-01-08']?.twr).toBeCloseTo(0.21, 10)
+    // The value still includes the cash.
+    expect(day['2026-01-08']?.value).toBeCloseTo(6210, 6)
+  })
+})

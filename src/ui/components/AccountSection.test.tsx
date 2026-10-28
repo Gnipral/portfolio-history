@@ -13,6 +13,8 @@ describe('AccountSection', () => {
     vi.unstubAllEnvs()
     vi.unstubAllGlobals()
     localStorage.clear()
+    // The modules load again for every test: keep them in English.
+    localStorage.setItem('portfolio-history:language', 'en')
   })
 
   it('stays hidden while the build has no account service', async () => {

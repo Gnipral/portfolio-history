@@ -237,69 +237,6 @@
   --series-7: #c77dff;
 }
 
-/* Pastels on a calm background. */
-[data-palette='soft'] {
-  --surface: #f3f0ea;
-  --border: #e6e1d8;
-  --text: #4a4d50;
-  --text-muted: #8a8a84;
-  --positive: #7fa98d;
-  --negative: #c98f89;
-  --chart-value: #8fa9c2;
-  --chart-invested: #c2c0ba;
-  --chart-positive: #93b8a0;
-  --chart-negative: #d4a5a0;
-  --chart-zero: #b5b2ab;
-  --chart-grid: #ebe7df;
-  --chart-separator: #d9d4ca;
-  --series-2: #d9bf94;
-  --series-5: #dcaec4;
-  --series-6: #b7c99a;
-  --series-7: #b9a8d6;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) [data-palette='soft'] {
-    --surface: #1c2026;
-    --border: #2a2f36;
-    --text: #c3c7cd;
-    --text-muted: #8a9099;
-    --positive: #8fbf9f;
-    --negative: #c99a96;
-    --chart-value: #9db6cc;
-    --chart-invested: #6f7782;
-    --chart-positive: #8fbf9f;
-    --chart-negative: #c99a96;
-    --chart-zero: #7c838c;
-    --chart-grid: #242a31;
-    --chart-separator: #3a414a;
-    --series-2: #c9b08a;
-    --series-5: #c79eb3;
-    --series-6: #a7b88d;
-    --series-7: #a99bc4;
-  }
-}
-
-:root[data-theme='dark'] [data-palette='soft'] {
-  --surface: #1c2026;
-  --border: #2a2f36;
-  --text: #c3c7cd;
-  --text-muted: #8a9099;
-  --positive: #8fbf9f;
-  --negative: #c99a96;
-  --chart-value: #9db6cc;
-  --chart-invested: #6f7782;
-  --chart-positive: #8fbf9f;
-  --chart-negative: #c99a96;
-  --chart-zero: #7c838c;
-  --chart-grid: #242a31;
-  --chart-separator: #3a414a;
-  --series-2: #c9b08a;
-  --series-5: #c79eb3;
-  --series-6: #a7b88d;
-  --series-7: #a99bc4;
-}
-
 /* Glowing colors on deep black, in the light theme too. */
 [data-palette='neon'] {
   --surface: #07060f;
@@ -361,69 +298,6 @@
   --series-5: #ff00e6;
   --series-6: #7df9ff;
   --series-7: #ff7a00;
-}
-
-/* Deep blues, teal gains, coral losses. */
-[data-palette='ocean'] {
-  --surface: #eef6fb;
-  --border: #cfe2ee;
-  --text: #0d2b45;
-  --text-muted: #4a6b80;
-  --positive: #0f9d8a;
-  --negative: #e4572e;
-  --chart-value: #0b5394;
-  --chart-invested: #7aa0b8;
-  --chart-positive: #0f9d8a;
-  --chart-negative: #e4572e;
-  --chart-zero: #12355b;
-  --chart-grid: #dbeaf3;
-  --chart-separator: #9dbbd0;
-  --series-2: #f2a541;
-  --series-5: #ff6f91;
-  --series-6: #3c91e6;
-  --series-7: #6a4c93;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) [data-palette='ocean'] {
-    --surface: #071a2b;
-    --border: #12324d;
-    --text: #e0f2ff;
-    --text-muted: #8fb3cc;
-    --positive: #2ee6c5;
-    --negative: #ff7b54;
-    --chart-value: #4fc3f7;
-    --chart-invested: #6d8fa8;
-    --chart-positive: #2ee6c5;
-    --chart-negative: #ff7b54;
-    --chart-zero: #e0f2ff;
-    --chart-grid: #0d2840;
-    --chart-separator: #2c5577;
-    --series-2: #ffc15e;
-    --series-5: #ff8fab;
-    --series-6: #81d4fa;
-    --series-7: #b39ddb;
-  }
-}
-
-:root[data-theme='dark'] [data-palette='ocean'] {
-  --surface: #071a2b;
-  --border: #12324d;
-  --text: #e0f2ff;
-  --text-muted: #8fb3cc;
-  --positive: #2ee6c5;
-  --negative: #ff7b54;
-  --chart-value: #4fc3f7;
-  --chart-invested: #6d8fa8;
-  --chart-positive: #2ee6c5;
-  --chart-negative: #ff7b54;
-  --chart-zero: #e0f2ff;
-  --chart-grid: #0d2840;
-  --chart-separator: #2c5577;
-  --series-2: #ffc15e;
-  --series-5: #ff8fab;
-  --series-6: #81d4fa;
-  --series-7: #b39ddb;
 }
 
 *,
@@ -1271,7 +1145,8 @@ code {
   align-items: start;
 }
 
-@media (max-width: 900px) {
+/* The positions table needs about 900px: below this the allocation goes under it instead of beside it. */
+@media (max-width: 1200px) {
   .dashboard-grid {
     grid-template-columns: minmax(0, 1fr);
   }

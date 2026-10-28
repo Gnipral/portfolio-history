@@ -246,12 +246,15 @@ export function DashboardPage() {
           <div className="dashboard-grid">
             <div className="panel">
               <h3>{t('Positions')}</h3>
-              <PositionsTable
-                positions={positions}
-                date={point.date}
-                selectedKey={positionKey}
-                onSelect={(key) => setPositionKey(key === positionKey ? null : key)}
-              />
+              {/* Wider than its column on smaller screens: it scrolls instead of running under the allocation. */}
+              <div className="table-scroll">
+                <PositionsTable
+                  positions={positions}
+                  date={point.date}
+                  selectedKey={positionKey}
+                  onSelect={(key) => setPositionKey(key === positionKey ? null : key)}
+                />
+              </div>
               {selectedPosition && history && (
                 <div className="stack position-detail">
                   <h4>
