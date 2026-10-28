@@ -1,8 +1,9 @@
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore, type FormEvent } from 'react'
 import {
   ACCOUNT_EVENT,
   accountAvailable,
   accountInfo,
+  accountKeyState,
   createAccount,
   deleteAccount,
   loadFromAccount,
@@ -11,6 +12,7 @@ import {
   saveToAccount,
   signIn,
   signOut,
+  unlockAccount,
 } from '../../account/account.ts'
 import { isDemo } from '../../demo/demoMode.ts'
 import { formatDate } from '../format.ts'
@@ -36,13 +38,21 @@ export function AccountSection() {
   const [confirm, setConfirm] = useState<'load' | 'delete' | null>(null)
   /** Data saved from another device, found when saving: replacing it needs a yes. */
   const [newer, setNewer] = useState<string | null>(null)
+  /** Whether this device has the encryption key; null while checking or signed out. */
+  const [keyState, setKeyState] = useState<'unlocked' | 'existing' | 'new' | null>(null)
 
   useEffect(() => {
+    setKeyState(null)
     if (!signedIn || !accountAvailable()) return
     accountInfo()
       .then((info) => setSavedAt(info.dataUpdatedAt))
       .catch(() => undefined)
+    accountKeyState()
+      .then(setKeyState)
+      .catch(() => undefined)
   }, [signedIn])
+
+  const unlocked = keyState === 'unlocked'
 
   // The demo has its own made-up data: nothing of it belongs in an account.
   if (!accountAvailable() || isDemo()) return null
@@ -66,7 +76,7 @@ export function AccountSection() {
       {!signedIn ? (
         <>
           <p className="muted small">
-            {t("Everything works without an account. With one, your imported portfolio and saved periods are kept, to open them again later or on another device. You sign in with a passkey: the fingerprint, face or PIN of your device, no password. Your data goes to the account only when you save it, and is then stored on the app's server.")}
+            {t('Everything works without an account. With one, your imported portfolio and saved periods are kept, to open them again later or on another device. You sign in with a passkey: the fingerprint, face or PIN of your device. Your portfolio is encrypted in this browser with an encryption password of your own before it goes to the account: the server cannot read it.')}
           </p>
           <div className="actions">
             <button type="button" className="primary" disabled={busy} onClick={() => void run(async () => (await createAccount('Portfolio History'), t('Account created: you are signed in.')))}>
@@ -83,11 +93,20 @@ export function AccountSection() {
             {t('Signed in.')} {savedAt ? t('Last saved on {date}.', { date: formatDate(savedAt.slice(0, 10)) }) : t('Nothing saved yet.')}{' '}
             {t('A new import is saved to your account by itself.')}
           </p>
+          {(keyState === 'new' || keyState === 'existing') && (
+            <KeyForm
+              choosing={keyState === 'new'}
+              onUnlocked={() => {
+                setKeyState('unlocked')
+                setStatus(t('Unlocked: this device can save and load your account.'))
+              }}
+            />
+          )}
           <div className="actions">
             <button
               type="button"
               className="primary"
-              disabled={busy}
+              disabled={busy || !unlocked}
               onClick={() =>
                 void run(async () => {
                   const found = await newerInAccount()
@@ -102,7 +121,7 @@ export function AccountSection() {
             >
               {t('Save to my account')}
             </button>
-            <button type="button" disabled={busy || !savedAt} onClick={() => setConfirm('load')}>
+            <button type="button" disabled={busy || !savedAt || !unlocked} onClick={() => setConfirm('load')}>
               {t('Load from my account')}
             </button>
             <button type="button" disabled={busy} onClick={() => void run(async () => (await signOut(), t('Signed out.')))}>
@@ -191,5 +210,63 @@ export function AccountSection() {
         </p>
       )}
     </fieldset>
+  )
+}
+
+/** At least this long: the password is all that protects the saved portfolio if the server leaks. */
+const MIN_PASSWORD = 10
+
+/** Choosing the encryption password, or entering it on another device. */
+function KeyForm({ choosing, onUnlocked }: { choosing: boolean; onUnlocked: () => void }) {
+  const [password, setPassword] = useState('')
+  const [repeat, setRepeat] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    if (choosing && password.length < MIN_PASSWORD) return setError(t('Use at least {count} characters.', { count: MIN_PASSWORD }))
+    if (choosing && password !== repeat) return setError(t('The two passwords are not the same.'))
+    setBusy(true)
+    setError('')
+    try {
+      await unlockAccount(password)
+      onUnlocked()
+    } catch (e) {
+      setError(message(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <form className="callout info stack" onSubmit={(e) => void submit(e)} aria-label={choosing ? t('Choose an encryption password') : t('Enter your encryption password')}>
+      <p>
+        <strong>{choosing ? t('Choose an encryption password') : t('Enter your encryption password')}</strong>{' '}
+        {choosing
+          ? t('Your portfolio is encrypted with it in this browser before it goes to your account. Nobody can reset it: without it the saved data cannot be opened again. The data on your devices stays.')
+          : t('Your account is encrypted with the password you chose on another device. Enter it once on this device to save and load.')}
+      </p>
+      <label>
+        {t('Encryption password')}
+        <input type="password" autoComplete={choosing ? 'new-password' : 'current-password'} value={password} onChange={(e) => setPassword(e.target.value)} />
+      </label>
+      {choosing && (
+        <label>
+          {t('Repeat the password')}
+          <input type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+        </label>
+      )}
+      {error && (
+        <p className="error-text small" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="actions">
+        <button type="submit" className="primary" disabled={busy || !password}>
+          {choosing ? t('Set the password') : t('Unlock')}
+        </button>
+      </div>
+    </form>
   )
 }
