@@ -5,7 +5,16 @@ import { DemoButton } from '../components/DemoBanner.tsx'
 import type { CostBasisMethod } from '../../engine/options.ts'
 import { BENCHMARKS } from '../../market/benchmarks.ts'
 import { DEFAULT_SETTINGS, saveSettings, useSettings, type Settings, type TextSetting } from '../../settings/settings.ts'
-import { readThemePreference, storeThemePreference, THEME_EVENT, type ThemePreference } from '../../theme/theme.ts'
+import {
+  PALETTES,
+  readPalette,
+  readThemePreference,
+  storePalette,
+  storeThemePreference,
+  THEME_EVENT,
+  type Palette,
+  type ThemePreference,
+} from '../../theme/theme.ts'
 import { resetSyncSession } from '../dashboard/usePortfolio.ts'
 
 const COST_BASIS: { value: CostBasisMethod; label: string; hint: string }[] = [
@@ -23,6 +32,7 @@ export function SettingsPage() {
   const [saved, setSaved] = useState(false)
 
   const [theme, setTheme] = useState<ThemePreference>(readThemePreference)
+  const [palette, setPalette] = useState<Palette>(readPalette)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleted, setDeleted] = useState(false)
 
@@ -195,6 +205,32 @@ export function SettingsPage() {
               <option value="dark">Dark</option>
             </select>
           </label>
+          <div className="palette-picker" role="radiogroup" aria-label="Colors">
+            <span>Colors</span>
+            {PALETTES.map((p) => (
+              <label key={p.id} className="palette-option">
+                <input
+                  type="radio"
+                  name="palette"
+                  value={p.id}
+                  checked={palette === p.id}
+                  onChange={() => {
+                    storePalette(p.id)
+                    setPalette(p.id)
+                  }}
+                />
+                <span className="palette-swatches" aria-hidden="true">
+                  {p.swatches.map((color) => (
+                    <i key={color} style={{ background: color }} />
+                  ))}
+                </span>
+                <span>
+                  <strong>{p.label}</strong>
+                  <span className="muted small"> {p.description}</span>
+                </span>
+              </label>
+            ))}
+          </div>
         </fieldset>
 
         <fieldset>
