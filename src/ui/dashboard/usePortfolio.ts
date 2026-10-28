@@ -8,6 +8,7 @@ import { localToday } from '../../market/dates.ts'
 import { syncMarketData, type SyncProgress } from '../../market/sync.ts'
 import { BENCHMARKS, DEFAULT_BENCHMARK_ID } from '../../market/benchmarks.ts'
 import { loadSettings, useSettings } from '../../settings/settings.ts'
+import { setDisplayCurrency } from '../format.ts'
 import { useOnline } from '../useOnline.ts'
 import { filterByAssetClass } from './assetClasses.ts'
 
@@ -33,6 +34,8 @@ export interface PortfolioState {
   /** The last update could not reach a price source: the stored prices are shown. */
   slowConnection: boolean
   online: boolean
+  /** The base currency of the settings while the amounts are still in EUR: none of its rates is stored yet. */
+  currencyFallback: string | null
 }
 
 /** `assetClasses`: the types of asset to show, e.g. ETFs; empty shows everything. */
@@ -111,7 +114,11 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
     [view, options],
   )
 
-  return { transactionCount, allInputs: inputs, inputs: view, options, series, sync, syncProblems, slowConnection, online }
+  // The amounts are in the currency the inputs were converted to, which can still be EUR.
+  if (inputs) setDisplayCurrency(inputs.currency)
+  const currencyFallback = inputs && inputs.currency !== baseCurrency ? baseCurrency : null
+
+  return { transactionCount, allInputs: inputs, inputs: view, options, series, sync, syncProblems, slowConnection, online, currencyFallback }
 }
 
 /** Lets tests start from a clean state. */

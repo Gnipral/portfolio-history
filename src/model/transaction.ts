@@ -68,4 +68,6 @@ export interface Transaction {
   orderId?: string
   split?: SplitInfo
   source: { broker: string; file: string; row: number }
+  /** Corrected by hand after the import: the signature of the row as imported, so a later import of it is skipped. */
+  edited?: string
 }
