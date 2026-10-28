@@ -104,6 +104,11 @@ export function demoTransactions(today: string): Transaction[] {
   trade('buy', '2022-01-15', 'demo:coin', 0.25)
   trade('buy', '2024-03-02', 'demo:coin', 0.1)
   add('withdrawal', weekday('2024-07-01'), { amountEur: -1500 })
+  // A few single shares more, so the share card has a large portfolio to sum up.
+  buyFor(weekday('2023-03-14'), 'demo:pharma', 600)
+  buyFor(weekday('2023-06-21'), 'demo:chips', 700)
+  buyFor(weekday('2024-01-17'), 'demo:retail', 400)
+  buyFor(weekday('2025-02-11'), 'demo:energy', 500)
 
   // Demo Bank pays twice a year; 30 % withholding tax is booked as its own row.
   const bank = instrument('demo:bank')
@@ -120,10 +125,13 @@ export function demoTransactions(today: string): Transaction[] {
 }
 
 const SEEDED_KEY = 'demo:seededFor'
+/** Raise when the made-up portfolio changes, so an open demo picks the change up the same day. */
+const VERSION = 2
 
 /** Fills the demo database once a day, so new months of the made-up portfolio appear by themselves. */
 export async function seedDemo(database: PortfolioDatabase, today: string, now: Date = new Date()): Promise<void> {
-  if ((await database.kv.get(SEEDED_KEY))?.value === today) return
+  const marker = `${VERSION}:${today}`
+  if ((await database.kv.get(SEEDED_KEY))?.value === marker) return
   const transactions = demoTransactions(today)
   await replacePortfolio(
     {
@@ -147,5 +155,5 @@ export async function seedDemo(database: PortfolioDatabase, today: string, now: 
       resolvedAt: now.toISOString(),
     })),
   )
-  await database.kv.put({ key: SEEDED_KEY, value: today })
+  await database.kv.put({ key: SEEDED_KEY, value: marker })
 }
