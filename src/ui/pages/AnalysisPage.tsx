@@ -66,7 +66,7 @@ export function AnalysisPage() {
           {tab === 'realized' && <RealizedSection inputs={inputs} options={options} />}
           {tab === 'costs' && <CostsSection inputs={inputs} options={options} series={series} />}
           {tab === 'risk' && <RiskSection series={series} />}
-          {tab === 'planning' && <PlanningSection inputs={inputs} options={options} series={series} planning={settings.planning} />}
+          {tab === 'planning' && <PlanningSection inputs={inputs} options={options} series={series} planning={settings.planning} otherAssets={settings.otherAssets} />}
         </div>
       )}
     </section>
