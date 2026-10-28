@@ -58,12 +58,17 @@ interface PointLabel {
 /** Height a label needs, so two lines close together get labels that do not cover each other. */
 const LABEL_HEIGHT = 20
 
+/** About the width of a label in the small monospace font, with its padding and gap to the point. */
+function labelWidth(text: string): number {
+  return text.length * 7.5 + 24
+}
+
 /**
  * Keeps every label at the height of its own point. Labels go right of the point (left near the right edge);
  * one that would cover another on that side goes to the other side, and only when both sides are taken is it
  * moved down, as little as needed.
  */
-export function spreadLabels(labels: PointLabel[], preferLeft = false): PointLabel[] {
+export function spreadLabels(labels: PointLabel[], preferLeft = false, room?: { left: number; right: number }): PointLabel[] {
   const out: PointLabel[] = []
   for (const pane of [0, 1] as const) {
     const placed: { y: number; flip: boolean }[] = []
@@ -71,7 +76,9 @@ export function spreadLabels(labels: PointLabel[], preferLeft = false): PointLab
     for (const label of labels.filter((l) => l.pane === pane).sort((a, b) => a.y - b.y)) {
       let y = label.y
       let flip = preferLeft
-      if (!free(y, flip)) flip = !flip
+      // The other side only when the label fits there; on a narrow chart it would stick out of it.
+      const fits = (side: boolean) => !room || (side ? room.left : room.right) >= labelWidth(label.text)
+      if (!free(y, flip) && fits(!flip)) flip = !flip
       if (!free(y, flip)) {
         flip = preferLeft
         while (!free(y, flip)) y += 1
@@ -409,7 +416,8 @@ export function PortfolioChart({
       const profit = data.pnl[i]?.value
       add(r.pnl, profit, (profit ?? 0) < 0 ? colors.chart.negative : colors.chart.positive, t('Profit'), 1)
     }
-    setPointLabels(spreadLabels(labels, x > element.clientWidth * 0.62).map((l) => ({ ...l, x, left: element.offsetLeft, top: element.offsetTop })))
+    const plot = element.clientWidth - r.main.priceScale().width()
+    setPointLabels(spreadLabels(labels, x > plot * 0.62, { left: x, right: plot - x }).map((l) => ({ ...l, x, left: element.offsetLeft, top: element.offsetTop })))
   }
   // biome-ignore lint/correctness/useExhaustiveDependencies: placed again when anything that moves the lines changes
   useEffect(() => {

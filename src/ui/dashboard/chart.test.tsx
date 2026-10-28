@@ -190,6 +190,14 @@ describe('spreadLabels', () => {
     ])
   })
 
+  it('stays on its side and moves down when the other side has no room, as on a phone', () => {
+    const spread = spreadLabels([label('IWDA', 100), label('Value', 104)], true, { left: 300, right: 20 })
+    expect(spread.map((l) => [l.key, l.y, l.flip])).toEqual([
+      ['IWDA', 100, true],
+      ['Value', 120, true],
+    ])
+  })
+
   it('moves a label down only when both sides are taken, and starts left near the right edge', () => {
     const spread = spreadLabels([label('A', 100), label('B', 104), label('C', 108)], true)
     expect(spread.map((l) => [l.key, l.y, l.flip])).toEqual([
