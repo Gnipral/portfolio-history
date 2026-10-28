@@ -42,7 +42,7 @@ describe('ImportPage', () => {
     expect(await db.transactions.count()).toBe(1)
   })
 
-  it('asks for confirmation before replacing existing data', async () => {
+  it('asks whether to add to or replace existing data', async () => {
     renderPage()
     chooseFile('Transactions.csv', `${HEADER}\n${ROW}\n`)
     fireEvent.click(await screen.findByRole('button', { name: 'Import 1 transactions' }))
@@ -51,8 +51,16 @@ describe('ImportPage', () => {
     chooseFile('Transactions.csv', `${HEADER}\n${ROW}\n`)
     fireEvent.click(await screen.findByRole('button', { name: 'Import 1 transactions' }))
     expect(await screen.findByRole('alertdialog')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Replace data' }))
-    expect(await screen.findByText(/Imported 1 transactions/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Add to portfolio' }))
+    expect(await screen.findByText(/Imported 0 transactions. Skipped 1 that were already stored./)).toBeTruthy()
+    expect(await db.transactions.count()).toBe(1)
+
+    chooseFile('Transactions.csv', `${HEADER}
+${ROW}
+`)
+    fireEvent.click(await screen.findByRole('button', { name: 'Import 1 transactions' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Replace data' }))
+    expect(await screen.findByText(/Imported 1 transactions./)).toBeTruthy()
   })
 
   it('shows details for an unrecognized file', async () => {
