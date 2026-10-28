@@ -25,6 +25,14 @@ describe('deriveInstruments', () => {
     expect(byKey.US0000000005).toMatchObject({ open: true, range: { from: '2026-01-16', to: today } })
     expect(byKey.IE0000000006?.kind).toBe('security')
   })
+
+  it('keeps a position open that was bought again after selling units from before the export', () => {
+    const [vertiv] = deriveInstruments(
+      [tx('sell', '2026-04-08', { isin: 'US0000000099', quantity: 6, amount: 1500 }), tx('buy', '2026-10-15', { isin: 'US0000000099', quantity: 5, amount: 900 })],
+      today,
+    )
+    expect(vertiv).toMatchObject({ open: true, range: { from: '2026-04-08', to: today } })
+  })
 })
 
 describe('syncMarketData', () => {

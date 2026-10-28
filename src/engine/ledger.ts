@@ -37,6 +37,8 @@ export interface DayFlows {
 export interface LedgerIssue {
   date: string
   message: string
+  /** Set when the export starts after these units were bought: the product, for a notice to the user. */
+  missingHistory?: string
 }
 
 /** One sale with its result, in EUR. */
@@ -118,6 +120,8 @@ export class Ledger {
   apply(t: Transaction): DayFlows {
     const flows: DayFlows = { inflow: 0, outflow: 0 }
     const cashBefore = this.cash
+    /** Units held since before the export, brought in at their value: money in, in every mode. */
+    let broughtIn = 0
     const charges = includedCharges(t, this.options)
 
     switch (t.type) {
@@ -148,13 +152,23 @@ export class Ledger {
         }
         const proceeds = Math.abs(t.amountEur) - charges
         const holding = this.holding(t)
-        let quantity = t.quantity
+        const quantity = t.quantity
         if (quantity > holding.quantity + EPSILON) {
           this.issues.push({
             date: t.date,
             message: `${t.product}: sold ${t.quantity} but only ${holding.quantity} held; the export may miss earlier buys.`,
+            missingHistory: t.product,
           })
-          quantity = holding.quantity
+          // Bought before the export starts, at a price nobody knows: the missing units come in at the sale
+          // price, like a transfer, so the sale makes no profit or loss and the return does not jump.
+          const missing = quantity - holding.quantity
+          const value = (proceeds * missing) / quantity
+          holding.quantity += missing
+          holding.cost += value
+          holding.lots.push({ quantity: missing, unitCost: value / missing })
+          this.netInvestedInSecurities += value
+          this.netDeposits += value
+          broughtIn = value
         }
         const costSold = this.removeCost(holding, quantity)
         const gain = proceeds - costSold
@@ -181,11 +195,13 @@ export class Ledger {
         holding.lastTradeDate = t.date
         this.netInvestedInSecurities -= proceeds
         this.cash += proceeds
-        flows.outflow += proceeds
+        // Units that came in and left on the same day: only the net leaves, so the day's return stays that of the price.
+        flows.outflow += proceeds - broughtIn
         break
       }
       case 'split':
-        this.applySplit(t)
+        broughtIn = this.applySplit(t)
+        flows.inflow += broughtIn
         break
       case 'transferIn': {
         if (!(t.quantity > 0)) break
@@ -278,7 +294,7 @@ export class Ledger {
       if (t.type === 'withdrawal') return { inflow: 0, outflow: Math.abs(t.amountEur) }
       // Securities moving in or out from outside the account are external flows too.
       if (t.type === 'transferIn' || t.type === 'transferOut') return flows
-      return { inflow: 0, outflow: 0 }
+      return { inflow: broughtIn, outflow: 0 }
     }
     return flows
   }
@@ -318,14 +334,23 @@ export class Ledger {
    * A split changes the number of units, not the cost. With an ISIN change the position and its
    * cost move to the new key.
    */
-  private applySplit(t: Transaction): void {
-    if (!t.split) return
+  private applySplit(t: Transaction): number {
+    if (!t.split) return 0
     const key = instrumentKey(t)
     const fromKey = t.split.fromIsin ?? key
     const from = this.holdings.get(fromKey)
     if (!from || from.quantity <= EPSILON) {
-      this.issues.push({ date: t.date, message: `${t.product}: split for a position that is not held.` })
-      return
+      this.issues.push({ date: t.date, message: `${t.product}: split for a position that is not held.`, missingHistory: t.product })
+      // Held since before the export starts: the units after the split come in at their market value of
+      // that day, like a transfer, so the position is not left out of the value.
+      const target = this.holding(t, key)
+      const value = (this.context.priceOf?.(target, t.date) ?? 0) * t.quantity
+      target.quantity += t.quantity
+      target.cost += value
+      target.lots.push({ quantity: t.quantity, unitCost: value / t.quantity })
+      this.netInvestedInSecurities += value
+      this.netDeposits += value
+      return value
     }
     const share = Math.min(1, t.split.fromQuantity / from.quantity)
     const ratio = t.quantity / t.split.fromQuantity
@@ -348,6 +373,7 @@ export class Ledger {
     target.lots.push(...movedLots)
     if (lastPrice !== undefined) target.lastTradePrice = lastPrice / ratio
     if (lastDate !== undefined) target.lastTradeDate = lastDate
+    return 0
   }
 
   /**
