@@ -29,6 +29,19 @@ describe('origin check', () => {
   })
 })
 
+describe('rate limit', () => {
+  it('refuses an address over its limit, before asking Yahoo', async () => {
+    const upstream = vi.fn()
+    vi.stubGlobal('fetch', upstream)
+    const limited: Env = { ...env, LIMITER: { limit: async ({ key }) => ({ success: key !== '203.0.113.7' }) } }
+    const request = new Request('https://proxy.example.workers.dev/yahoo/chart/AAPL', { headers: { Origin: ORIGIN, 'CF-Connecting-IP': '203.0.113.7' } })
+    const response = await worker.fetch(request, limited, ctx)
+    expect(response.status).toBe(429)
+    expect(response.headers.get('Retry-After')).toBe('60')
+    expect(upstream).not.toHaveBeenCalled()
+  })
+})
+
 describe('/yahoo/chart', () => {
   it('forwards only whitelisted parameters and adds CORS headers', async () => {
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response('{"chart":{}}', { status: 200 }))

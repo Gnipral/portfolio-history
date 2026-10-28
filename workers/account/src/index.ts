@@ -8,6 +8,11 @@ import { D1Store } from './store.ts'
 
 export default {
   fetch(request: Request, env: Env): Promise<Response> {
-    return createHandler({ store: new D1Store(env.DB), passkeys: simpleWebAuthn })(request, env.ALLOWED_ORIGINS)
+    const limiter = env.AUTH_LIMITER
+    return createHandler({
+      store: new D1Store(env.DB),
+      passkeys: simpleWebAuthn,
+      ...(limiter ? { allow: async (key: string) => (await limiter.limit({ key })).success } : {}),
+    })(request, env.ALLOWED_ORIGINS)
   },
 }

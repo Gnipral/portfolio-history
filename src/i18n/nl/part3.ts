@@ -229,6 +229,8 @@ export const part3: Record<string, string> = {
     'Ze zijn op {date} vanaf een ander toestel of een andere browser bewaard, nadat deze browser ze het laatst bewaarde of laadde.',
   'Replace it with this browser': 'Vervangen door deze browser',
   'Load it here instead': 'Liever hier laden',
+  'The backup set the price proxy to {url}: check in Settings that you trust it.':
+    'De back-up stelde de prijsproxy in op {url}: kijk in Instellingen na of je die vertrouwt.',
   // Quick ranges and toggle groups, translated with t(key).
   '1M': '1M',
   '3M': '3M',

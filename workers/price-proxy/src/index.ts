@@ -9,8 +9,13 @@
  */
 
 export interface Env {
-  /** Comma-separated origins, e.g. "https://gnipral.github.io,http://localhost:5173". */
+  /** Comma-separated origins, e.g. "https://gnipral.github.io". Local origins go in .dev.vars. */
   ALLOWED_ORIGINS: string
+  /**
+   * Limits requests per IP address (wrangler.toml). The Origin check only keeps other web pages out; a
+   * script can send any Origin, so this keeps the proxy from being used as a free one.
+   */
+  LIMITER?: { limit(options: { key: string }): Promise<{ success: boolean }> }
   /** Optional OpenFIGI key (higher rate limit), set with `wrangler secret put OPENFIGI_API_KEY`. */
   OPENFIGI_API_KEY?: string
 }
@@ -130,6 +135,9 @@ export default {
     const origin = allowedOrigin(request, env)
     if (!origin) return new Response('Forbidden', { status: 403 })
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(origin) })
+    if (env.LIMITER && !(await env.LIMITER.limit({ key: request.headers.get('CF-Connecting-IP') ?? 'unknown' })).success) {
+      return json(429, { error: 'Too many requests: wait a minute' }, origin, { 'Retry-After': '60' })
+    }
 
     const url = new URL(request.url)
     try {
