@@ -221,3 +221,16 @@ describe('daily series: a deposit that waits as cash', () => {
     expect(day['2026-01-08']?.value).toBeCloseTo(6210, 6)
   })
 })
+
+describe('daily series: an export that starts after the first buys', () => {
+  // 10 bought in the export; 15 sold later, 5 of them bought before the export starts.
+  const trades = [tx('buy', '2026-01-05', { isin: A, quantity: 10, amount: 1000 }), tx('sell', '2026-01-07', { isin: A, quantity: 15, amount: 1650 })]
+  const prices = book([['2026-01-05', 100], ['2026-01-06', 105], ['2026-01-07', 110]])
+  const day = byDate(computeDailySeries(trades, prices, DEFAULT_OPTIONS, '2026-01-08').points)
+
+  it('makes no jump in profit or percentage on the sale', () => {
+    // The 10 known units gain 10 each; the 5 others came in and left at the sale price.
+    expect(day['2026-01-07']?.pnl).toBeCloseTo(100, 6)
+    expect(day['2026-01-07']?.twr).toBeCloseTo(0.1, 6)
+  })
+})
