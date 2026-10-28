@@ -18,16 +18,25 @@
 import type { Passkeys } from './passkeys.ts'
 import type { D1Database, Store } from './store.ts'
 
+/** Cloudflare's rate limiting binding: at most a set number of calls per key in a period. */
+export interface RateLimit {
+  limit(options: { key: string }): Promise<{ success: boolean }>
+}
+
 export interface Env {
-  /** Comma-separated origins, e.g. "https://gnipral.github.io,http://localhost:5173". */
+  /** Comma-separated origins, e.g. "https://gnipral.github.io". Local origins go in .dev.vars. */
   ALLOWED_ORIGINS: string
   DB: D1Database
+  /** Limits starting and finishing a passkey ceremony per IP address (wrangler.toml). */
+  AUTH_LIMITER?: RateLimit
 }
 
 export interface Deps {
   store: Store
   passkeys: Passkeys
   now?: () => Date
+  /** Whether another passkey ceremony may start from this address; without it, every one may. */
+  allow?: (address: string) => Promise<boolean>
 }
 
 const CHALLENGE_MS = 5 * 60 * 1000
@@ -97,7 +106,7 @@ async function readJson(request: Request): Promise<Record<string, unknown>> {
 }
 
 /** The routes, with their store and passkey checks given, so they can be tested. */
-export function createHandler({ store, passkeys, now = () => new Date() }: Deps) {
+export function createHandler({ store, passkeys, now = () => new Date(), allow }: Deps) {
   async function challenge(id: unknown): Promise<{ challenge: string; userId: string | null }> {
     if (typeof id !== 'string') throw new HttpError(400, 'Missing challenge')
     const found = await store.takeChallenge(id)
@@ -129,6 +138,12 @@ export function createHandler({ store, passkeys, now = () => new Date() }: Deps)
     const rpID = new URL(origin).hostname
     const expiresAt = () => new Date(now().getTime() + CHALLENGE_MS).toISOString()
     const key = `${request.method} ${pathname}`
+
+    // Creating accounts and signing in write to the database without a session: limit them per address,
+    // so a script cannot fill the database or use up its daily writes.
+    if (allow && (pathname.startsWith('/register/') || pathname.startsWith('/login/'))) {
+      if (!(await allow(request.headers.get('CF-Connecting-IP') ?? 'unknown'))) throw new HttpError(429, 'Too many attempts: wait a minute')
+    }
 
     if (key === 'POST /register/options') {
       const body = await readJson(request)

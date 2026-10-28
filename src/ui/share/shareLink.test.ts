@@ -39,4 +39,12 @@ describe('share links', () => {
     expect(await bad({ curve: Array.from({ length: 5000 }, () => 1) })).toBeNull()
     expect(await bad({ positions: [{ name: 'x'.repeat(500), weight: 1, return: 0 }] })).toBeNull()
   })
+
+  const bad = async (change: Record<string, unknown>) => readShareLink(dataOf(await shareLink({ ...card, ...change } as ShareCard)))
+
+  it('stop unpacking a link that grows far beyond a card', async () => {
+    // Ten megabytes of spaces pack into a few kilobytes.
+    const bomb = await bad({ padding: ' '.repeat(10_000_000) })
+    expect(bomb).toBeNull()
+  })
 })

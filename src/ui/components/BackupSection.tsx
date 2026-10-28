@@ -63,11 +63,12 @@ export function BackupSection() {
     setStatus('')
     try {
       const data = await readBackup(file.text, filePassword)
-      await restoreBackup(data)
+      const { newProxyUrl } = await restoreBackup(data)
       resetSyncSession()
       account.sync()
       setFile(null)
-      setStatus(t('Backup restored: {count} transactions.', { count: data.transactions.length }))
+      const restored = t('Backup restored: {count} transactions.', { count: data.transactions.length })
+      setStatus(newProxyUrl ? `${restored} ${t('The backup set the price proxy to {url}: check in Settings that you trust it.', { url: newProxyUrl })}` : restored)
     } catch (error) {
       setStatus(message(error))
     } finally {

@@ -4,10 +4,20 @@ compatibility_date = "2026-10-01"
 workers_dev = true
 preview_urls = false
 
+# Only the app's own site. `wrangler dev` adds the local origins from .dev.vars.
 [vars]
-ALLOWED_ORIGINS = "https://gnipral.github.io,http://localhost:5173,http://localhost:4173"
+ALLOWED_ORIGINS = "https://gnipral.github.io"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "portfolio-history-account"
 database_id = "ad97ce7a-3363-45a2-8ef9-426f892bb540"
+
+# At most 20 passkey requests (options and verify of sign-up and sign-in) per IP address a minute.
+[[ratelimits]]
+name = "AUTH_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 20
+  period = 60

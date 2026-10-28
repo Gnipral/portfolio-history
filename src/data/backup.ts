@@ -110,15 +110,21 @@ export async function readBackup(text: string, password = ''): Promise<BackupDat
   return data
 }
 
-/** Replaces the portfolio, ticker choices and settings of this browser; cached prices and rates stay. */
-export async function restoreBackup(data: BackupData, database: PortfolioDatabase = db): Promise<void> {
+/**
+ * Replaces the portfolio, ticker choices and settings of this browser; cached prices and rates stay.
+ * Returns the price proxy URL of the backup when it differs from the one here: the symbols go to that
+ * server from now on, so the user should see it (a backup can come from someone else).
+ */
+export async function restoreBackup(data: BackupData, database: PortfolioDatabase = db): Promise<{ newProxyUrl: string | null }> {
+  const before = (await loadSettings(database)).proxyUrl
   await database.transaction('rw', database.transactions, database.imports, database.symbols, async () => {
     await Promise.all([database.transactions.clear(), database.imports.clear(), database.symbols.clear()])
     await database.transactions.bulkAdd(data.transactions)
     if (data.importRecord) await database.imports.put(data.importRecord)
     await database.symbols.bulkPut(data.symbols)
   })
-  await saveSettings(data.settings, database)
+  const after = (await saveSettings(data.settings, database)).proxyUrl
+  return { newProxyUrl: after && after !== before ? after : null }
 }
 
 export function backupFileName(now = new Date()): string {

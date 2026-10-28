@@ -18,9 +18,36 @@ function fromBase64Url(text: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(binary, (char) => char.charCodeAt(0))
 }
 
+/** A card unpacks to a few kilobytes; a link that unpacks to more is no card (or a bomb that would hang the tab). */
+const MAX_UNPACKED_BYTES = 100_000
+
 async function transform(bytes: Uint8Array<ArrayBuffer>, stream: CompressionStream | DecompressionStream): Promise<Uint8Array<ArrayBuffer>> {
   const out = (new Response(bytes).body as ReadableStream<Uint8Array<ArrayBuffer>>).pipeThrough(stream)
   return new Uint8Array(await new Response(out).arrayBuffer())
+}
+
+/** Unpacks a link, stopping as soon as it grows past MAX_UNPACKED_BYTES. */
+async function unpack(bytes: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
+  const reader = (new Response(bytes).body as ReadableStream<Uint8Array<ArrayBuffer>>).pipeThrough(new DecompressionStream('deflate-raw')).getReader()
+  const chunks: Uint8Array[] = []
+  let size = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    size += value.byteLength
+    if (size > MAX_UNPACKED_BYTES) {
+      await reader.cancel()
+      throw new Error('Too large for a card')
+    }
+    chunks.push(value)
+  }
+  const out = new Uint8Array(size)
+  let offset = 0
+  for (const chunk of chunks) {
+    out.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return out
 }
 
 /** A link that opens the card read-only: the card itself, compressed, in the part after #. */
@@ -41,7 +68,7 @@ const isCurve = (value: unknown): value is number[] => Array.isArray(value) && v
  */
 export async function readShareLink(data: string): Promise<ShareCard | null> {
   try {
-    const json = new TextDecoder().decode(await transform(fromBase64Url(data), new DecompressionStream('deflate-raw')))
+    const json = new TextDecoder().decode(await unpack(fromBase64Url(data)))
     const raw = JSON.parse(json) as Record<string, unknown>
     if (raw.v !== VERSION || !isDate(raw.from) || !isDate(raw.to) || !isNumber(raw.twr) || !isCurve(raw.curve)) return null
     const benchmark = raw.benchmark as Record<string, unknown> | undefined

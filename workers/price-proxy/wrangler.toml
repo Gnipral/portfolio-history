@@ -4,5 +4,15 @@ compatibility_date = "2026-10-01"
 workers_dev = true
 preview_urls = false
 
+# Only the app's own site. `wrangler dev` adds the local origins from .dev.vars.
 [vars]
-ALLOWED_ORIGINS = "https://gnipral.github.io,http://localhost:5173,http://localhost:4173"
+ALLOWED_ORIGINS = "https://gnipral.github.io"
+
+# At most 300 requests per IP address a minute: a first sync of a large portfolio stays below it.
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "1002"
+
+  [ratelimits.simple]
+  limit = 300
+  period = 60
