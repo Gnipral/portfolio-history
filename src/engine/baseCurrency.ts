@@ -22,6 +22,11 @@ export class BaseRate {
     this.days = days.filter((d) => d.rates[base] !== undefined).sort((a, b) => a.date.localeCompare(b.date))
   }
 
+  /** Whether any rate of the base currency is stored; without one, amounts cannot be converted. */
+  get known(): boolean {
+    return this.base === 'EUR' || this.days.length > 0
+  }
+
   on(date: string): number {
     if (this.base === 'EUR') return 1
     const rate = this.fx.rate(this.base, date)

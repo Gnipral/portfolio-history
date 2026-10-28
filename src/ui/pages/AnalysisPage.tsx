@@ -9,6 +9,7 @@ import { RealizedSection } from '../analysis/RealizedSection.tsx'
 import { RiskSection } from '../analysis/RiskSection.tsx'
 import { TaxesSection } from '../analysis/TaxesSection.tsx'
 import { engineOptions } from '../dashboard/toggles.ts'
+import { CurrencyNotice } from '../dashboard/CurrencyNotice.tsx'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
 import { ErrorBoundary } from '../errors/ErrorBoundary.tsx'
 import { t } from '../../i18n/i18n.ts'
@@ -31,7 +32,7 @@ export function AnalysisPage() {
   const settings = useSettings() ?? DEFAULT_SETTINGS
   const importRecord = useLiveQuery(() => db.imports.get('current'))
   const options = engineOptions(settings, importRecord?.capabilities)
-  const { transactionCount, inputs, series } = usePortfolio(options)
+  const { transactionCount, inputs, series, currencyFallback } = usePortfolio(options)
   const [tab, setTab] = useState<Tab>('taxes')
 
   if (transactionCount === undefined) return null
@@ -58,6 +59,7 @@ export function AnalysisPage() {
           ))}
         </div>
       </div>
+      <CurrencyNotice currency={currencyFallback} />
       {!inputs || !series ? (
         <p role="status">{t('Calculating…')}</p>
       ) : (

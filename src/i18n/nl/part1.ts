@@ -150,6 +150,7 @@ export const part1: Record<string, string> = {
   'Delete all data?': 'Alle gegevens wissen?',
   'Delete everything': 'Alles wissen',
   'Delete for good': 'Definitief verwijderen',
+  'Delete for good?': 'Definitief verwijderen?',
   'Delete your account?': 'Je account verwijderen?',
   'Delete {type} {product} of {date}': '{type} {product} van {date} verwijderen',
   Demo: 'Demo',

@@ -1,6 +1,7 @@
 import type { ImportContext } from '../import/types.ts'
 import type { AssetClass, Transaction, TransactionType } from '../model/transaction.ts'
 import { db, type ImportRecord, type PortfolioDatabase } from './db.ts'
+import { signature } from './portfolio.ts'
 import { msg, t } from '../i18n/i18n.ts'
 
 export const MANUAL_BROKER = 'Manual'
@@ -109,6 +110,7 @@ export function buildTransaction(input: ManualInput, context: ImportContext, bas
     fxCostsEur: base?.fxCostsEur ?? 0,
     totalEur: round(amountEur - input.costsEur - input.taxesEur - (base?.fxCostsEur ?? 0)),
     source: base?.source ?? { broker: MANUAL_BROKER, file: '', row: 0 },
+    ...(base && base.source.broker !== MANUAL_BROKER ? { edited: base.edited ?? signature(base) } : {}),
   }
 }
 

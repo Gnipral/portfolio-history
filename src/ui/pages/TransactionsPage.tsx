@@ -58,6 +58,8 @@ export function TransactionsPage() {
   const [query, setQuery] = useState('')
   const [shown, setShown] = useState(PAGE)
   const [editing, setEditing] = useState<Editing | null>(null)
+  // The transaction whose delete button was pressed once: a second press deletes it.
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -124,19 +126,40 @@ export function TransactionsPage() {
                     <td className="num">{formatEur(tx.totalEur)}</td>
                     <td className="muted small">{tx.source.broker}</td>
                     <td className="row-actions">
-                      {isEditable(tx) && (
-                        <button type="button" className="link-button" onClick={() => setEditing({ input: toInput(tx), base: tx })}>
-                          {t('Edit')}
-                        </button>
+                      {confirmDelete === tx.id ? (
+                        <>
+                          <span className="small">{t('Delete for good?')}</span>
+                          <button
+                            type="button"
+                            className="link-button danger-text"
+                            onClick={() => {
+                              setConfirmDelete(null)
+                              void deleteTransaction(tx.id)
+                            }}
+                          >
+                            {t('Yes, delete')}
+                          </button>
+                          <button type="button" className="link-button" onClick={() => setConfirmDelete(null)}>
+                            {t('Cancel')}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {isEditable(tx) && (
+                            <button type="button" className="link-button" onClick={() => setEditing({ input: toInput(tx), base: tx })}>
+                              {t('Edit')}
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="link-button"
+                            aria-label={t('Delete {type} {product} of {date}', { type: TYPE_LABELS[tx.type] ?? tx.type, product: tx.product, date: formatDate(tx.date) })}
+                            onClick={() => setConfirmDelete(tx.id)}
+                          >
+                            {t('Delete')}
+                          </button>
+                        </>
                       )}
-                      <button
-                        type="button"
-                        className="link-button"
-                        aria-label={t('Delete {type} {product} of {date}', { type: TYPE_LABELS[tx.type] ?? tx.type, product: tx.product, date: formatDate(tx.date) })}
-                        onClick={() => void deleteTransaction(tx.id)}
-                      >
-                        {t('Delete')}
-                      </button>
                     </td>
                   </tr>
                 ))}
