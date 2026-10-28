@@ -7,6 +7,7 @@ import {
   deleteAccount,
   loadFromAccount,
   readToken,
+  newerInAccount,
   saveToAccount,
   signIn,
   signOut,
@@ -33,6 +34,8 @@ export function AccountSection() {
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('')
   const [confirm, setConfirm] = useState<'load' | 'delete' | null>(null)
+  /** Data saved from another device, found when saving: replacing it needs a yes. */
+  const [newer, setNewer] = useState<string | null>(null)
 
   useEffect(() => {
     if (!signedIn || !accountAvailable()) return
@@ -87,8 +90,12 @@ export function AccountSection() {
               disabled={busy}
               onClick={() =>
                 void run(async () => {
-                  const at = await saveToAccount()
-                  setSavedAt(at)
+                  const found = await newerInAccount()
+                  if (found) {
+                    setNewer(found)
+                    return ''
+                  }
+                  setSavedAt(await saveToAccount())
                   return t('Saved to your account.')
                 })
               }
@@ -105,6 +112,41 @@ export function AccountSection() {
               {t('Delete account')}
             </button>
           </div>
+          {newer && (
+            <div className="callout warning" role="alertdialog" aria-label={t('Replace the data in your account?')}>
+              <p>
+                <strong>{t('Replace the data in your account?')}</strong>{' '}
+                {t('It was saved from another device or browser on {date}, after this browser last saved or loaded it.', { date: formatDate(newer.slice(0, 10)) })}
+              </p>
+              <div className="actions">
+                <button
+                  type="button"
+                  className="danger"
+                  onClick={() => {
+                    setNewer(null)
+                    void run(async () => {
+                      setSavedAt(await saveToAccount())
+                      return t('Saved to your account.')
+                    })
+                  }}
+                >
+                  {t('Replace it with this browser')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewer(null)
+                    setConfirm('load')
+                  }}
+                >
+                  {t('Load it here instead')}
+                </button>
+                <button type="button" onClick={() => setNewer(null)}>
+                  {t('Cancel')}
+                </button>
+              </div>
+            </div>
+          )}
           {confirm === 'load' && (
             <div className="callout warning" role="alertdialog" aria-label={t('Load from my account')}>
               <p>

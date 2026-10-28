@@ -1,12 +1,12 @@
 import { useState, type DragEvent } from 'react'
 import { Link } from 'react-router'
-import { saveAfterImport } from '../../account/account.ts'
 import { addToPortfolio, hasPortfolio, replacePortfolio } from '../../data/portfolio.ts'
 import { loadImportContext } from '../../import/fxContext.ts'
 import { readFile } from '../../import/readFile.ts'
 import { ImportError, importTables } from '../../import/registry.ts'
 import type { ImportResult } from '../../import/types.ts'
 import { isDemo } from '../../demo/demoMode.ts'
+import { useAccountSync } from '../components/AccountSync.tsx'
 import { DemoButton } from '../components/DemoBanner.tsx'
 import { ImportPreview } from '../components/ImportPreview.tsx'
 import { t } from '../../i18n/i18n.ts'
@@ -44,6 +44,7 @@ const BROKERS: [string, string][] = [
 export function ImportPage() {
   const [state, setState] = useState<State>({ phase: 'idle' })
   const [dragging, setDragging] = useState(false)
+  const account = useAccountSync()
 
   async function handleFiles(fileList: FileList | null) {
     const files = [...(fileList ?? [])]
@@ -69,7 +70,7 @@ export function ImportPage() {
       let count = result.transactions.length
       if (mode === 'add') count = await addToPortfolio(result, files)
       else await replacePortfolio(result, files)
-      void saveAfterImport()
+      account.sync()
       setState({ phase: 'done', count, skipped: result.transactions.length - count })
     } catch (error) {
       setState({ phase: 'error', message: t('Saving the import failed. Your previous data is unchanged.'), details: [String(error)] })
@@ -169,6 +170,7 @@ export function ImportPage() {
           />
         </div>
       )}
+      {state.phase === 'done' && account.notice}
 
       {state.phase === 'preview' && (
         <>
