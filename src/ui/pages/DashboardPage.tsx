@@ -12,6 +12,8 @@ import { benchmarkLines } from '../dashboard/benchmarkLines.ts'
 import { localToday } from '../../market/dates.ts'
 import type { ChartMode } from '../dashboard/chartData.ts'
 import { PositionsTable } from '../dashboard/PositionsTable.tsx'
+import { profitPeriods } from '../dashboard/profit.ts'
+import { ProfitOverview } from '../dashboard/ProfitOverview.tsx'
 import { SummaryCards } from '../dashboard/SummaryCards.tsx'
 import { TimeControls } from '../dashboard/TimeControls.tsx'
 import { clampIndex, rangeChange, visibleRange, type RangeKey } from '../dashboard/timeRange.ts'
@@ -70,6 +72,9 @@ export function DashboardPage() {
     [inputs, options, positionKey],
   )
 
+  const periods = useMemo(() => profitPeriods(points, selected), [points, selected])
+  const mainBenchmark = benchmarks[0]
+  const benchmarkPnl = mainBenchmark?.points[selected]?.pnl
   const lastDate = dates.at(-1)
   const noConnection = !online || slowConnection
   // The most recent market price of the positions held now: how up to date the stored prices are.
@@ -174,6 +179,13 @@ export function DashboardPage() {
               )
             })}
           </p>
+          <ProfitOverview
+            periods={periods}
+            date={point.date}
+            positions={positions}
+            pnl={point.pnl}
+            benchmark={mainBenchmark && benchmarkPnl !== undefined ? { label: mainBenchmark.label, pnl: benchmarkPnl } : undefined}
+          />
           <SummaryCards point={point} cashMode={series?.cashMode ?? false} />
           <div className="dashboard-grid">
             <div className="panel">

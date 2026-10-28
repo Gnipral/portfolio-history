@@ -1367,3 +1367,58 @@ progress {
 .connection-notice p {
   margin: 0;
 }
+
+/* Profit per period: four tiles, then the best and worst position and the gap with the benchmark. */
+.profit-overview {
+  display: grid;
+  gap: 1rem;
+}
+
+.profit-periods {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.profit-period {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.profit-eur {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.profit-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profit-facts li {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.profit-facts strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .profit-periods,
+  .profit-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

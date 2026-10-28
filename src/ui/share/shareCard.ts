@@ -45,7 +45,7 @@ export interface SharedPosition {
 }
 
 /** A short name: the ticker without its exchange when known, else the product name. */
-function shortName(position: Position): string {
+export function shortName(position: Pick<Position, 'symbol' | 'product'>): string {
   const ticker = position.symbol && !position.symbol.includes(':') ? position.symbol.split('.')[0] : undefined
   if (ticker) return ticker
   return position.product.length > 28 ? `${position.product.slice(0, 27).trimEnd()}…` : position.product
