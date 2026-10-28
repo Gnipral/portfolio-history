@@ -23,10 +23,9 @@ function stored(): Language | null {
   }
 }
 
-/** The chosen language, else the browser's when it is Dutch, else English. */
-export function detectLanguage(chosen = stored(), browser: readonly string[] = typeof navigator === 'undefined' ? [] : navigator.languages ?? [navigator.language]): Language {
-  if (chosen) return chosen
-  return browser.some((l) => l.toLowerCase().startsWith('nl')) ? 'nl' : 'en'
+/** The language chosen in Settings, else Dutch: the app is made for Dutch-speaking investors first. */
+export function detectLanguage(chosen = stored()): Language {
+  return chosen ?? 'nl'
 }
 
 let current: Language = detectLanguage()

@@ -78,23 +78,29 @@ export function SettingsPage() {
         <fieldset>
           <legend>{t('Price sources')}</legend>
           <p className="muted small">
-            {t('Keys and URLs are stored only in this browser. Prices are fetched from the first source that has them: the price proxy, then Twelve Data, then Alpha Vantage. Crypto prices come from CoinGecko without a key.')}
+            {t('Prices come by themselves through the price service of the app: you do not need to fill in anything here.')}
           </p>
-          <label>
-            {t('Price proxy URL')}
-            <input type="url" placeholder="https://portfolio-history-price-proxy.example.workers.dev" {...field('proxyUrl')} />
-            <span className="muted small">{t('Yahoo Finance prices and ISIN lookup. See workers/price-proxy in the repository.')}</span>
-          </label>
-          <label>
-            {t('Twelve Data API key')}
-            <input type="password" autoComplete="off" {...field('twelveDataKey')} />
-            <span className="muted small">{t('Free plan: 800 requests per day, 8 per minute.')}</span>
-          </label>
-          <label>
-            {t('Alpha Vantage API key')}
-            <input type="password" autoComplete="off" {...field('alphaVantageKey')} />
-            <span className="muted small">{t('Free plan: 25 requests per day, last 100 trading days only.')}</span>
-          </label>
+          <details>
+            <summary>{t('Advanced: own price sources')}</summary>
+            <p className="muted small">
+              {t('Only needed when a product has no price on the Prices page. A source is asked only when the ones above it have no price. Keys are stored in this browser only. Crypto prices come from CoinGecko without a key.')}
+            </p>
+            <label>
+              {t('Price proxy URL')}
+              <input type="url" placeholder="https://portfolio-history-price-proxy.example.workers.dev" {...field('proxyUrl')} />
+              <span className="muted small">{t('Filled in already. Only change it if you run your own copy (workers/price-proxy in the repository).')}</span>
+            </label>
+            <label>
+              {t('Twelve Data API key (optional)')}
+              <input type="password" autoComplete="off" {...field('twelveDataKey')} />
+              <span className="muted small">{t('A free key from twelvedata.com is enough: up to 800 prices a day.')}</span>
+            </label>
+            <label>
+              {t('Alpha Vantage API key (optional)')}
+              <input type="password" autoComplete="off" {...field('alphaVantageKey')} />
+              <span className="muted small">{t('A free key from alphavantage.co gives 25 prices a day, of the last 100 trading days only: a last resort.')}</span>
+            </label>
+          </details>
         </fieldset>
         <fieldset>
           <legend>{t('Benchmark')}</legend>

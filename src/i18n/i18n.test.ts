@@ -36,10 +36,9 @@ describe('t', () => {
     expect(t('Imported {count} transactions.', { count: 3 })).toBe('Imported 3 transactions.')
   })
 
-  it('follows the choice, else a Dutch browser', () => {
-    expect(detectLanguage('en', ['nl-BE'])).toBe('en')
-    expect(detectLanguage(null, ['nl-BE', 'en'])).toBe('nl')
-    expect(detectLanguage(null, ['fr-BE', 'nl'])).toBe('nl')
-    expect(detectLanguage(null, ['en-US'])).toBe('en')
+  it('follows the choice, else Dutch', () => {
+    expect(detectLanguage('en')).toBe('en')
+    expect(detectLanguage('nl')).toBe('nl')
+    expect(detectLanguage(null)).toBe('nl')
   })
 })
