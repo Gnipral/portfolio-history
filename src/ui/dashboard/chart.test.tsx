@@ -102,7 +102,7 @@ vi.mock('lightweight-charts', () => ({
   BaselineSeries: {},
   ColorType: { Solid: 'solid' },
   CrosshairMode: { Magnet: 1 },
-  LineStyle: { Solid: 0, Dashed: 2 },
+  LineStyle: { Solid: 0, Dotted: 1, Dashed: 2, LargeDashed: 3, SparseDotted: 4 },
   PriceScaleMode: { Normal: 0, Logarithmic: 1 },
 }))
 

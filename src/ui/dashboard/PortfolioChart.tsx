@@ -71,6 +71,21 @@ function withZero(base: () => AutoscaleInfo | null): AutoscaleInfo | null {
   return { ...info, priceRange: { minValue: Math.min(0, minValue), maxValue: Math.max(0, maxValue) } }
 }
 
+/**
+ * Every benchmark line has its own pattern besides its color, and its name on the price axis, so
+ * the lines can be told apart without seeing colors. `css` draws the same pattern in the legend.
+ */
+const BENCHMARK_PATTERNS = [
+  { lineStyle: LineStyle.LargeDashed, lineWidth: 2, css: 'repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 9px)' },
+  { lineStyle: LineStyle.Dotted, lineWidth: 2, css: 'repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 4px)' },
+  { lineStyle: LineStyle.SparseDotted, lineWidth: 2, css: 'repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 6px)' },
+  { lineStyle: LineStyle.Solid, lineWidth: 1, css: 'linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat' },
+] as const
+
+function benchmarkPattern(index: number) {
+  return BENCHMARK_PATTERNS[index % BENCHMARK_PATTERNS.length]!
+}
+
 /** The profit pane: about a quarter of the chart, never smaller than 130px. */
 function profitHeight(chartHeight: number): number {
   return Math.max(130, Math.round(chartHeight * 0.28))
@@ -184,7 +199,7 @@ export function PortfolioChart({
       handleScroll: false,
       handleScale: false,
     })
-    const main = chart.addSeries(AreaSeries, { lineWidth: 3, priceLineVisible: false })
+    const main = chart.addSeries(AreaSeries, { lineWidth: 3, priceLineVisible: false, title: 'Value' })
     // Room under the value for the divider label.
     main.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.12 } })
     const secondary = chart.addSeries(LineSeries, { lineWidth: 2, lineStyle: LineStyle.Dashed, priceLineVisible: false })
@@ -254,10 +269,12 @@ export function PortfolioChart({
     // One line per benchmark, in the pane of the value.
     while (r.benchmarks.length > data.benchmarks.length) r.chart.removeSeries(r.benchmarks.pop() as ISeriesApi<'Line'>)
     while (r.benchmarks.length < data.benchmarks.length) {
-      r.benchmarks.push(r.chart.addSeries(LineSeries, { lineWidth: 2, priceLineVisible: false, lastValueVisible: false }, 0))
+      const { lineStyle, lineWidth } = benchmarkPattern(r.benchmarks.length)
+      r.benchmarks.push(r.chart.addSeries(LineSeries, { lineWidth, lineStyle, priceLineVisible: false }, 0))
     }
     r.benchmarks.forEach((line, i) => {
-      line.applyOptions({ color: cssColor(benchmarksRef.current[i]?.color, wrapper.current) })
+      // The name next to the last value on the axis: no need to match colors with the legend.
+      line.applyOptions({ color: cssColor(benchmarksRef.current[i]?.color, wrapper.current), title: benchmarksRef.current[i]?.label ?? '' })
       line.setData(data.benchmarks[i] ?? [])
     })
     // The 0 line moves with the pane it belongs to; it is made again below.
@@ -271,6 +288,7 @@ export function PortfolioChart({
       if (!r.pnl) {
         const options = {
           baseValue: { type: 'price' as const, price: 0 },
+          title: 'Profit',
           lineWidth: 3 as const,
           priceLineVisible: false,
           autoscaleInfoProvider: withZero,
@@ -300,6 +318,7 @@ export function PortfolioChart({
   const benchmarkLegend = benchmarks.map((b, i) => ({
     label: b.label,
     color: b.color,
+    pattern: benchmarkPattern(i).css,
     text: mode === 'eur' ? formatEur(b.points[selected]?.value ?? 0) : formatPercent((data.benchmarks[i]?.[selected - from]?.value ?? 0) / 100),
   }))
   return (
@@ -320,7 +339,7 @@ export function PortfolioChart({
                 )}
                 {benchmarkLegend.map((b) => (
                   <span key={b.label}>
-                    <i className="swatch" style={{ background: `var(${b.color})` }} /> {b.label} {b.text}
+                    <i className="swatch" style={{ color: `var(${b.color})`, background: b.pattern }} /> {b.label} {b.text}
                   </span>
                 ))}
                 {chartStyle.profitPane && (
@@ -336,7 +355,7 @@ export function PortfolioChart({
                 </span>
                 {benchmarkLegend.map((b) => (
                   <span key={b.label}>
-                    <i className="swatch" style={{ background: `var(${b.color})` }} /> {b.label} {b.text}
+                    <i className="swatch" style={{ color: `var(${b.color})`, background: b.pattern }} /> {b.label} {b.text}
                   </span>
                 ))}
                 {from === 0 && chartStyle.invested && (
