@@ -1,6 +1,7 @@
 import { Dexie, type EntityTable, type Table } from 'dexie'
 import type { CapabilityReasons, Capabilities, ImportIssue } from '../import/types.ts'
 import type { FxDay, PriceCoverage, PricePoint, SplitEvent, SymbolRecord } from '../market/types.ts'
+import { DEMO_DATABASE, isDemo } from '../demo/demoMode.ts'
 import type { Transaction } from '../model/transaction.ts'
 
 /** Metadata of the import currently loaded. There is at most one, with id `current`. */
@@ -55,4 +56,5 @@ export class PortfolioDatabase extends Dexie {
   }
 }
 
-export const db = new PortfolioDatabase()
+/** The own data, or in demo mode the separate database with the made-up portfolio. */
+export const db = new PortfolioDatabase(isDemo() ? DEMO_DATABASE : undefined)

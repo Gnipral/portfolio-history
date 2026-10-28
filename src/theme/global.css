@@ -224,6 +224,25 @@ button:active:not(:disabled) {
   color: var(--on-accent);
 }
 
+/* Demo mode: a calm warning-colored strip, so a made-up portfolio is never mistaken for the own one. */
+.demo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 1rem;
+  background: color-mix(in srgb, var(--warning) 16%, var(--bg));
+  border-bottom: 1px solid color-mix(in srgb, var(--warning) 45%, var(--border));
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.demo-banner button {
+  padding: 0.25rem 0.8rem;
+  font-size: 0.85rem;
+}
+
 .offline-badge {
   display: inline-flex;
   align-items: center;
