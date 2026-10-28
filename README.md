@@ -37,7 +37,7 @@ There is no backend and no account. Transactions, prices and settings live in yo
 
 ### Offline
 
-The app is a PWA: install it from the browser menu ("Install app" or "Add to Home Screen"). After the first visit, the app shell, the static market data and everything in IndexedDB work without a connection. While offline the header shows **Offline**, the dashboard is calculated from the stored prices, and new prices are fetched as soon as the connection is back. On a slow connection (on a train, say) every request gives up after 10 seconds: the app goes on with the stored prices, the dashboard shows **Stored prices up to** the date of the oldest price in use, and it tries again on the next visit. A new version is never activated by surprise: a banner asks to reload.
+The app is a PWA: install it from the browser menu ("Install app" or "Add to Home Screen"). After the first visit, the app shell, the static market data and everything in IndexedDB work without a connection. While offline the header shows **Offline**, the dashboard is calculated from the stored prices, and new prices are fetched as soon as the connection is back. On a slow connection (on a train, say) every request gives up after 10 seconds: the app goes on with the stored prices. With a weak or no connection the dashboard says so plainly, with the date of the last prices found, and fetches new prices by itself as soon as the connection is stable (it tries again every minute). A new version is never activated by surprise: a banner asks to reload.
 
 ### How the numbers are calculated
 
