@@ -9,6 +9,7 @@ import { localToday } from '../../market/dates.ts'
 import { DEFAULT_PLANNING, updateSettings, type PlanningSettings } from '../../settings/settings.ts'
 import { displayCurrency, formatEur, formatPercent } from '../format.ts'
 import { NetWorthPanel } from './NetWorthPanel.tsx'
+import { t } from '../../i18n/i18n.ts'
 
 interface Props {
   inputs: EngineInputs
@@ -63,24 +64,23 @@ export function PlanningSection({ inputs, options, series, planning, otherAssets
     <>
       <NetWorthPanel portfolioValue={start} assets={otherAssets} />
       <div className="panel">
-        <h3>Rebalance with your next deposit</h3>
+        <h3>{t('Rebalance with your next deposit')}</h3>
         <p className="muted small">
-          Fill in the share you want per position. The deposit goes to the positions furthest below their target, so you
-          get closer without selling anything.
+          {t('Fill in the share you want per position. The deposit goes to the positions furthest below their target, so you get closer without selling anything.')}
         </p>
         <div className="actions">
-          <NumberField label="Deposit" value={planning.deposit} step={50} suffix={displayCurrency()} onChange={(deposit) => void save({ deposit })} />
+          <NumberField label={t('Deposit')} value={planning.deposit} step={50} suffix={displayCurrency()} onChange={(deposit) => void save({ deposit })} />
           <button
             type="button"
             onClick={() =>
               void save({ targets: Object.fromEntries(rows.map((r) => [r.key, Math.round(r.share * 1000) / 10])) })
             }
           >
-            Use the current mix
+            {t('Use the current mix')}
           </button>
           {hasTargets && (
             <button type="button" onClick={() => void save({ targets: {} })}>
-              Clear targets
+              {t('Clear targets')}
             </button>
           )}
         </div>
@@ -88,13 +88,13 @@ export function PlanningSection({ inputs, options, series, planning, otherAssets
           <table className="table">
             <thead>
               <tr>
-                <th>Position</th>
-                <th className="num">Value</th>
-                <th className="num">Now</th>
-                <th className="num">Target</th>
-                <th className="num">Buy</th>
-                <th className="num">After</th>
-                <th className="num">To reach the target exactly</th>
+                <th>{t('Position')}</th>
+                <th className="num">{t('Value')}</th>
+                <th className="num">{t('Now')}</th>
+                <th className="num">{t('Target')}</th>
+                <th className="num">{t('Buy')}</th>
+                <th className="num">{t('After')}</th>
+                <th className="num">{t('To reach the target exactly')}</th>
               </tr>
             </thead>
             <tbody>
@@ -111,7 +111,7 @@ export function PlanningSection({ inputs, options, series, planning, otherAssets
                       max={100}
                       step={1}
                       inputMode="decimal"
-                      aria-label={`Target for ${r.label} (%)`}
+                      aria-label={t('Target for {name} (%)', { name: r.label })}
                       value={planning.targets[r.key] ?? ''}
                       placeholder="0"
                       onChange={(e) => setTarget(r.key, Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
@@ -135,25 +135,24 @@ export function PlanningSection({ inputs, options, series, planning, otherAssets
       </div>
 
       <div className="panel">
-        <h3>Projection</h3>
+        <h3>{t('Projection')}</h3>
         <p className="muted small">
-          What today's {formatEur(start, true)} can grow to with a monthly amount and a steady return. Real returns go up
-          and down; this only shows the effect of time and saving.
+          {t("What today's {amount} can grow to with a monthly amount and a steady return. Real returns go up and down; this only shows the effect of time and saving.", { amount: formatEur(start, true) })}
         </p>
         <div className="form-grid settings-form">
-          <NumberField label="Every month" value={planning.monthly} step={50} suffix={displayCurrency()} onChange={(monthly) => void save({ monthly })} />
+          <NumberField label={t('Every month')} value={planning.monthly} step={50} suffix={displayCurrency()} onChange={(monthly) => void save({ monthly })} />
           <div className="field-with-action">
-            <NumberField label="Return per year" value={planning.yearlyReturn} step={0.5} suffix="%" onChange={(yearlyReturn) => void save({ yearlyReturn })} />
+            <NumberField label={t('Return per year')} value={planning.yearlyReturn} step={0.5} suffix="%" onChange={(yearlyReturn) => void save({ yearlyReturn })} />
             {ownReturn !== undefined && (
               <button type="button" className="link-button small" onClick={() => void save({ yearlyReturn: Math.round(ownReturn * 1000) / 10 })}>
                 Use my return so far ({formatPercent(ownReturn)})
               </button>
             )}
           </div>
-          <NumberField label="Years" value={planning.years} step={1} onChange={(years) => void save({ years: Math.min(60, Math.round(years)) })} />
-          <NumberField label="Inflation per year" value={planning.inflation} step={0.5} suffix="%" onChange={(inflation) => void save({ inflation })} />
+          <NumberField label={t('Years')} value={planning.years} step={1} onChange={(years) => void save({ years: Math.min(60, Math.round(years)) })} />
+          <NumberField label={t('Inflation per year')} value={planning.inflation} step={0.5} suffix="%" onChange={(inflation) => void save({ inflation })} />
           <NumberField
-            label="Spending per year to live from it"
+            label={t('Spending per year to live from it')}
             value={planning.yearlySpending}
             step={1000}
             suffix={displayCurrency()}
@@ -167,17 +166,17 @@ export function PlanningSection({ inputs, options, series, planning, otherAssets
             <span className="muted small">{formatEur(end.realValue, true)} in today's money</span>
           </div>
           <div className="card">
-            <span className="card-label">You put in</span>
+            <span className="card-label">{t('You put in')}</span>
             <span className="card-value">{formatEur(end.contributed, true)}</span>
-            <span className="muted small">today's value plus every monthly amount</span>
+            <span className="muted small">{t("today's value plus every monthly amount")}</span>
           </div>
           <div className="card">
-            <span className="card-label">Growth</span>
+            <span className="card-label">{t('Growth')}</span>
             <span className="card-value positive">{formatEur(end.value - end.contributed, true)}</span>
           </div>
           {fire && (
             <div className="card">
-              <span className="card-label">Financial independence</span>
+              <span className="card-label">{t('Financial independence')}</span>
               <span className="card-value">{fire.year === undefined ? `not in ${planning.years} years` : fire.year === 0 ? 'already' : `in ${fire.year} years`}</span>
               <span className="muted small">At {formatEur(fire.target, true)} in today's money (25 × your spending, the 4% rule)</span>
             </div>
@@ -204,7 +203,7 @@ function ProjectionChart({ rows, target }: { rows: ProjectionYear[]; target?: nu
 
   return (
     <figure className="projection-chart">
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Projected value after ${last} years: ${formatEur(rows.at(-1)?.value ?? 0, true)}`}>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t('Projected value after {years} years: {amount}', { years: last, amount: formatEur(rows.at(-1)?.value ?? 0, true) })}>
         <path d={area((r) => r.value)} className="projection-fill projection-value" />
         <path d={area((r) => r.contributed)} className="projection-fill projection-contributed" />
         <path d={line((r) => r.value)} className="projection-value" />
@@ -218,12 +217,12 @@ function ProjectionChart({ rows, target }: { rows: ProjectionYear[]; target?: nu
         ))}
       </svg>
       <figcaption className="muted small">
-        <span className="legend-swatch projection-value" /> value <span className="legend-swatch projection-contributed" /> put in{' '}
-        <span className="legend-swatch projection-real" /> value in today's money
+        <span className="legend-swatch projection-value" /> {t('value')} <span className="legend-swatch projection-contributed" /> {t('put in')}{' '}
+        <span className="legend-swatch projection-real" /> {t("value in today's money")}
         {target !== undefined && (
           <>
             {' '}
-            <span className="legend-swatch projection-target" /> independence target
+            <span className="legend-swatch projection-target" /> {t('independence target')}
           </>
         )}
       </figcaption>

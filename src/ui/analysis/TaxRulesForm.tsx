@@ -1,4 +1,5 @@
 import { isAdjusted, presetOf, TAX_PRESETS, type CapitalGainsRules } from '../../engine/analysis/capitalGains.ts'
+import { t, tn } from '../../i18n/i18n.ts'
 
 interface Props {
   rules: CapitalGainsRules
@@ -25,85 +26,86 @@ export function TaxRulesForm({ rules, onChange }: Props) {
   return (
     <div className="stack settings-form tax-rules">
       <label>
-        Tax rules of
+        {t('Tax rules of')}
         <select value={preset.id} onChange={(e) => onChange((TAX_PRESETS.find((p) => p.id === e.target.value) ?? preset).rules)}>
           {TAX_PRESETS.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.label}
+              {t(p.label)}
             </option>
           ))}
         </select>
       </label>
       <details open={rules.country === 'custom' || adjusted}>
         <summary>
-          Adjust the rules{adjusted && <span className="badge warning">adjusted</span>}
+          {t('Adjust the rules')}
+          {adjusted && <span className="badge warning">{t('adjusted')}</span>}
         </summary>
         <div className="tax-rules-grid">
           <NumberField
-            label="Rate (%)"
+            label={t('Rate (%)')}
             value={Math.round(rules.rate * 100_000) / 1000}
             step={0.1}
-            hint="Including surcharges such as a solidarity surcharge"
+            hint={t('Including surcharges such as a solidarity surcharge')}
             onChange={(percent) => set({ rate: percent / 100 })}
           />
-          <NumberField label="Yearly exemption (EUR)" value={rules.yearlyExemption} step={100} onChange={(v) => set({ yearlyExemption: v, maxExemption: Math.max(rules.maxExemption, v) })} />
+          <NumberField label={t('Yearly exemption (EUR)')} value={rules.yearlyExemption} step={100} onChange={(v) => set({ yearlyExemption: v, maxExemption: Math.max(rules.maxExemption, v) })} />
           <NumberField
-            label="Unused exemption carried over per year (EUR)"
+            label={t('Unused exemption carried over per year (EUR)')}
             value={rules.exemptionCarryOver}
             step={100}
             onChange={(v) => set({ exemptionCarryOver: v })}
           />
           <NumberField
-            label="Highest exemption with carry-over (EUR)"
+            label={t('Highest exemption with carry-over (EUR)')}
             value={rules.maxExemption}
             step={100}
             onChange={(v) => set({ maxExemption: Math.max(v, rules.yearlyExemption) })}
           />
           <label>
-            Losses offset later gains
+            {t('Losses offset later gains')}
             <select value={rules.lossCarryForwardYears} onChange={(e) => set({ lossCarryForwardYears: Number(e.target.value) })}>
-              <option value={0}>No, only in the same year</option>
+              <option value={0}>{t('No, only in the same year')}</option>
               {[1, 3, 5, 6, 10].map((years) => (
                 <option key={years} value={years}>
-                  For {years} {years === 1 ? 'year' : 'years'}
+                  {tn(years, 'For {count} year', 'For {count} years')}
                 </option>
               ))}
-              <option value={99}>Without limit</option>
+              <option value={99}>{t('Without limit')}</option>
             </select>
           </label>
           <label>
-            Units sold
+            {t('Units sold')}
             <select value={rules.costBasis} onChange={(e) => set({ costBasis: e.target.value as CapitalGainsRules['costBasis'] })}>
-              <option value="average">Average purchase price</option>
-              <option value="fifo">First in, first out (FIFO)</option>
+              <option value="average">{t('Average purchase price')}</option>
+              <option value="fifo">{t('First in, first out (FIFO)')}</option>
             </select>
           </label>
           <NumberField
-            label="Taxed from year (0 = always)"
+            label={t('Taxed from year (0 = always)')}
             value={rules.firstTaxedYear ?? 0}
             step={1}
             onChange={(v) => set({ firstTaxedYear: v >= 1900 ? Math.round(v) : null })}
           />
           <label>
-            Gains before this date are not taxed
+            {t('Gains before this date are not taxed')}
             <input type="date" value={rules.referenceDate ?? ''} onChange={(e) => set({ referenceDate: e.target.value || null })} />
-            <span className="muted small">What you held then counts at its market value of that day</span>
+            <span className="muted small">{t('What you held then counts at its market value of that day')}</span>
           </label>
           <label>
-            Value on that date
+            {t('Value on that date')}
             <select value={rules.stepUp} disabled={!rules.referenceDate} onChange={(e) => set({ stepUp: e.target.value as CapitalGainsRules['stepUp'] })}>
-              <option value="higher">Only when higher than the purchase price</option>
-              <option value="value">Always, also when lower</option>
+              <option value="higher">{t('Only when higher than the purchase price')}</option>
+              <option value="value">{t('Always, also when lower')}</option>
             </select>
           </label>
           <label className="radio">
             <input type="checkbox" checked={rules.deductCharges} onChange={(e) => set({ deductCharges: e.target.checked })} />
-            <span>Costs and taxes on trades lower the gain</span>
+            <span>{t('Costs and taxes on trades lower the gain')}</span>
           </label>
         </div>
         {adjusted && rules.country !== 'custom' && (
           <button type="button" onClick={() => onChange(preset.rules)}>
-            Back to the rules of {preset.label}
+            {t('Back to the rules of {name}', { name: t(preset.label) })}
           </button>
         )}
       </details>

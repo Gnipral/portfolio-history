@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { t } from '../../i18n/i18n.ts'
 import type { CapitalGainsResult } from '../../engine/analysis/capitalGains.ts'
 import type { ChargesYear } from '../../engine/analysis/charges.ts'
 import type { IncomeRow } from '../../engine/analysis/income.ts'
@@ -37,28 +38,28 @@ export function TaxReportPanel({ gains, income, charges, rulesLabel }: Props) {
     const page = window.open(url)
     // Without a window (pop-ups blocked), download the page instead; it prints from any browser.
     if (page) page.addEventListener('load', () => page.print(), { once: true })
-    else save(taxReportHtml(report(), rulesLabel, localToday()), 'text/html', `tax-report-${year}.html`)
+    else save(taxReportHtml(report(), rulesLabel, localToday()), 'text/html', `${t('tax-report')}-${year}.html`)
     setTimeout(() => URL.revokeObjectURL(url), 60_000)
   }
 
   return (
     <div className="panel">
-      <h3>Tax report</h3>
-      <p className="muted small">One year of sales, dividends, interest, costs and taxes, to fill in your tax return or hand to an accountant.</p>
+      <h3>{t('Tax report')}</h3>
+      <p className="muted small">{t('One year of sales, dividends, interest, costs and taxes, to fill in your tax return or hand to an accountant.')}</p>
       <div className="actions">
         <label className="inline-label">
-          Year
+          {t('Year')}
           <select value={year} onChange={(e) => setChosen(e.target.value)}>
             {years.map((y) => (
               <option key={y}>{y}</option>
             ))}
           </select>
         </label>
-        <button type="button" onClick={() => save(`﻿${taxReportCsv(report(), displayCurrency())}`, 'text/csv;charset=utf-8', `tax-report-${year}.csv`)}>
-          Download CSV
+        <button type="button" onClick={() => save(`﻿${taxReportCsv(report(), displayCurrency())}`, 'text/csv;charset=utf-8', `${t('tax-report')}-${year}.csv`)}>
+          {t('Download CSV')}
         </button>
         <button type="button" onClick={print}>
-          Print or save as PDF
+          {t('Print or save as PDF')}
         </button>
       </div>
     </div>

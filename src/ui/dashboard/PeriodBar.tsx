@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import type { NamedPeriod } from '../../settings/settings.ts'
+import { t } from '../../i18n/i18n.ts'
 import { formatDate } from '../format.ts'
 
 interface Props {
@@ -14,7 +15,7 @@ interface Props {
 }
 
 function describe(period: { from: string; to: string | null }): string {
-  return `${formatDate(period.from)} – ${period.to ? formatDate(period.to) : 'today'}`
+  return `${formatDate(period.from)} – ${period.to ? formatDate(period.to) : t('today')}`
 }
 
 /** Saved periods to open with one click, and the current one to save under a name. */
@@ -32,22 +33,22 @@ export function PeriodBar({ periods, openId, current, onOpen, onSave, onRemove }
   }
 
   return (
-    <div className="period-bar" role="group" aria-label="Saved periods">
-      <span className="label-caps">Periods</span>
+    <div className="period-bar" role="group" aria-label={t('Saved periods')}>
+      <span className="label-caps">{t('Periods')}</span>
       <div className="chips">
         {periods.map((p) => (
           <span key={p.id} className="period-chip">
             <button type="button" className="chip" aria-pressed={p.id === openId} title={describe(p)} onClick={() => onOpen(p.id)}>
               {p.name}
             </button>
-            <button type="button" className="period-remove" aria-label={`Remove ${p.name}`} title="Remove" onClick={() => onRemove(p.id)}>
+            <button type="button" className="period-remove" aria-label={t('Remove {name}', { name: p.name })} title={t('Remove')} onClick={() => onRemove(p.id)}>
               ×
             </button>
           </span>
         ))}
         {!naming && (
           <button type="button" className="chip period-save" onClick={() => setNaming(true)}>
-            + Save this period
+            + {t('Save this period')}
           </button>
         )}
       </div>
@@ -55,23 +56,23 @@ export function PeriodBar({ periods, openId, current, onOpen, onSave, onRemove }
         <form className="period-form" onSubmit={save}>
           <input
             autoFocus
-            aria-label="Name of the period"
-            placeholder="e.g. After the crash"
+            aria-label={t('Name of the period')}
+            placeholder={t('e.g. After the crash')}
             maxLength={40}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <span className="muted small">{describe(current)}</span>
           <button type="submit" className="primary" disabled={!name.trim()}>
-            Save
+            {t('Save')}
           </button>
           <button type="button" onClick={() => setNaming(false)}>
-            Cancel
+            {t('Cancel')}
           </button>
         </form>
       )}
       {periods.length === 0 && !naming && (
-        <span className="muted small">Pick a range or a day, then save it under a name to open it again later.</span>
+        <span className="muted small">{t('Pick a range or a day, then save it under a name to open it again later.')}</span>
       )}
     </div>
   )

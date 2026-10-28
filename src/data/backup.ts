@@ -2,6 +2,7 @@ import type { SymbolRecord } from '../market/types.ts'
 import type { Transaction } from '../model/transaction.ts'
 import { loadSettings, saveSettings, type Settings } from '../settings/settings.ts'
 import { db, type ImportRecord, type PortfolioDatabase } from './db.ts'
+import { t } from '../i18n/i18n.ts'
 
 const APP = 'portfolio-history'
 const ITERATIONS = 600_000
@@ -80,10 +81,10 @@ function parseFile(text: string): PlainFile | EncryptedFile {
   try {
     file = JSON.parse(text)
   } catch {
-    throw new BackupError('This is not a Portfolio History backup.')
+    throw new BackupError(t('This is not a Portfolio History backup.'))
   }
-  if (typeof file !== 'object' || file === null || (file as { app?: unknown }).app !== APP) throw new BackupError('This is not a Portfolio History backup.')
-  if ((file as { v?: unknown }).v !== 1) throw new BackupError('This backup was made by a newer version of the app. Reload to update first.')
+  if (typeof file !== 'object' || file === null || (file as { app?: unknown }).app !== APP) throw new BackupError(t('This is not a Portfolio History backup.'))
+  if ((file as { v?: unknown }).v !== 1) throw new BackupError(t('This backup was made by a newer version of the app. Reload to update first.'))
   return file as PlainFile | EncryptedFile
 }
 
@@ -91,20 +92,20 @@ export async function readBackup(text: string, password = ''): Promise<BackupDat
   const file = parseFile(text)
   let data: BackupData
   if ('encrypted' in file) {
-    if (!password) throw new BackupError('This backup is protected with a password.')
+    if (!password) throw new BackupError(t('This backup is protected with a password.'))
     const { salt, iv, iterations, data: cipher } = file.encrypted
     try {
       const key = await deriveKey(password, fromBase64(salt), iterations)
       const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromBase64(iv) }, key, fromBase64(cipher))
       data = JSON.parse(new TextDecoder().decode(plain)) as BackupData
     } catch {
-      throw new BackupError('Wrong password.')
+      throw new BackupError(t('Wrong password.'))
     }
   } else {
     data = file.data
   }
   if (!Array.isArray(data?.transactions) || !Array.isArray(data.symbols) || typeof data.settings !== 'object') {
-    throw new BackupError('The backup is damaged.')
+    throw new BackupError(t('The backup is damaged.'))
   }
   return data
 }

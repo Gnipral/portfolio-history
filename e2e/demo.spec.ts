@@ -52,3 +52,22 @@ test('the share card is drawn', async ({ page }) => {
   expect(drawn).toBe(true)
   expect(errors).toEqual([])
 })
+
+test.describe('in Dutch', () => {
+  test.use({ locale: 'nl-BE' })
+
+  test('a Dutch browser gets the app in Dutch', async ({ page }) => {
+    const errors = watchErrors(page)
+    await page.goto('./')
+    await page.getByRole('button', { name: 'Probeer de demo' }).first().click()
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Posities' })).toBeVisible()
+    await expect(page.locator('html')).toHaveAttribute('lang', 'nl')
+    await page.getByRole('link', { name: 'Analyse' }).click()
+    for (const tab of ['Belastingen', 'Dividenden', 'Gerealiseerd', 'Kosten', 'Risico', 'Planning']) {
+      await page.getByRole('tab', { name: tab }).click()
+      await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true')
+    }
+    expect(errors).toEqual([])
+  })
+})

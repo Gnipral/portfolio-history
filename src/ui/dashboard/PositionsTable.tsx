@@ -1,20 +1,21 @@
 import { useMemo, useState } from 'react'
 import type { Position } from '../../engine/positions.ts'
+import { locale, t } from '../../i18n/i18n.ts'
 import { formatDate, formatEur, formatPercent, formatSignedEur, trendClass } from '../format.ts'
 import { nextSort, sortPositions, withWeights, type PositionColumn, type SortState } from './positionSort.ts'
 
 const COLUMNS: { key: PositionColumn; label: string; numeric: boolean }[] = [
-  { key: 'product', label: 'Product', numeric: false },
-  { key: 'quantity', label: 'Quantity', numeric: true },
-  { key: 'averageCost', label: 'Avg cost', numeric: true },
-  { key: 'price', label: 'Price', numeric: true },
-  { key: 'value', label: 'Value', numeric: true },
+  { key: 'product', label: t('Product'), numeric: false },
+  { key: 'quantity', label: t('Quantity'), numeric: true },
+  { key: 'averageCost', label: t('Avg cost'), numeric: true },
+  { key: 'price', label: t('Price'), numeric: true },
+  { key: 'value', label: t('Value'), numeric: true },
   { key: 'pnl', label: 'P/L', numeric: true },
   { key: 'pnlPercent', label: 'P/L %', numeric: true },
-  { key: 'weight', label: 'Weight', numeric: true },
+  { key: 'weight', label: t('Weight'), numeric: true },
 ]
 
-const quantityFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 6 })
+const quantityFormat = new Intl.NumberFormat(locale(), { maximumFractionDigits: 6 })
 
 interface Props {
   positions: Position[]
@@ -28,7 +29,7 @@ export function PositionsTable({ positions, date, selectedKey = null, onSelect }
   const [sort, setSort] = useState<SortState>({ column: 'value', descending: true })
   const rows = useMemo(() => sortPositions(withWeights(positions), sort), [positions, sort])
 
-  if (rows.length === 0) return <p className="muted">No open positions on {formatDate(date)}.</p>
+  if (rows.length === 0) return <p className="muted">{t('No open positions on {date}.', { date: formatDate(date) })}</p>
 
   return (
     <table className="table positions">
@@ -41,7 +42,7 @@ export function PositionsTable({ positions, date, selectedKey = null, onSelect }
               aria-sort={sort.column === column.key ? (sort.descending ? 'descending' : 'ascending') : 'none'}
             >
               <button type="button" className="sort-button" onClick={() => setSort(nextSort(sort, column.key))}>
-                {column.label}
+                {t(column.label)}
                 {sort.column === column.key && <span aria-hidden="true">{sort.descending ? ' ▼' : ' ▲'}</span>}
               </button>
             </th>
@@ -70,11 +71,11 @@ export function PositionsTable({ positions, date, selectedKey = null, onSelect }
                   className="badge warning"
                   title={
                     row.priceSource === 'trade'
-                      ? 'No market price: valued at the last trade price'
-                      : `Last market price from ${row.priceDate ? formatDate(row.priceDate) : 'an earlier date'}`
+                      ? t('No market price: valued at the last trade price')
+                      : t('Last market price from {date}', { date: row.priceDate ? formatDate(row.priceDate) : t('an earlier date') })
                   }
                 >
-                  {row.priceSource === 'trade' ? 'trade' : 'old'}
+                  {row.priceSource === 'trade' ? t('trade') : t('old')}
                 </span>
               )}
             </td>
