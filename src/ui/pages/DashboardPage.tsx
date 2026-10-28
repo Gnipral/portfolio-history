@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { DemoButton } from '../components/DemoBanner.tsx'
 import { positionSeries } from '../../engine/analysis/positionSeries.ts'
 import { db } from '../../data/db.ts'
 import { positionsOn } from '../../engine/positions.ts'
@@ -74,8 +75,10 @@ export function DashboardPage() {
       <section>
         <h2>Dashboard</h2>
         <p>
-          No portfolio loaded yet. <Link to="/import">Import a broker export</Link> to see its history.
+          No portfolio loaded yet. <Link to="/import">Import a broker export</Link> to see its history, or look around in a
+          made-up portfolio first.
         </p>
+        <DemoButton />
       </section>
     )
   }

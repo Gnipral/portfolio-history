@@ -1,4 +1,5 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router'
+import { DemoBanner } from '../ui/components/DemoBanner.tsx'
 import { NavIcon } from '../ui/components/NavIcon.tsx'
 import { OfflineBadge } from '../ui/components/OfflineBadge.tsx'
 import { ThemeToggle } from '../ui/components/ThemeToggle.tsx'
@@ -13,6 +14,7 @@ export function App() {
   return (
     <>
       <UpdateBanner />
+      <DemoBanner />
       <header className="app-header">
         <h1 className="brand">
           <img src={`${import.meta.env.BASE_URL}brand/gnipral-mark.svg`} alt="Gnipral" width={28} height={28} />
