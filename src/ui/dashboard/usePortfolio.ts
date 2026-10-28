@@ -19,7 +19,10 @@ export interface PortfolioState {
   inputs: EngineInputs | null
   series: SeriesResult | null
   sync: SyncProgress | null
+  /** Instruments with a problem of their own; not those that only failed on the connection. */
   syncProblems: number
+  /** The last update could not reach a price source: the stored prices are shown. */
+  slowConnection: boolean
 }
 
 export function usePortfolio(options: EngineOptions): PortfolioState {
@@ -28,6 +31,7 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
   const [inputs, setInputs] = useState<EngineInputs | null>(null)
   const [sync, setSync] = useState<SyncProgress | null>(null)
   const [syncProblems, setSyncProblems] = useState(0)
+  const [slowConnection, setSlowConnection] = useState(false)
   const online = useOnline()
 
   useEffect(() => {
@@ -61,7 +65,11 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
         },
       })
       if (cancelled) return
-      setSyncProblems(Object.keys(report.problems).length)
+      const connection = new Set(report.connection)
+      setSyncProblems(Object.keys(report.problems).filter((key) => !connection.has(key)).length)
+      setSlowConnection(connection.size > 0)
+      // Try again on the next visit of the dashboard instead of tomorrow.
+      if (connection.size > 0) lastSyncKey = null
       setInputs(await loadEngineInputs(db, benchmarks))
     })()
     return () => {
@@ -74,7 +82,7 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
     [inputs, options],
   )
 
-  return { transactionCount, inputs, series, sync, syncProblems }
+  return { transactionCount, inputs, series, sync, syncProblems, slowConnection }
 }
 
 /** Lets tests start from a clean state. */

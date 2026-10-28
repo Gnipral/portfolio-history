@@ -3,6 +3,7 @@ import type { Transaction } from '../model/transaction.ts'
 import type { Settings } from '../settings/settings.ts'
 import { BENCHMARKS } from './benchmarks.ts'
 import { deriveInstruments, type Instrument } from './instruments.ts'
+import { isNetworkError } from './http.ts'
 import { resolveIsins } from './openFigi.ts'
 import { missingRanges, savePrices } from './priceCache.ts'
 import { CRYPTO_PREFIX, searchCoinId } from './providers/coinGecko.ts'
@@ -35,6 +36,11 @@ export interface SyncReport {
   errors: string[]
   /** Instrument key -> problem, for instruments without (complete) prices. */
   problems: Record<string, string>
+  /**
+   * Keys of the problems caused by the connection (too slow or gone) rather than by the instrument:
+   * the stored prices are still shown, and the next update tries again.
+   */
+  connection: string[]
 }
 
 const FIGI_BATCH = 10
@@ -50,6 +56,7 @@ async function resolveSymbols(
   options: Required<Pick<SyncOptions, 'database' | 'settings' | 'now' | 'queues'>>,
   instruments: Instrument[],
   problems: Record<string, string>,
+  connection: string[],
 ): Promise<void> {
   const { database, settings, now, queues } = options
   const existing = new Map((await database.symbols.bulkGet(instruments.map((i) => i.key))).flatMap((r) => (r ? [[r.key, r]] : [])))
@@ -83,6 +90,7 @@ async function resolveSymbols(
         await database.symbols.bulkPut(records)
       } catch (error) {
         for (const i of batch) problems[i.key] = `Symbol lookup failed: ${String(error)}`
+        if (isNetworkError(error)) connection.push(...batch.map((i) => i.key))
       }
     }
   }
@@ -100,6 +108,7 @@ async function resolveSymbols(
       })
     } catch (error) {
       problems[instrument.key] = `Coin lookup failed: ${String(error)}`
+      if (isNetworkError(error)) connection.push(instrument.key)
     }
   }
 
@@ -125,16 +134,18 @@ async function fetchRange(
 ): Promise<{ result: ProviderResult; provider: PriceProvider }> {
   const candidates = providers.filter((p) => p.isAvailable(settings) && p.supports(symbol, kind))
   if (candidates.length === 0) throw new Error('No price source configured for this symbol. Add an API key or the price proxy in Settings.')
-  const failures: string[] = []
+  const failures: unknown[] = []
   for (const provider of candidates) {
     try {
       const result = await queueFor(queues, provider.id).run(() => provider.fetchDaily(symbol, range, settings))
       return { result, provider }
     } catch (error) {
-      failures.push(error instanceof Error ? error.message : String(error))
+      failures.push(error)
     }
   }
-  throw new Error(failures.join('; '))
+  // Only the connection failed: keep that error, so the caller knows to try again later.
+  if (failures.every(isNetworkError)) throw failures[0]
+  throw new Error(failures.map((error) => (error instanceof Error ? error.message : String(error))).join('; '))
 }
 
 /**
@@ -147,6 +158,7 @@ export async function syncMarketData(options: SyncOptions): Promise<SyncReport> 
   const queues = options.queues ?? PROVIDER_QUEUES
   const errors: string[] = []
   const problems: Record<string, string> = {}
+  const connection: string[] = []
 
   onProgress?.({ phase: 'fx', done: 0, total: 1, message: 'Updating exchange rates' })
   errors.push(...(await syncFx(database, today)).errors)
@@ -163,7 +175,7 @@ export async function syncMarketData(options: SyncOptions): Promise<SyncReport> 
 
   const instruments = deriveInstruments(transactions, today)
   onProgress?.({ phase: 'symbols', done: 0, total: instruments.length, message: 'Looking up symbols' })
-  await resolveSymbols({ database, settings, now, queues }, instruments, problems)
+  await resolveSymbols({ database, settings, now, queues }, instruments, problems, connection)
 
   const records = new Map((await database.symbols.toArray()).map((r) => [r.key, r]))
   const jobs: { key: string; symbol: string; kind: 'security' | 'crypto'; range: DateRange }[] = []
@@ -196,6 +208,7 @@ export async function syncMarketData(options: SyncOptions): Promise<SyncReport> 
         }
       } catch (error) {
         problems[job.key] = error instanceof Error ? error.message : String(error)
+        if (isNetworkError(error)) connection.push(job.key)
       } finally {
         done++
         onProgress?.({ phase: 'prices', done, total, message: `Fetching prices (${done}/${total})` })
@@ -204,7 +217,7 @@ export async function syncMarketData(options: SyncOptions): Promise<SyncReport> 
   )
 
   onProgress?.({ phase: 'done', done: total, total, message: 'Done' })
-  return { errors, problems }
+  return { errors, problems, connection }
 }
 
 export async function setManualSymbol(database: PortfolioDatabase, key: string, symbol: string, kind: 'security' | 'crypto', now: Date) {
