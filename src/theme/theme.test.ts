@@ -1,7 +1,16 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { nextThemePreference, PALETTES, readPalette, readThemePreference, storePalette, storeThemePreference } from './theme.ts'
+import {
+  currentPalette,
+  nextThemePreference,
+  PALETTE_EVENT,
+  PALETTES,
+  readPalette,
+  readThemePreference,
+  storePalette,
+  storeThemePreference,
+} from './theme.ts'
 
 afterEach(() => {
   localStorage.clear()
@@ -35,15 +44,20 @@ describe('theme', () => {
 })
 
 describe('palette', () => {
-  it('is standard by default, and is stored and applied when chosen', () => {
+  it('is standard by default, stored when chosen, and announced, but never set on the whole page', () => {
     localStorage.clear()
     expect(readPalette()).toBe('standard')
-    storePalette('colorblind')
-    expect(readPalette()).toBe('colorblind')
-    expect(document.documentElement.getAttribute('data-palette')).toBe('colorblind')
-    storePalette('standard')
+    const heard: unknown[] = []
+    const listen = (e: Event) => heard.push((e as CustomEvent).detail)
+    window.addEventListener(PALETTE_EVENT, listen)
+    storePalette('neon')
+    expect(readPalette()).toBe('neon')
+    expect(currentPalette()).toBe('neon')
     expect(document.documentElement.hasAttribute('data-palette')).toBe(false)
+    storePalette('standard')
     expect(localStorage.getItem('palette')).toBeNull()
+    expect(heard).toEqual(['neon', 'standard'])
+    window.removeEventListener(PALETTE_EVENT, listen)
   })
 
   it('has a light and a dark value for every color it changes', () => {
@@ -54,9 +68,10 @@ describe('palette', () => {
         expect(start, selector).toBeGreaterThan(-1)
         return [...css.slice(start, css.indexOf('}', start)).matchAll(/--([\w-]+):/g)].map((m) => m[1]).sort()
       }
-      const light = tokens(`:root[data-palette='${id}']`)
-      expect(tokens(`:root[data-palette='${id}']:not([data-theme='light'])`)).toEqual(light)
-      expect(tokens(`:root[data-palette='${id}'][data-theme='dark']`)).toEqual(light)
+      const light = tokens(`
+[data-palette='${id}']`)
+      expect(tokens(`:root:not([data-theme='light']) [data-palette='${id}']`)).toEqual(light)
+      expect(tokens(`:root[data-theme='dark'] [data-palette='${id}']`)).toEqual(light)
     }
   })
 })

@@ -106,191 +106,324 @@
 }
 
 /*
- * Palettes on top of the theme (Settings → Appearance). Each one has light and dark values; the
- * dark ones are repeated for the system dark mode and for a chosen dark theme, like the theme itself.
+ * Palettes of the chart block on the dashboard (its own bar, or Settings): set on that block only,
+ * so the rest of the app keeps the theme. Each has light and dark values; the dark ones are
+ * repeated for the system dark mode and for a chosen dark theme, like the theme itself.
  */
 
-/* Okabe-Ito colors: blue for gains and orange for losses stay apart with red-green colour blindness. */
-:root[data-palette='colorblind'] {
-  --positive: #0072b2;
-  --negative: #c75400;
-  --series-1: #0072b2;
-  --series-2: #e69f00;
-  --series-3: #56b4e9;
-  --series-4: #009e73;
-  --series-5: #d55e00;
-  --series-6: #cc79a7;
-  --series-7: #8a7a00;
-  --series-other: #999999;
-  --chart-value: #7a3f9d;
-  --chart-invested: #6b7280;
-  --chart-positive: #0072b2;
-  --chart-negative: #d55e00;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-palette='colorblind']:not([data-theme='light']) {
-    --positive: #56b4e9;
-    --negative: #f0a030;
-    --series-1: #56b4e9;
-    --series-2: #e69f00;
-    --series-3: #3a9ad9;
-    --series-4: #2ec4a0;
-    --series-5: #ff7a33;
-    --series-6: #e58fc3;
-    --series-7: #f0e442;
-    --series-other: #6b7280;
-    --chart-value: #e58fc3;
-    --chart-invested: #a3acb8;
-    --chart-positive: #56b4e9;
-    --chart-negative: #f0a030;
-  }
-}
-
-:root[data-palette='colorblind'][data-theme='dark'] {
-  --positive: #56b4e9;
-  --negative: #f0a030;
-  --series-1: #56b4e9;
-  --series-2: #e69f00;
-  --series-3: #3a9ad9;
-  --series-4: #2ec4a0;
-  --series-5: #ff7a33;
-  --series-6: #e58fc3;
-  --series-7: #f0e442;
-  --series-other: #6b7280;
-  --chart-value: #e58fc3;
-  --chart-invested: #a3acb8;
-  --chart-positive: #56b4e9;
-  --chart-negative: #f0a030;
-}
-
-/* Darker text and lines, stronger colors. */
-:root[data-palette='high-contrast'] {
-  --bg: #ffffff;
+/* Okabe-Ito based: blue gains, orange losses, purple value; apart with red-green colour blindness. */
+[data-palette='colorblind'] {
   --surface: #ffffff;
-  --surface-2: #e8e5dd;
-  --border: #8a857a;
+  --border: #d5d8de;
+  --text: #1a1c1e;
+  --text-muted: #555b63;
+  --positive: #0072b2;
+  --negative: #e66100;
+  --chart-value: #7b2cbf;
+  --chart-invested: #555555;
+  --chart-positive: #0072b2;
+  --chart-negative: #e66100;
+  --chart-zero: #222222;
+  --chart-grid: #e6e6e6;
+  --chart-separator: #999999;
+  --series-2: #009e73;
+  --series-5: #56b4e9;
+  --series-6: #000000;
+  --series-7: #f0b400;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) [data-palette='colorblind'] {
+    --surface: #10131a;
+    --border: #2a303b;
+    --text: #e6e8ee;
+    --text-muted: #a0a7b4;
+    --positive: #4fb3ff;
+    --negative: #ff9f1c;
+    --chart-value: #d896ff;
+    --chart-invested: #a0a7b4;
+    --chart-positive: #4fb3ff;
+    --chart-negative: #ff9f1c;
+    --chart-zero: #f0f0f0;
+    --chart-grid: #232833;
+    --chart-separator: #59606c;
+    --series-2: #2bd9a6;
+    --series-5: #7fd3ff;
+    --series-6: #ffffff;
+    --series-7: #ffd23f;
+  }
+}
+
+:root[data-theme='dark'] [data-palette='colorblind'] {
+  --surface: #10131a;
+  --border: #2a303b;
+  --text: #e6e8ee;
+  --text-muted: #a0a7b4;
+  --positive: #4fb3ff;
+  --negative: #ff9f1c;
+  --chart-value: #d896ff;
+  --chart-invested: #a0a7b4;
+  --chart-positive: #4fb3ff;
+  --chart-negative: #ff9f1c;
+  --chart-zero: #f0f0f0;
+  --chart-grid: #232833;
+  --chart-separator: #59606c;
+  --series-2: #2bd9a6;
+  --series-5: #7fd3ff;
+  --series-6: #ffffff;
+  --series-7: #ffd23f;
+}
+
+/* Pure black or white with thick, bright colors. */
+[data-palette='high-contrast'] {
+  --surface: #ffffff;
+  --border: #000000;
   --text: #000000;
-  --text-muted: #2f3433;
-  --positive: #006b2d;
-  --negative: #b00000;
-  --chart-value: #00509e;
-  --chart-invested: #3d434b;
-  --chart-positive: #007a33;
-  --chart-negative: #c00000;
+  --text-muted: #000000;
+  --positive: #007a1f;
+  --negative: #d10000;
+  --chart-value: #0000ee;
+  --chart-invested: #000000;
+  --chart-positive: #007a1f;
+  --chart-negative: #d10000;
   --chart-zero: #000000;
-  --chart-grid: #d8d3c8;
-  --chart-separator: #6b665c;
+  --chart-grid: #bdbdbd;
+  --chart-separator: #000000;
+  --series-2: #ff8c00;
+  --series-5: #ff00aa;
+  --series-6: #00a3a3;
+  --series-7: #8b00ff;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root[data-palette='high-contrast']:not([data-theme='light']) {
-    --bg: #000000;
-    --surface: #0e1115;
-    --surface-2: #171c22;
-    --border: #56606b;
+  :root:not([data-theme='light']) [data-palette='high-contrast'] {
+    --surface: #000000;
+    --border: #ffffff;
     --text: #ffffff;
-    --text-muted: #c3cbc6;
-    --positive: #2bff9e;
-    --negative: #ff6b6b;
-    --chart-value: #7fd8ff;
-    --chart-invested: #c4ccd4;
-    --chart-positive: #4dffa6;
-    --chart-negative: #ff8a8a;
+    --text-muted: #ffffff;
+    --positive: #00ff66;
+    --negative: #ff3355;
+    --chart-value: #00e5ff;
+    --chart-invested: #ffffff;
+    --chart-positive: #00ff66;
+    --chart-negative: #ff3355;
     --chart-zero: #ffffff;
-    --chart-grid: #2a323b;
-    --chart-separator: #7a8794;
+    --chart-grid: #3a3a3a;
+    --chart-separator: #ffffff;
+    --series-2: #ffb000;
+    --series-5: #ff4fd8;
+    --series-6: #b6ff00;
+    --series-7: #c77dff;
   }
 }
 
-:root[data-palette='high-contrast'][data-theme='dark'] {
-  --bg: #000000;
-  --surface: #0e1115;
-  --surface-2: #171c22;
-  --border: #56606b;
+:root[data-theme='dark'] [data-palette='high-contrast'] {
+  --surface: #000000;
+  --border: #ffffff;
   --text: #ffffff;
-  --text-muted: #c3cbc6;
-  --positive: #2bff9e;
-  --negative: #ff6b6b;
-  --chart-value: #7fd8ff;
-  --chart-invested: #c4ccd4;
-  --chart-positive: #4dffa6;
-  --chart-negative: #ff8a8a;
+  --text-muted: #ffffff;
+  --positive: #00ff66;
+  --negative: #ff3355;
+  --chart-value: #00e5ff;
+  --chart-invested: #ffffff;
+  --chart-positive: #00ff66;
+  --chart-negative: #ff3355;
   --chart-zero: #ffffff;
-  --chart-grid: #2a323b;
-  --chart-separator: #7a8794;
+  --chart-grid: #3a3a3a;
+  --chart-separator: #ffffff;
+  --series-2: #ffb000;
+  --series-5: #ff4fd8;
+  --series-6: #b6ff00;
+  --series-7: #c77dff;
 }
 
-/* Calmer colors and less contrast. */
-:root[data-palette='soft'] {
-  --text: #33373a;
-  --text-muted: #767c78;
-  --border: #e8e4dc;
-  --positive: #3f8f62;
-  --negative: #b9635d;
-  --series-1: #5a9e78;
-  --series-2: #d4a056;
-  --series-3: #8085c9;
-  --series-4: #5ea8b8;
-  --series-5: #cf7fa4;
-  --series-6: #93b562;
-  --series-7: #a084cf;
-  --series-other: #b4bcc6;
-  --chart-value: #5a8db0;
-  --chart-invested: #9ea3aa;
-  --chart-positive: #5aa77c;
-  --chart-negative: #c9726b;
-  --chart-zero: #8a8f96;
-  --chart-grid: #f1eee8;
-  --chart-separator: #cfc9bd;
+/* Pastels on a calm background. */
+[data-palette='soft'] {
+  --surface: #f3f0ea;
+  --border: #e6e1d8;
+  --text: #4a4d50;
+  --text-muted: #8a8a84;
+  --positive: #7fa98d;
+  --negative: #c98f89;
+  --chart-value: #8fa9c2;
+  --chart-invested: #c2c0ba;
+  --chart-positive: #93b8a0;
+  --chart-negative: #d4a5a0;
+  --chart-zero: #b5b2ab;
+  --chart-grid: #ebe7df;
+  --chart-separator: #d9d4ca;
+  --series-2: #d9bf94;
+  --series-5: #dcaec4;
+  --series-6: #b7c99a;
+  --series-7: #b9a8d6;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root[data-palette='soft']:not([data-theme='light']) {
-    --text: #c7cbd3;
-    --text-muted: #7f8a84;
-    --border: #20262d;
-    --positive: #5cc999;
-    --negative: #e88a8a;
-    --series-1: #5cc999;
-    --series-2: #e6b877;
-    --series-3: #9a9ce6;
-    --series-4: #6cc3d6;
-    --series-5: #e39cc0;
-    --series-6: #b2d27a;
-    --series-7: #b99ae0;
-    --series-other: #56606a;
-    --chart-value: #7fb4cf;
-    --chart-invested: #8d97a2;
-    --chart-positive: #6cc79c;
-    --chart-negative: #e39a9a;
-    --chart-zero: #9aa3ad;
-    --chart-grid: #181d23;
-    --chart-separator: #3c4651;
+  :root:not([data-theme='light']) [data-palette='soft'] {
+    --surface: #1c2026;
+    --border: #2a2f36;
+    --text: #c3c7cd;
+    --text-muted: #8a9099;
+    --positive: #8fbf9f;
+    --negative: #c99a96;
+    --chart-value: #9db6cc;
+    --chart-invested: #6f7782;
+    --chart-positive: #8fbf9f;
+    --chart-negative: #c99a96;
+    --chart-zero: #7c838c;
+    --chart-grid: #242a31;
+    --chart-separator: #3a414a;
+    --series-2: #c9b08a;
+    --series-5: #c79eb3;
+    --series-6: #a7b88d;
+    --series-7: #a99bc4;
   }
 }
 
-:root[data-palette='soft'][data-theme='dark'] {
-  --text: #c7cbd3;
-  --text-muted: #7f8a84;
-  --border: #20262d;
-  --positive: #5cc999;
-  --negative: #e88a8a;
-  --series-1: #5cc999;
-  --series-2: #e6b877;
-  --series-3: #9a9ce6;
-  --series-4: #6cc3d6;
-  --series-5: #e39cc0;
-  --series-6: #b2d27a;
-  --series-7: #b99ae0;
-  --series-other: #56606a;
-  --chart-value: #7fb4cf;
-  --chart-invested: #8d97a2;
-  --chart-positive: #6cc79c;
-  --chart-negative: #e39a9a;
-  --chart-zero: #9aa3ad;
-  --chart-grid: #181d23;
-  --chart-separator: #3c4651;
+:root[data-theme='dark'] [data-palette='soft'] {
+  --surface: #1c2026;
+  --border: #2a2f36;
+  --text: #c3c7cd;
+  --text-muted: #8a9099;
+  --positive: #8fbf9f;
+  --negative: #c99a96;
+  --chart-value: #9db6cc;
+  --chart-invested: #6f7782;
+  --chart-positive: #8fbf9f;
+  --chart-negative: #c99a96;
+  --chart-zero: #7c838c;
+  --chart-grid: #242a31;
+  --chart-separator: #3a414a;
+  --series-2: #c9b08a;
+  --series-5: #c79eb3;
+  --series-6: #a7b88d;
+  --series-7: #a99bc4;
+}
+
+/* Glowing colors on deep black, in the light theme too. */
+[data-palette='neon'] {
+  --surface: #07060f;
+  --border: #2b1f5c;
+  --text: #f4f0ff;
+  --text-muted: #b6a8ff;
+  --positive: #39ff14;
+  --negative: #ff2079;
+  --chart-value: #00f0ff;
+  --chart-invested: #8f7bff;
+  --chart-positive: #39ff14;
+  --chart-negative: #ff2079;
+  --chart-zero: #fdfdfd;
+  --chart-grid: #1a1238;
+  --chart-separator: #6a4cff;
+  --series-2: #ffe600;
+  --series-5: #ff00e6;
+  --series-6: #7df9ff;
+  --series-7: #ff7a00;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) [data-palette='neon'] {
+    --surface: #07060f;
+    --border: #2b1f5c;
+    --text: #f4f0ff;
+    --text-muted: #b6a8ff;
+    --positive: #39ff14;
+    --negative: #ff2079;
+    --chart-value: #00f0ff;
+    --chart-invested: #8f7bff;
+    --chart-positive: #39ff14;
+    --chart-negative: #ff2079;
+    --chart-zero: #fdfdfd;
+    --chart-grid: #1a1238;
+    --chart-separator: #6a4cff;
+    --series-2: #ffe600;
+    --series-5: #ff00e6;
+    --series-6: #7df9ff;
+    --series-7: #ff7a00;
+  }
+}
+
+:root[data-theme='dark'] [data-palette='neon'] {
+  --surface: #07060f;
+  --border: #2b1f5c;
+  --text: #f4f0ff;
+  --text-muted: #b6a8ff;
+  --positive: #39ff14;
+  --negative: #ff2079;
+  --chart-value: #00f0ff;
+  --chart-invested: #8f7bff;
+  --chart-positive: #39ff14;
+  --chart-negative: #ff2079;
+  --chart-zero: #fdfdfd;
+  --chart-grid: #1a1238;
+  --chart-separator: #6a4cff;
+  --series-2: #ffe600;
+  --series-5: #ff00e6;
+  --series-6: #7df9ff;
+  --series-7: #ff7a00;
+}
+
+/* Deep blues, teal gains, coral losses. */
+[data-palette='ocean'] {
+  --surface: #eef6fb;
+  --border: #cfe2ee;
+  --text: #0d2b45;
+  --text-muted: #4a6b80;
+  --positive: #0f9d8a;
+  --negative: #e4572e;
+  --chart-value: #0b5394;
+  --chart-invested: #7aa0b8;
+  --chart-positive: #0f9d8a;
+  --chart-negative: #e4572e;
+  --chart-zero: #12355b;
+  --chart-grid: #dbeaf3;
+  --chart-separator: #9dbbd0;
+  --series-2: #f2a541;
+  --series-5: #ff6f91;
+  --series-6: #3c91e6;
+  --series-7: #6a4c93;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) [data-palette='ocean'] {
+    --surface: #071a2b;
+    --border: #12324d;
+    --text: #e0f2ff;
+    --text-muted: #8fb3cc;
+    --positive: #2ee6c5;
+    --negative: #ff7b54;
+    --chart-value: #4fc3f7;
+    --chart-invested: #6d8fa8;
+    --chart-positive: #2ee6c5;
+    --chart-negative: #ff7b54;
+    --chart-zero: #e0f2ff;
+    --chart-grid: #0d2840;
+    --chart-separator: #2c5577;
+    --series-2: #ffc15e;
+    --series-5: #ff8fab;
+    --series-6: #81d4fa;
+    --series-7: #b39ddb;
+  }
+}
+
+:root[data-theme='dark'] [data-palette='ocean'] {
+  --surface: #071a2b;
+  --border: #12324d;
+  --text: #e0f2ff;
+  --text-muted: #8fb3cc;
+  --positive: #2ee6c5;
+  --negative: #ff7b54;
+  --chart-value: #4fc3f7;
+  --chart-invested: #6d8fa8;
+  --chart-positive: #2ee6c5;
+  --chart-negative: #ff7b54;
+  --chart-zero: #e0f2ff;
+  --chart-grid: #0d2840;
+  --chart-separator: #2c5577;
+  --series-2: #ffc15e;
+  --series-5: #ff8fab;
+  --series-6: #81d4fa;
+  --series-7: #b39ddb;
 }
 
 *,
@@ -1693,3 +1826,22 @@ progress {
   cursor: not-allowed;
 }
 
+
+/* With a palette, the chart block is one colored card: its own background, text and borders. */
+.chart-block[data-palette] {
+  padding: 0.75rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.chart-block[data-palette] .chart-wrapper {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.chart-block[data-palette] .muted {
+  color: var(--text-muted);
+}

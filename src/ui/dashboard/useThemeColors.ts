@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type RefObject } from 'react'
 
 export interface ThemeColors {
   bg: string
@@ -23,8 +23,8 @@ export interface ThemeColors {
   }
 }
 
-function read(): ThemeColors {
-  const style = getComputedStyle(document.documentElement)
+function read(element?: Element | null): ThemeColors {
+  const style = getComputedStyle(element ?? document.documentElement)
   const v = (name: string) => style.getPropertyValue(name).trim()
   return {
     bg: v('--bg'),
@@ -50,21 +50,29 @@ function read(): ThemeColors {
   }
 }
 
-/** The current theme's CSS variables, updated when the system or manual theme changes. */
-export function useThemeColors(): ThemeColors {
-  const [colors, setColors] = useState(read)
+/**
+ * The current theme's CSS variables, updated when the system or manual theme changes. With an
+ * element, as that element sees them: a palette set on a block of the page then counts too, and
+ * `palette` reads them again when it changes.
+ */
+export function useThemeColors(element?: RefObject<Element | null>, palette?: string): ThemeColors {
+  const [colors, setColors] = useState(() => read())
 
   useEffect(() => {
-    const update = () => setColors(read())
+    setColors(read(element?.current))
+  }, [element, palette])
+
+  useEffect(() => {
+    const update = () => setColors(read(element?.current))
     const observer = new MutationObserver(update)
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-palette'] })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     const media = window.matchMedia?.('(prefers-color-scheme: dark)')
     media?.addEventListener('change', update)
     return () => {
       observer.disconnect()
       media?.removeEventListener('change', update)
     }
-  }, [])
+  }, [element])
 
   return colors
 }

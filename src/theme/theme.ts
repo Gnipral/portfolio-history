@@ -35,40 +35,39 @@ export function storeThemePreference(preference: ThemePreference): void {
 
 export function applyStoredTheme(): void {
   applyTheme(readThemePreference())
-  applyPalette(readPalette())
 }
 
 export function nextThemePreference(current: ThemePreference): ThemePreference {
   return current === 'system' ? 'light' : current === 'light' ? 'dark' : 'system'
 }
 
-/** Color palettes on top of the light or dark theme. */
-export type Palette = 'standard' | 'colorblind' | 'high-contrast' | 'soft'
+/** Color palettes of the chart block on the dashboard; the rest of the app keeps the theme's colors. */
+export type Palette = 'standard' | 'colorblind' | 'high-contrast' | 'soft' | 'neon' | 'ocean'
 
-/** `swatches`: gain, loss, value line and two series colors, to show in the picker. */
+/** `swatches`: background, value line, gain, loss and a benchmark color, to show in the pickers. */
 export const PALETTES: { id: Palette; label: string; description: string; swatches: string[] }[] = [
-  { id: 'standard', label: 'Standard', description: 'Green for gains, red for losses.', swatches: ['#0e8345', '#c5221f', '#1170a6', '#d97706', '#4f46e5'] },
+  { id: 'standard', label: 'Standard', description: 'The colors of the app: green for gains, red for losses.', swatches: ['#14181d', '#5cc8f0', '#3ddc97', '#ff7b7b', '#ffb95f'] },
   {
     id: 'colorblind',
     label: 'Colour-blind friendly',
-    description: 'Blue for gains, orange for losses, and colors that stay apart with red-green colour blindness.',
-    swatches: ['#0072b2', '#c75400', '#7a3f9d', '#e69f00', '#56b4e9'],
+    description: 'Blue for gains, orange for losses, purple for the value: apart with red-green colour blindness.',
+    swatches: ['#10131a', '#d896ff', '#4fb3ff', '#ff9f1c', '#2bd9a6'],
   },
   {
     id: 'high-contrast',
     label: 'High contrast',
-    description: 'Darker text and lines, stronger colors: easier to read.',
-    swatches: ['#006b2d', '#b00000', '#00509e', '#d97706', '#4f46e5'],
+    description: 'Pure black or white, thick bright colors: as readable as it gets.',
+    swatches: ['#000000', '#00e5ff', '#00ff66', '#ff3355', '#ffb000'],
   },
-  {
-    id: 'soft',
-    label: 'Soft',
-    description: 'Calmer colors and less contrast: easier on the eyes.',
-    swatches: ['#3f8f62', '#b9635d', '#5a8db0', '#d4a056', '#8085c9'],
-  },
+  { id: 'soft', label: 'Soft', description: 'Pastel colors on a calm background: easy on the eyes.', swatches: ['#1c2026', '#9db6cc', '#8fbf9f', '#c99a96', '#c9b08a'] },
+  { id: 'neon', label: 'Neon', description: 'Glowing colors on deep black, in light and dark.', swatches: ['#07060f', '#00f0ff', '#39ff14', '#ff2079', '#ffe600'] },
+  { id: 'ocean', label: 'Ocean', description: 'Deep blues with teal for gains and coral for losses.', swatches: ['#071a2b', '#4fc3f7', '#2ee6c5', '#ff7b54', '#ffc15e'] },
 ]
 
 const PALETTE_KEY = 'palette'
+
+/** Fired on window when the palette changes, so the chart block and Settings follow. */
+export const PALETTE_EVENT = 'palettechange'
 
 export function readPalette(): Palette {
   try {
@@ -80,13 +79,6 @@ export function readPalette(): Palette {
   return 'standard'
 }
 
-/** `standard` removes the attribute, so the theme's own colors apply. */
-export function applyPalette(palette: Palette): void {
-  const root = document.documentElement
-  if (palette === 'standard') root.removeAttribute('data-palette')
-  else root.setAttribute('data-palette', palette)
-}
-
 export function storePalette(palette: Palette): void {
   try {
     if (palette === 'standard') localStorage.removeItem(PALETTE_KEY)
@@ -94,5 +86,14 @@ export function storePalette(palette: Palette): void {
   } catch {
     // Not persisted; the choice still applies for this session.
   }
-  applyPalette(palette)
+  current = palette
+  window.dispatchEvent(new CustomEvent(PALETTE_EVENT, { detail: palette }))
+}
+
+let current: Palette | null = null
+
+/** The chosen palette, read once from storage and then kept up to date. */
+export function currentPalette(): Palette {
+  current ??= readPalette()
+  return current
 }
