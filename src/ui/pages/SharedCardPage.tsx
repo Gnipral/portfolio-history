@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { DemoButton } from '../components/DemoBanner.tsx'
 import { formatDate, formatPercent } from '../format.ts'
 import { drawShareCard, loadCardFonts } from '../share/drawShareCard.ts'
 import type { ShareCard } from '../share/shareCard.ts'
+import { comparePath, linkData } from '../share/compare.ts'
 import { readShareLink } from '../share/shareLink.ts'
 
 /** A card someone shared as a link: shown read-only, with the way to try the app. */
@@ -11,6 +12,8 @@ export function SharedCardPage() {
   const { data = '' } = useParams()
   const [card, setCard] = useState<ShareCard | null | undefined>(undefined)
   const canvas = useRef<HTMLCanvasElement>(null)
+  const navigate = useNavigate()
+  const [other, setOther] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -51,6 +54,16 @@ export function SharedCardPage() {
         amounts.
       </p>
       <canvas ref={canvas} className="share-preview wide" role="img" aria-label={`Return ${formatPercent(card.twr)}`} />
+      <form
+        className="actions"
+        onSubmit={(e) => {
+          e.preventDefault()
+          void navigate(comparePath([data, ...linkData(other)]))
+        }}
+      >
+        <input className="compare-input" aria-label="Share link to compare with" placeholder="Paste another share link (optional)" value={other} onChange={(e) => setOther(e.target.value)} />
+        <button type="submit">Compare</button>
+      </form>
       <div className="callout info">
         <p>
           <strong>See your own portfolio like this.</strong> Free, no account needed, and your data stays on your device.
