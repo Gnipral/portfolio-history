@@ -5,6 +5,7 @@ import {
   CrosshairMode,
   LineSeries,
   LineStyle,
+  PriceScaleMode,
   createChart,
   type AutoscaleInfo,
   type IChartApi,
@@ -16,6 +17,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { BenchmarkLine } from './benchmarkLines.ts'
 import type { DailyPoint } from '../../engine/series.ts'
+import { DEFAULT_CHART_STYLE, type ChartStyle } from '../../settings/settings.ts'
 import { formatDate, formatEur, formatPercent } from '../format.ts'
 import { chartData, type ChartMode } from './chartData.ts'
 import { useThemeColors } from './useThemeColors.ts'
@@ -28,6 +30,9 @@ interface Props {
   mode: ChartMode
   onHover: (index: number) => void
   benchmarks?: BenchmarkLine[]
+  /** How the chart is drawn; changed in the chart's own menu. */
+  chartStyle?: ChartStyle
+  onStyleChange?: (change: Partial<ChartStyle>) => void
 }
 
 interface ChartRefs {
@@ -37,8 +42,8 @@ interface ChartRefs {
   benchmarks: ISeriesApi<'Line'>[]
   /** Only in EUR mode; removing it also removes its pane. */
   pnl: ISeriesApi<'Baseline'> | null
-  /** The 0 line: on the profit in EUR, on the return in percent. */
-  zero: IPriceLine | null
+  /** The 0 line: on the profit in EUR, on the return in percent; none in EUR without the profit pane. */
+  zero: { line: IPriceLine; on: ISeriesApi<'Area'> | ISeriesApi<'Baseline'> } | null
 }
 
 function pnlColors({ chart }: ReturnType<typeof useThemeColors>) {
@@ -80,7 +85,17 @@ function cssColor(variable: string | undefined): string {
 }
 
 /** Value and profit over time with a crosshair that follows, and drives, the selected day. */
-export function PortfolioChart({ points, from, to, selected, mode, onHover, benchmarks = [] }: Props) {
+export function PortfolioChart({
+  points,
+  from,
+  to,
+  selected,
+  mode,
+  onHover,
+  benchmarks = [],
+  chartStyle = DEFAULT_CHART_STYLE,
+  onStyleChange,
+}: Props) {
   const container = useRef<HTMLDivElement>(null)
   const refs = useRef<ChartRefs | null>(null)
   const colors = useThemeColors()
@@ -202,11 +217,16 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
       },
       grid: { vertLines: { visible: false }, horzLines: { color: colors.chart.grid } },
     })
-    r.main.applyOptions({ lineColor: colors.chart.value, topColor: `${colors.chart.value}40`, bottomColor: `${colors.chart.value}04` })
+    const fill = chartStyle.fill
+    r.main.applyOptions({
+      lineColor: colors.chart.value,
+      topColor: fill ? `${colors.chart.value}40` : 'transparent',
+      bottomColor: fill ? `${colors.chart.value}04` : 'transparent',
+    })
     r.secondary.applyOptions({ color: colors.chart.invested })
     r.pnl?.applyOptions(pnlColors(colors))
-    r.zero?.applyOptions(zeroLine(colors))
-  }, [colors])
+    r.zero?.line.applyOptions(zeroLine(colors))
+  }, [colors, chartStyle.fill])
 
   // Data and mode.
   useEffect(() => {
@@ -217,6 +237,9 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
     r.chart.applyOptions({ localization: { locale: 'en-GB', priceFormatter: format } })
     r.main.setData(data.main)
     r.secondary.setData(data.secondary)
+    r.secondary.applyOptions({ visible: chartStyle.invested })
+    // Log only for values: a return in percent goes through 0 and below.
+    r.main.priceScale().applyOptions({ mode: chartStyle.log && !percent ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal })
     // One line per benchmark, in the pane of the value.
     while (r.benchmarks.length > data.benchmarks.length) r.chart.removeSeries(r.benchmarks.pop() as ISeriesApi<'Line'>)
     while (r.benchmarks.length < data.benchmarks.length) {
@@ -226,13 +249,15 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
       line.applyOptions({ color: cssColor(benchmarksRef.current[i]?.color) })
       line.setData(data.benchmarks[i] ?? [])
     })
-    if (percent && r.pnl) {
+    // The 0 line moves with the pane it belongs to; it is made again below.
+    if (r.zero) r.zero.on.removePriceLine(r.zero.line)
+    r.zero = null
+    const profitPane = !percent && chartStyle.profitPane
+    if (!profitPane && r.pnl) {
       r.chart.removeSeries(r.pnl)
       r.pnl = null
-      r.zero = r.main.createPriceLine(zeroLine(colorsRef.current))
-    } else if (!percent) {
+    } else if (profitPane) {
       if (!r.pnl) {
-        if (r.zero) r.main.removePriceLine(r.zero)
         const options = {
           baseValue: { type: 'price' as const, price: 0 },
           lineWidth: 3 as const,
@@ -244,14 +269,14 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
         r.chart.panes()[1]?.setHeight(profitHeight(container.current?.clientHeight ?? 0))
         // Room above the curve for the pane label, and the 0 line clear of the time axis.
         r.pnl.priceScale().applyOptions({ scaleMargins: { top: 0.25, bottom: 0.1 } })
-        r.zero = r.pnl.createPriceLine(zeroLine(colorsRef.current))
       }
       r.pnl.setData(data.pnl)
+      r.zero = { line: r.pnl.createPriceLine(zeroLine(colorsRef.current)), on: r.pnl }
     }
-    if (percent && !r.zero) r.zero = r.main.createPriceLine(zeroLine(colorsRef.current))
+    if (percent) r.zero = { line: r.main.createPriceLine(zeroLine(colorsRef.current)), on: r.main }
     r.chart.timeScale().fitContent()
     requestAnimationFrame(measurePanes)
-  }, [data, mode, colors])
+  }, [data, mode, colors, chartStyle.invested, chartStyle.log, chartStyle.profitPane])
 
   // Show the crosshair on the selected day when it is chosen with the slider or date picker.
   useEffect(() => {
@@ -277,17 +302,21 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
                 <span>
                   <i className="swatch main" /> Value {formatEur(point.value)}
                 </span>
-                <span>
-                  <i className="swatch secondary" /> Invested {formatEur(point.invested)}
-                </span>
+                {chartStyle.invested && (
+                  <span>
+                    <i className="swatch secondary" /> Invested {formatEur(point.invested)}
+                  </span>
+                )}
                 {benchmarkLegend.map((b) => (
                   <span key={b.label}>
                     <i className="swatch" style={{ background: `var(${b.color})` }} /> {b.label} {b.text}
                   </span>
                 ))}
-                <span>
-                  <i className="swatch pnl" /> Profit {formatEur(point.pnl)}
-                </span>
+                {chartStyle.profitPane && (
+                  <span>
+                    <i className="swatch pnl" /> Profit {formatEur(point.pnl)}
+                  </span>
+                )}
               </>
             ) : (
               <>
@@ -299,7 +328,7 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
                     <i className="swatch" style={{ background: `var(${b.color})` }} /> {b.label} {b.text}
                   </span>
                 ))}
-                {from === 0 && (
+                {from === 0 && chartStyle.invested && (
                   <span>
                     <i className="swatch secondary" /> Simple {formatPercent(point.simpleReturn)}
                   </span>
@@ -308,6 +337,7 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
             )}
           </div>
         )}
+        {onStyleChange && <StyleMenu chartStyle={chartStyle} percent={mode === 'percent'} onChange={onStyleChange} />}
         <button
           type="button"
           className="chart-expand"
@@ -328,5 +358,51 @@ export function PortfolioChart({ points, from, to, selected, mode, onHover, benc
       )}
       <div ref={container} className="chart" data-testid="portfolio-chart" />
     </div>
+  )
+}
+
+/** A small menu next to the full screen button with the ways to draw the chart. */
+function StyleMenu({ chartStyle, percent, onChange }: { chartStyle: ChartStyle; percent: boolean; onChange: (change: Partial<ChartStyle>) => void }) {
+  const option = (key: keyof ChartStyle, label: string, hint: string, eurOnly = false) => (
+    <label className="radio">
+      <input type="checkbox" checked={chartStyle[key]} disabled={eurOnly && percent} onChange={(e) => onChange({ [key]: e.target.checked })} />
+      <span>
+        {label}
+        <span className="muted small"> {eurOnly && percent ? 'Only in EUR.' : hint}</span>
+      </span>
+    </label>
+  )
+  // Closes like a menu: a click or tap anywhere else, or Esc.
+  const menu = useRef<HTMLDetailsElement>(null)
+  useEffect(() => {
+    const close = (e: Event) => {
+      const element = menu.current
+      if (!element?.open) return
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !element.contains(e.target as Node)) element.open = false
+    }
+    document.addEventListener('pointerdown', close)
+    document.addEventListener('keydown', close)
+    return () => {
+      document.removeEventListener('pointerdown', close)
+      document.removeEventListener('keydown', close)
+    }
+  }, [])
+  return (
+    <details ref={menu} className="chart-style">
+      <summary className="chart-expand" aria-label="Chart style" title="Chart style">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
+          <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
+          <circle cx="16" cy="6" r="2" />
+          <circle cx="10" cy="12" r="2" />
+          <circle cx="18" cy="18" r="2" />
+        </svg>
+      </summary>
+      <div className="chart-style-menu" role="group" aria-label="Chart style">
+        {option('fill', 'Fill under the value', 'A soft area, or the line alone.')}
+        {option('invested', 'Invested capital', percent ? 'The simple return line.' : 'The dashed line.')}
+        {option('profitPane', 'Profit / loss pane', 'The pane under the value.', true)}
+        {option('log', 'Logarithmic scale', 'Equal steps are equal percentages.', true)}
+      </div>
+    </details>
   )
 }

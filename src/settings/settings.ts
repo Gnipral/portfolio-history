@@ -4,6 +4,20 @@ import { DEFAULT_TAX_RULES, type CapitalGainsRules } from '../engine/analysis/ca
 import { DEFAULT_OPTIONS, type CostBasisMethod, type Toggles } from '../engine/options.ts'
 import { DEFAULT_BENCHMARK_ID } from '../market/benchmarks.ts'
 
+/** How the dashboard chart is drawn; switched in its own menu. */
+export interface ChartStyle {
+  /** A soft fill under the value line, or the line alone. */
+  fill: boolean
+  /** The dashed line of the invested capital (simple return in percent). */
+  invested: boolean
+  /** The profit / loss pane under the value, in EUR. */
+  profitPane: boolean
+  /** A logarithmic value scale, in EUR: equal steps are equal percentages. */
+  log: boolean
+}
+
+export const DEFAULT_CHART_STYLE: ChartStyle = { fill: true, invested: true, profitPane: true, log: false }
+
 /** Stored only in this browser's IndexedDB. */
 export interface Settings {
   /** URL of the deployed workers/price-proxy, without trailing slash. */
@@ -23,6 +37,7 @@ export interface Settings {
   toggles: Toggles
   /** Rules of the capital gains tax estimate: a country's preset, possibly adjusted. */
   taxRules: CapitalGainsRules
+  chartStyle: ChartStyle
 }
 
 /** Settings edited as text in the settings form. */
@@ -44,6 +59,7 @@ export const DEFAULT_SETTINGS: Settings = {
   costBasis: defaultCostBasis,
   toggles: defaultToggles,
   taxRules: DEFAULT_TAX_RULES,
+  chartStyle: DEFAULT_CHART_STYLE,
 }
 
 const SETTINGS_KEY = 'settings'
@@ -58,6 +74,7 @@ export async function loadSettings(database: PortfolioDatabase = db): Promise<Se
       ...parsed,
       toggles: { ...DEFAULT_SETTINGS.toggles, ...parsed.toggles },
       taxRules: { ...DEFAULT_SETTINGS.taxRules, ...parsed.taxRules },
+      chartStyle: { ...DEFAULT_CHART_STYLE, ...parsed.chartStyle },
     }
   } catch {
     return DEFAULT_SETTINGS
