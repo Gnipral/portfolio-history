@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PortfolioDatabase } from '../data/db.ts'
 import { tx } from '../engine/testing.ts'
 import { loadSettings, saveSettings } from '../settings/settings.ts'
-import { loadFromAccount, packData, readToken, saveToAccount, signOut, unpackData } from './account.ts'
+import { loadFromAccount, newerInAccount, packData, readToken, saveToAccount, signOut, unpackData } from './account.ts'
 
 const period = { id: 'p1', name: 'After the crash', from: '2026-03-01', to: null }
 
@@ -56,5 +56,28 @@ describe('account data', () => {
     vi.stubGlobal('fetch', async () => Response.json({ error: 'Not signed in' }, { status: 401 }))
     await expect(loadFromAccount(new PortfolioDatabase('test-account-401'))).rejects.toThrow()
     expect(readToken()).toBeNull()
+  })
+
+  it('notices data saved from another device since this browser last saved', async () => {
+    let savedAt: string | null = '2026-10-01T08:00:00.000Z'
+    vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
+      if (url === '/me') return Response.json({ userId: 'u', dataUpdatedAt: savedAt })
+      if (init.method === 'PUT') {
+        savedAt = '2026-10-28T12:00:00.000Z'
+        return Response.json({ updatedAt: savedAt })
+      }
+      throw new Error(`unexpected request ${url}`)
+    })
+    localStorage.setItem('account-token', 'token-123')
+    // Saved before from elsewhere, never from here.
+    expect(await newerInAccount()).toBe('2026-10-01T08:00:00.000Z')
+
+    const here = new PortfolioDatabase('test-account-newer')
+    await saveToAccount(here)
+    expect(await newerInAccount()).toBeNull()
+
+    savedAt = '2026-10-29T09:00:00.000Z'
+    expect(await newerInAccount()).toBe('2026-10-29T09:00:00.000Z')
+    await here.delete()
   })
 })

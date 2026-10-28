@@ -3,6 +3,7 @@ import type { PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequest
 import { db, type ImportRecord, type PortfolioDatabase } from '../data/db.ts'
 import type { Transaction } from '../model/transaction.ts'
 import { loadSettings, saveSettings, type NamedPeriod } from '../settings/settings.ts'
+import { isDemo } from '../demo/demoMode.ts'
 import { t } from '../i18n/i18n.ts'
 
 /**
@@ -13,6 +14,8 @@ import { t } from '../i18n/i18n.ts'
 export const ACCOUNT_URL: string = (import.meta.env.VITE_ACCOUNT_URL ?? '').replace(/\/+$/, '')
 
 const TOKEN_KEY = 'account-token'
+/** When the account's data was last saved from or loaded into this browser: newer data came from elsewhere. */
+const KNOWN_KEY = 'account-known-at'
 
 /** Fired on window when signing in or out, so every account control follows. */
 export const ACCOUNT_EVENT = 'accountchange'
@@ -29,10 +32,30 @@ export function readToken(): string | null {
   }
 }
 
+function readKnown(): string | null {
+  try {
+    return localStorage.getItem(KNOWN_KEY)
+  } catch {
+    return null
+  }
+}
+
+function storeKnown(updatedAt: string | null): void {
+  try {
+    if (updatedAt) localStorage.setItem(KNOWN_KEY, updatedAt)
+    else localStorage.removeItem(KNOWN_KEY)
+  } catch {
+    // Without storage every save asks first, which is safe.
+  }
+}
+
 function storeToken(token: string | null): void {
   try {
     if (token) localStorage.setItem(TOKEN_KEY, token)
-    else localStorage.removeItem(TOKEN_KEY)
+    else {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(KNOWN_KEY)
+    }
   } catch {
     // Without storage the session lasts until the page closes.
   }
@@ -122,6 +145,7 @@ export async function saveToAccount(database: PortfolioDatabase = db): Promise<s
   const response = await call('/data', { method: 'PUT', headers: { 'Content-Type': 'application/octet-stream' }, body })
   const answer = (await response.json().catch(() => ({}))) as { updatedAt?: string; error?: string }
   if (!response.ok || !answer.updatedAt) throw new AccountError(answer.error ?? t('Saving failed'))
+  storeKnown(answer.updatedAt)
   return answer.updatedAt
 }
 
@@ -130,6 +154,7 @@ export async function loadFromAccount(database: PortfolioDatabase = db): Promise
   const response = await call('/data', { method: 'GET' })
   if (response.status === 404) throw new AccountError(t('Nothing is saved in this account yet'))
   if (!response.ok) throw new AccountError(t('Loading failed'))
+  const updatedAt = response.headers.get('X-Updated-At')
   const data = await unpackData(new Uint8Array(await response.arrayBuffer()))
   await database.transaction('rw', database.transactions, database.imports, async () => {
     await database.transactions.clear()
@@ -138,11 +163,32 @@ export async function loadFromAccount(database: PortfolioDatabase = db): Promise
     if (data.importRecord) await database.imports.put(data.importRecord)
   })
   await saveSettings({ periods: data.periods }, database)
+  storeKnown(updatedAt)
   return { transactions: data.transactions.length }
 }
 
-/** After an import: keep the account up to date when signed in. Failures stay quiet; Settings can save again. */
-export async function saveAfterImport(): Promise<void> {
-  if (!accountAvailable() || !readToken()) return
-  await saveToAccount().catch(() => undefined)
+/**
+ * When the account holds data that this browser never saved or loaded: saved from another device since.
+ * Saving now would replace it, so the app asks first.
+ */
+export async function newerInAccount(): Promise<string | null> {
+  const { dataUpdatedAt } = await accountInfo()
+  return dataUpdatedAt && dataUpdatedAt !== readKnown() ? dataUpdatedAt : null
+}
+
+/**
+ * After a change to the portfolio: keep the account up to date when signed in. Data saved from another
+ * device is never replaced unasked: then nothing is saved and the time of that data is returned.
+ * Other failures stay quiet; Settings can save again.
+ */
+export async function saveAfterChange(): Promise<string | null> {
+  if (!accountAvailable() || !readToken() || isDemo()) return null
+  try {
+    const newer = await newerInAccount()
+    if (newer) return newer
+    await saveToAccount()
+  } catch {
+    // Offline or signed out: the next save from Settings brings the account up to date.
+  }
+  return null
 }

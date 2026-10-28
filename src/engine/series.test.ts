@@ -183,3 +183,24 @@ describe('positionsOn', () => {
     })
   })
 })
+
+describe('daily series: a broker with deposits and one without', () => {
+  // Broker K has deposits and keeps 500 in cash; broker T only buys and sells, with money from outside.
+  const other = (t: ReturnType<typeof tx>) => ({ ...t, source: { ...t.source, broker: 'T' } })
+  const trades = [
+    tx('deposit', '2026-01-05', { amount: 500 }),
+    other(tx('buy', '2026-01-05', { isin: A, quantity: 10, amount: 1000 })),
+    other(tx('sell', '2026-01-07', { isin: A, quantity: 5, amount: 600 })),
+  ]
+  const prices = book([['2026-01-05', 100], ['2026-01-07', 120]])
+  const { points, cashMode } = computeDailySeries(trades, prices, DEFAULT_OPTIONS, '2026-01-07')
+  const day = byDate(points)
+
+  it('pays the trades of the broker without deposits from outside, not from the other cash', () => {
+    expect(cashMode).toBe(true)
+    // 500 cash + 10 units at 100; invested: the deposit and the 1000 brought in for the buy.
+    expect(day['2026-01-05']).toMatchObject({ value: 1500, invested: 1500, pnl: 0 })
+    // The 600 of the sale goes out again: 500 cash + 5 units at 120; invested 1500 - 600.
+    expect(day['2026-01-07']).toMatchObject({ value: 1100, invested: 900, pnl: 200 })
+  })
+})
