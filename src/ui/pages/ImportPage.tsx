@@ -1,7 +1,7 @@
 import { useState, type DragEvent } from 'react'
 import { Link } from 'react-router'
 import { saveAfterImport } from '../../account/account.ts'
-import { hasPortfolio, replacePortfolio } from '../../data/portfolio.ts'
+import { addToPortfolio, hasPortfolio, replacePortfolio } from '../../data/portfolio.ts'
 import { loadImportContext } from '../../import/fxContext.ts'
 import { readFile } from '../../import/readFile.ts'
 import { ImportError, importTables } from '../../import/registry.ts'
@@ -16,7 +16,7 @@ type State =
   | { phase: 'error'; message: string; details: string[] }
   | { phase: 'preview'; result: ImportResult; files: string[]; confirmReplace: boolean }
   | { phase: 'saving' }
-  | { phase: 'done'; count: number }
+  | { phase: 'done'; count: number; skipped: number }
 
 const ACCEPT = '.csv,.xlsx,.xls'
 
@@ -57,16 +57,18 @@ export function ImportPage() {
     }
   }
 
-  async function save(result: ImportResult, files: string[], confirmed: boolean) {
-    if (!confirmed && (await hasPortfolio())) {
+  async function save(result: ImportResult, files: string[], mode: 'ask' | 'add' | 'replace') {
+    if (mode === 'ask' && (await hasPortfolio())) {
       setState({ phase: 'preview', result, files, confirmReplace: true })
       return
     }
     setState({ phase: 'saving' })
     try {
-      await replacePortfolio(result, files)
+      let count = result.transactions.length
+      if (mode === 'add') count = await addToPortfolio(result, files)
+      else await replacePortfolio(result, files)
       void saveAfterImport()
-      setState({ phase: 'done', count: result.transactions.length })
+      setState({ phase: 'done', count, skipped: result.transactions.length - count })
     } catch (error) {
       setState({ phase: 'error', message: 'Saving the import failed. Your previous data is unchanged.', details: [String(error)] })
     }
@@ -98,7 +100,8 @@ export function ImportPage() {
       <h2>Import</h2>
       <p className="muted">
         Import the export of one broker; the broker is recognized from the file. Select several files at once when a
-        broker splits its history over more files. Your data is processed and stored only on this device.
+        broker splits its history over more files, and import the next broker afterwards to combine them in one
+        portfolio. Your data is processed and stored only on this device.
       </p>
       <p className="muted small demo-hint">
         No export at hand? <DemoButton className="link-button" /> with a made-up portfolio.
@@ -155,7 +158,8 @@ export function ImportPage() {
 
       {state.phase === 'done' && (
         <div className="callout success" role="status">
-          Imported {state.count} transactions. <Link to="/">Go to the dashboard</Link>
+          Imported {state.count} transactions.
+          {state.skipped > 0 && ` Skipped ${state.skipped} that were already stored.`} <Link to="/">Go to the dashboard</Link>
         </div>
       )}
 
@@ -163,13 +167,16 @@ export function ImportPage() {
         <>
           <ImportPreview result={state.result} files={state.files} />
           {state.confirmReplace ? (
-            <div className="callout warning" role="alertdialog" aria-label="Replace existing data">
+            <div className="callout warning" role="alertdialog" aria-label="Add to or replace existing data">
               <p>
-                <strong>Replace all existing data?</strong> The portfolio currently stored on this device will be
-                deleted and replaced by this import.
+                <strong>You already have a portfolio on this device.</strong> Add this import to it, for example a
+                second broker or a newer export (transactions that are already stored are skipped), or replace it.
               </p>
               <div className="actions">
-                <button type="button" className="primary" onClick={() => void save(state.result, state.files, true)}>
+                <button type="button" className="primary" onClick={() => void save(state.result, state.files, 'add')}>
+                  Add to portfolio
+                </button>
+                <button type="button" onClick={() => void save(state.result, state.files, 'replace')}>
                   Replace data
                 </button>
                 <button type="button" onClick={() => setState({ phase: 'idle' })}>
@@ -183,7 +190,7 @@ export function ImportPage() {
                 type="button"
                 className="primary"
                 disabled={state.result.transactions.length === 0}
-                onClick={() => void save(state.result, state.files, false)}
+                onClick={() => void save(state.result, state.files, 'ask')}
               >
                 Import {state.result.transactions.length} transactions
               </button>
