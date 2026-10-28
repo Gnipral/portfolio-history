@@ -9,6 +9,9 @@
     },
     {
       "path": "./workers/price-proxy"
+    },
+    {
+      "path": "./workers/account"
     }
   ]
 }

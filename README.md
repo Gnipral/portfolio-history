@@ -34,9 +34,13 @@ Live app: https://gnipral.github.io/portfolio-history/
 5. **Settings**: API keys, price proxy, cost basis (average or FIFO), benchmarks and mix, theme, chart colors (the same palettes as in the chart), and deleting all data.
 6. **Demo mode**: "Try the demo" (on the empty dashboard, the Import page or in Settings) opens a made-up portfolio from March 2021 until today, with deposits, ETFs, six stocks and crypto (one stock in USD, one paying dividends), a sale and a withdrawal. Its prices are generated in the browser, so it needs no connection or API key. It lives in its own database with its own settings: your own data is never touched. A banner on every page leads back.
 
+### Optional account
+
+Everything works without an account. Where the optional account service is set up ([workers/account](workers/account/README.md)), **Settings → Account** creates one with a passkey (fingerprint, face or PIN, no password). It keeps the imported portfolio and the saved periods, to open them again later or on another device. Data goes to the account only when you save it, or import while signed in. The demo never goes to an account.
+
 ### Privacy
 
-There is no backend and no account. Transactions, prices and settings live in your browser's IndexedDB and never leave the device. The only outgoing requests are for market data: tickers, ISINs and date ranges, never quantities or amounts. **Settings → Delete all data** wipes everything, including the price cache and API keys.
+Without an account there is no backend. Transactions, prices and settings live in your browser's IndexedDB and never leave the device. The only outgoing requests are for market data: tickers, ISINs and date ranges, never quantities or amounts. **Settings → Delete all data** wipes everything, including the price cache and API keys.
 
 ### Offline
 
