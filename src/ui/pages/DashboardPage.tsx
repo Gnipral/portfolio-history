@@ -24,6 +24,7 @@ import { clampIndex, periodRange, rangeChange, visibleRange, type RangeKey } fro
 import { ToggleBar } from '../dashboard/ToggleBar.tsx'
 import { engineOptions, toggleStates } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
+import { ErrorBoundary } from '../errors/ErrorBoundary.tsx'
 import { DEFAULT_SETTINGS, saveSettings, updateSettings, useSettings } from '../../settings/settings.ts'
 import { displayCurrency, formatPercent, formatSignedEur, trendClass } from '../format.ts'
 
@@ -188,19 +189,21 @@ export function DashboardPage() {
           />
           {/* The chart, its benchmarks, filter and summary: the block the chart palette colors. */}
           <div className="chart-block stack" data-palette={palette === 'standard' ? undefined : palette}>
-            <Suspense fallback={<div className="chart-wrapper chart-placeholder" />}>
-              <PortfolioChart
-                points={points}
-                from={visible.from}
-                to={visible.to}
-                selected={selected}
-                mode={mode}
-                onHover={setSelectedIndex}
-                benchmarks={benchmarks}
-                chartStyle={settings.chartStyle}
-                onStyleChange={(change) => void updateSettings((current) => ({ chartStyle: { ...current.chartStyle, ...change } }))}
-              />
-            </Suspense>
+            <ErrorBoundary label="The chart">
+              <Suspense fallback={<div className="chart-wrapper chart-placeholder" />}>
+                <PortfolioChart
+                  points={points}
+                  from={visible.from}
+                  to={visible.to}
+                  selected={selected}
+                  mode={mode}
+                  onHover={setSelectedIndex}
+                  benchmarks={benchmarks}
+                  chartStyle={settings.chartStyle}
+                  onStyleChange={(change) => void updateSettings((current) => ({ chartStyle: { ...current.chartStyle, ...change } }))}
+                />
+              </Suspense>
+            </ErrorBoundary>
             <BenchmarkPicker settings={settings} lines={benchmarks} onChange={(change) => void updateSettings(change)} />
             <AssetFilter
               classes={classes}
@@ -248,9 +251,11 @@ export function DashboardPage() {
                   <h4>
                     {selectedPosition.product} <span className="muted small">since the first transaction</span>
                   </h4>
-                  <Suspense fallback={<div className="chart-wrapper chart-placeholder" />}>
-                    <PositionChart points={history.points} trades={history.trades} />
-                  </Suspense>
+                  <ErrorBoundary label="The position chart" resetKey={positionKey}>
+                    <Suspense fallback={<div className="chart-wrapper chart-placeholder" />}>
+                      <PositionChart points={history.points} trades={history.trades} />
+                    </Suspense>
+                  </ErrorBoundary>
                 </div>
               )}
             </div>
@@ -266,9 +271,11 @@ export function DashboardPage() {
                     ))}
                   </div>
                 </div>
-                <Suspense fallback={null}>
-                  <AllocationChart slices={slices} />
-                </Suspense>
+                <ErrorBoundary label="The allocation" resetKey={dimension}>
+                  <Suspense fallback={null}>
+                    <AllocationChart slices={slices} />
+                  </Suspense>
+                </ErrorBoundary>
               </div>
             )}
           </div>

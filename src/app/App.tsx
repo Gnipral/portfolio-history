@@ -1,10 +1,11 @@
-import { NavLink, Navigate, Route, Routes } from 'react-router'
+import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router'
 import { useSettings } from '../settings/settings.ts'
 import { DemoBanner } from '../ui/components/DemoBanner.tsx'
 import { NavIcon } from '../ui/components/NavIcon.tsx'
 import { OfflineBadge } from '../ui/components/OfflineBadge.tsx'
 import { ThemeToggle } from '../ui/components/ThemeToggle.tsx'
 import { UpdateBanner } from '../ui/components/UpdateBanner.tsx'
+import { ErrorBoundary } from '../ui/errors/ErrorBoundary.tsx'
 import { setDisplayCurrency } from '../ui/format.ts'
 import { AnalysisPage } from '../ui/pages/AnalysisPage.tsx'
 import { ComparePage } from '../ui/pages/ComparePage.tsx'
@@ -18,6 +19,7 @@ import { TransactionsPage } from '../ui/pages/TransactionsPage.tsx'
 export function App() {
   // Set while rendering, before any page below formats an amount.
   setDisplayCurrency(useSettings()?.baseCurrency ?? 'EUR')
+  const { pathname } = useLocation()
   return (
     <>
       <UpdateBanner />
@@ -53,17 +55,19 @@ export function App() {
         <ThemeToggle />
       </header>
       <main className="app-main">
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/analysis" element={<AnalysisPage />} />
-          <Route path="/import" element={<ImportPage />} />
-          <Route path="/transactions" element={<TransactionsPage />} />
-          <Route path="/prices" element={<PricesPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/s/:data" element={<SharedCardPage />} />
-          <Route path="/c/:data" element={<ComparePage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <ErrorBoundary resetKey={pathname}>
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/analysis" element={<AnalysisPage />} />
+            <Route path="/import" element={<ImportPage />} />
+            <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/prices" element={<PricesPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/s/:data" element={<SharedCardPage />} />
+            <Route path="/c/:data" element={<ComparePage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
     </>
   )
