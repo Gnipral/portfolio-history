@@ -25,7 +25,8 @@ export function PositionChart({ points, trades }: { points: PositionPoint[]; tra
     const chart = createChart(container.current, {
       autoSize: true,
       localization: { locale: locale(), priceFormatter: (v: number) => formatEur(v, true) },
-      crosshair: { mode: CrosshairMode.Magnet },
+      // The boxes on the axes in the color of the line, not black.
+      crosshair: { mode: CrosshairMode.Magnet, horzLine: { labelBackgroundColor: colors.accent }, vertLine: { labelBackgroundColor: colors.accent } },
       layout: { background: { type: ColorType.Solid, color: colors.surface }, textColor: colors.textMuted },
       grid: { vertLines: { color: colors.border }, horzLines: { color: colors.border } },
       rightPriceScale: { borderVisible: false },
