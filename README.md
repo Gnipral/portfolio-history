@@ -11,7 +11,7 @@ A Progressive Web App that reconstructs the value and profit of an investment po
 
 Live app: https://gnipral.github.io/portfolio-history/
 
-No broker export at hand? Open the app and press **Try the demo**: a made-up portfolio that needs no connection, no account and no file. The app is in Dutch, with English as a choice in Settings. Feedback and ideas are welcome in the [issues](https://github.com/Gnipral/portfolio-history/issues).
+No broker export at hand? Open the app and press **Try the demo**: a made-up portfolio that needs no connection, no account and no file. Feedback and ideas are welcome in the [issues](https://github.com/Gnipral/portfolio-history/issues).
 
 ![The dashboard of the demo portfolio: value, invested capital and profit since 2021, compared with the same money in IWDA](docs/screenshots/dashboard.png)
 
