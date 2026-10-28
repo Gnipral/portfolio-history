@@ -1845,3 +1845,49 @@ progress {
 .chart-block[data-palette] .muted {
   color: var(--text-muted);
 }
+
+/* Saved periods: chips to open one, a small cross to remove it, and an inline form to name one. */
+.period-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.period-chip {
+  display: inline-flex;
+  align-items: center;
+}
+
+.period-chip .chip {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.period-remove {
+  min-height: 2rem;
+  padding: 0 0.55rem;
+  border-left: none;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.period-save {
+  border-style: dashed;
+}
+
+.period-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex-basis: 100%;
+}
+
+.period-form input {
+  min-width: 14rem;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clampIndex, rangeChange, rangeStart, visibleRange } from './timeRange.ts'
+import { clampIndex, periodRange, rangeChange, rangeStart, visibleRange } from './timeRange.ts'
 
 describe('rangeStart', () => {
   const first = '2023-10-25'
@@ -46,5 +46,22 @@ describe('rangeChange', () => {
     expect(rangeChange(points, 2, 2).twr).toBeCloseTo(0.1, 12)
     expect(rangeChange(points, 0, 2).pnl).toBe(210)
     expect(rangeChange(points, 0, 2).twr).toBeCloseTo(0.21, 12)
+  })
+})
+
+describe('periodRange', () => {
+  const days = ['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04', '2026-01-05'].map((date) => ({ date }))
+
+  it('shows the days of a saved period', () => {
+    expect(periodRange(days, { from: '2026-01-02', to: '2026-01-04' })).toEqual({ from: 1, to: 3 })
+  })
+
+  it('runs an open period up to the last day, so it grows along', () => {
+    expect(periodRange(days, { from: '2026-01-03', to: null })).toEqual({ from: 2, to: 4 })
+  })
+
+  it('stays within the history', () => {
+    expect(periodRange(days, { from: '2025-06-01', to: '2027-01-01' })).toEqual({ from: 0, to: 4 })
+    expect(periodRange([], { from: '2026-01-01', to: null })).toEqual({ from: 0, to: -1 })
   })
 })
