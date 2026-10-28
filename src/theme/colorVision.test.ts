@@ -25,7 +25,9 @@ describe('colour-blind palette', () => {
   ] as const) {
     const colors = tokens(selector)
     const pairs: [string, string][] = [['chart-positive', 'chart-negative'], ['chart-value', 'chart-positive'], ['chart-value', 'chart-negative']]
-    LINES.forEach((a, i) => LINES.slice(i + 1).forEach((b) => pairs.push([a, b])))
+    LINES.forEach((a, i) => {
+      for (const b of LINES.slice(i + 1)) pairs.push([a, b])
+    })
 
     it.each(pairs)(`keeps %s and %s apart for every kind of colour vision (${mode})`, (a, b) => {
       const { difference, vision } = leastDifference(colors[a]!, colors[b]!)
