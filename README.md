@@ -29,6 +29,7 @@ Live app: https://gnipral.github.io/portfolio-history/
    - **Costs**: transaction costs, FX costs and taxes, and how much profit and time-weighted return they cost;
    - **Risk**: largest fall and recovery, volatility, best and worst month, and the return of every month.
 5. **Settings**: API keys, price proxy, cost basis (average or FIFO), benchmarks and mix, theme, and deleting all data.
+6. **Demo mode**: "Try the demo" (on the empty dashboard, the Import page or in Settings) opens a made-up portfolio from March 2021 until today, with deposits, ETFs, a US stock, a dividend payer, crypto, a sale and a withdrawal. Its prices are generated in the browser, so it needs no connection or API key. It lives in its own database with its own settings: your own data is never touched. A banner on every page leads back.
 
 ### Privacy
 

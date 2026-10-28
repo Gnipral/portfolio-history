@@ -5,6 +5,8 @@ import { loadImportContext } from '../../import/fxContext.ts'
 import { readFile } from '../../import/readFile.ts'
 import { ImportError, importTables } from '../../import/registry.ts'
 import type { ImportResult } from '../../import/types.ts'
+import { isDemo } from '../../demo/demoMode.ts'
+import { DemoButton } from '../components/DemoBanner.tsx'
 import { ImportPreview } from '../components/ImportPreview.tsx'
 
 type State =
@@ -74,12 +76,30 @@ export function ImportPage() {
     void handleFiles(event.dataTransfer.files)
   }
 
+  // An import in demo mode would land in the demo database: import into the own data instead.
+  if (isDemo()) {
+    return (
+      <section className="stack">
+        <h2>Import</h2>
+        <div className="callout">
+          <p>You are in demo mode. Leave it to import the export of your own broker.</p>
+          <div className="actions">
+            <DemoButton />
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="stack">
       <h2>Import</h2>
       <p className="muted">
         Import the export of one broker; the broker is recognized from the file. Select several files at once when a
         broker splits its history over more files. Your data is processed and stored only on this device.
+      </p>
+      <p className="muted small demo-hint">
+        No export at hand? <DemoButton className="link-button" /> with a made-up portfolio.
       </p>
       <details className="supported-brokers">
         <summary>Supported brokers and which file to export</summary>
