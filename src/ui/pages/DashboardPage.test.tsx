@@ -107,8 +107,9 @@ describe('DashboardPage', () => {
     ])
     renderPage()
     // 1000 into IWDA at 50 = 20 units, worth 1050 today: +50, +5%
-    expect(await screen.findByText(/The same money in IWDA/)).toBeTruthy()
-    expect(screen.getByText('+€50.00')).toBeTruthy()
+    expect((await screen.findByText(/The same money in IWDA/)).textContent).toContain('+€50.00')
+    // The profit overview puts the gap in euros next to it.
+    expect(screen.getByText('Versus IWDA')).toBeTruthy()
   })
 
   it('recalculates instantly when costs are excluded, and explains unavailable options', async () => {
