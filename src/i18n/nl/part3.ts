@@ -222,6 +222,13 @@ export const part3: Record<string, string> = {
   '{share} of gross': '{share} van bruto',
   '{shown} of {total} transactions': '{shown} van {total} transacties',
   '{what} could not be shown.': '{what} kon niet getoond worden.',
+  'Not saved to your account: it holds data saved elsewhere on {date}. Choose in <link>Settings</link> which to keep.':
+    'Niet in je account bewaard: daar staan gegevens die op {date} ergens anders bewaard zijn. Kies in <link>Instellingen</link> wat je houdt.',
+  'Replace the data in your account?': 'De gegevens in je account vervangen?',
+  'It was saved from another device or browser on {date}, after this browser last saved or loaded it.':
+    'Ze zijn op {date} vanaf een ander toestel of een andere browser bewaard, nadat deze browser ze het laatst bewaarde of laadde.',
+  'Replace it with this browser': 'Vervangen door deze browser',
+  'Load it here instead': 'Liever hier laden',
   // Quick ranges and toggle groups, translated with t(key).
   '1M': '1M',
   '3M': '3M',
