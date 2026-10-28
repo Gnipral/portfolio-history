@@ -4,6 +4,7 @@ import { db, type ImportRecord, type PortfolioDatabase } from '../data/db.ts'
 import type { Transaction } from '../model/transaction.ts'
 import { loadSettings, saveSettings, type NamedPeriod } from '../settings/settings.ts'
 import { isDemo } from '../demo/demoMode.ts'
+import { deriveAccountKey, forgetAccountKey, isSealed, newSalt, open, readAccountKey, saltOf, sameSalt, seal, storeAccountKey } from './vault.ts'
 import { t } from '../i18n/i18n.ts'
 
 /**
@@ -64,13 +65,19 @@ function storeToken(token: string | null): void {
 
 export class AccountError extends Error {}
 
+/** The account's data is encrypted and this device does not have the key yet: the encryption password is needed. */
+export class AccountLockedError extends AccountError {}
+
 async function call(path: string, init: RequestInit = {}): Promise<Response> {
   const token = readToken()
   const response = await fetch(`${ACCOUNT_URL}${path}`, {
     ...init,
     headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init.headers },
   })
-  if (response.status === 401 && token) storeToken(null)
+  if (response.status === 401 && token) {
+    storeToken(null)
+    void forgetAccountKey().catch(() => undefined)
+  }
   return response
 }
 
@@ -90,6 +97,7 @@ export async function createAccount(name: string): Promise<void> {
   const { challengeId, options } = await callJson<{ challengeId: string; options: PublicKeyCredentialCreationOptionsJSON }>('/register/options', { name })
   const response = await startRegistration({ optionsJSON: options })
   const { token } = await callJson<{ token: string }>('/register/verify', { challengeId, response })
+  await forgetAccountKey()
   storeToken(token)
 }
 
@@ -98,16 +106,20 @@ export async function signIn(): Promise<void> {
   const { challengeId, options } = await callJson<{ challengeId: string; options: PublicKeyCredentialRequestOptionsJSON }>('/login/options', {})
   const response = await startAuthentication({ optionsJSON: options })
   const { token } = await callJson<{ token: string }>('/login/verify', { challengeId, response })
+  // A key of an earlier account must not encrypt the data of this one.
+  await forgetAccountKey()
   storeToken(token)
 }
 
 export async function signOut(): Promise<void> {
   await call('/logout', { method: 'POST' }).catch(() => undefined)
+  await forgetAccountKey()
   storeToken(null)
 }
 
 export async function deleteAccount(): Promise<void> {
   await callJson('/account', undefined, 'DELETE')
+  await forgetAccountKey()
   storeToken(null)
 }
 
@@ -138,10 +150,45 @@ export async function unpackData(bytes: Uint8Array<ArrayBuffer>): Promise<SavedD
   return data
 }
 
-/** Saves the portfolio and periods of this browser to the account; answers when it was saved. */
+/** The saved bytes of the account, or null when nothing is saved yet. */
+async function fetchSaved(): Promise<{ bytes: Uint8Array<ArrayBuffer>; updatedAt: string | null } | null> {
+  const response = await call('/data', { method: 'GET' })
+  if (response.status === 404) return null
+  if (!response.ok) throw new AccountError(t('Loading failed'))
+  return { bytes: new Uint8Array(await response.arrayBuffer()), updatedAt: response.headers.get('X-Updated-At') }
+}
+
+/**
+ * Whether this device can save and load: `unlocked` with the key stored here, `existing` when the account
+ * holds data encrypted with a password chosen before, `new` when a password still has to be chosen.
+ */
+export async function accountKeyState(database: PortfolioDatabase = db): Promise<'unlocked' | 'existing' | 'new'> {
+  if (await readAccountKey(database)) return 'unlocked'
+  const saved = await fetchSaved()
+  return saved && isSealed(saved.bytes) ? 'existing' : 'new'
+}
+
+/**
+ * Derives the key from the encryption password and keeps it on this device. With data already encrypted
+ * in the account the password must open it; otherwise it becomes the password of the account.
+ */
+export async function unlockAccount(password: string, database: PortfolioDatabase = db): Promise<void> {
+  const saved = await fetchSaved()
+  if (saved && isSealed(saved.bytes)) {
+    const key = await deriveAccountKey(password, saltOf(saved.bytes))
+    if (!(await open(saved.bytes, key.key))) throw new AccountError(t('Wrong encryption password.'))
+    await storeAccountKey(key, database)
+    return
+  }
+  await storeAccountKey(await deriveAccountKey(password, newSalt()), database)
+}
+
+/** Saves the portfolio and periods of this browser to the account, encrypted; answers when it was saved. */
 export async function saveToAccount(database: PortfolioDatabase = db): Promise<string> {
+  const key = await readAccountKey(database)
+  if (!key) throw new AccountLockedError(t('Enter your encryption password first.'))
   const [transactions, importRecord, settings] = await Promise.all([database.transactions.toArray(), database.imports.get('current'), loadSettings(database)])
-  const body = await packData({ v: 1, transactions, importRecord: importRecord ?? null, periods: settings.periods })
+  const body = await seal(await packData({ v: 1, transactions, importRecord: importRecord ?? null, periods: settings.periods }), key)
   const response = await call('/data', { method: 'PUT', headers: { 'Content-Type': 'application/octet-stream' }, body })
   const answer = (await response.json().catch(() => ({}))) as { updatedAt?: string; error?: string }
   if (!response.ok || !answer.updatedAt) throw new AccountError(answer.error ?? t('Saving failed'))
@@ -151,11 +198,19 @@ export async function saveToAccount(database: PortfolioDatabase = db): Promise<s
 
 /** Replaces the portfolio and periods of this browser with those of the account. */
 export async function loadFromAccount(database: PortfolioDatabase = db): Promise<{ transactions: number }> {
-  const response = await call('/data', { method: 'GET' })
-  if (response.status === 404) throw new AccountError(t('Nothing is saved in this account yet'))
-  if (!response.ok) throw new AccountError(t('Loading failed'))
-  const updatedAt = response.headers.get('X-Updated-At')
-  const data = await unpackData(new Uint8Array(await response.arrayBuffer()))
+  const saved = await fetchSaved()
+  if (!saved) throw new AccountError(t('Nothing is saved in this account yet'))
+  const { bytes, updatedAt } = saved
+  let plain = bytes
+  // Data saved before the encryption is plain; the next save encrypts it.
+  if (isSealed(bytes)) {
+    const key = await readAccountKey(database)
+    if (!key || !sameSalt(key.salt, saltOf(bytes))) throw new AccountLockedError(t('Enter your encryption password first.'))
+    const opened = await open(bytes, key.key)
+    if (!opened) throw new AccountLockedError(t('Enter your encryption password first.'))
+    plain = opened
+  }
+  const data = await unpackData(plain)
   await database.transaction('rw', database.transactions, database.imports, async () => {
     await database.transactions.clear()
     await database.imports.clear()
@@ -178,14 +233,16 @@ export async function newerInAccount(): Promise<string | null> {
 
 /**
  * After a change to the portfolio: keep the account up to date when signed in. Data saved from another
- * device is never replaced unasked: then nothing is saved and the time of that data is returned.
+ * device is never replaced unasked, and without the encryption key nothing can be saved: then nothing is
+ * saved and the answer says why.
  * Other failures stay quiet; Settings can save again.
  */
-export async function saveAfterChange(): Promise<string | null> {
+export async function saveAfterChange(): Promise<{ newer: string } | { locked: true } | null> {
   if (!accountAvailable() || !readToken() || isDemo()) return null
   try {
+    if (!(await readAccountKey())) return { locked: true }
     const newer = await newerInAccount()
-    if (newer) return newer
+    if (newer) return { newer }
     await saveToAccount()
   } catch {
     // Offline or signed out: the next save from Settings brings the account up to date.

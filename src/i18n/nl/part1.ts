@@ -186,8 +186,8 @@ export const part1: Record<string, string> = {
   'Every unit costs the average purchase price (as most brokers show it).': 'Elk stuk kost de gemiddelde aankoopprijs (zoals de meeste brokers het tonen).',
   'Everything is stored in this browser only: the imported transactions, cached prices and exchange rates, and these settings, including API keys.':
     'Alles wordt alleen in deze browser bewaard: de geïmporteerde transacties, bewaarde koersen en wisselkoersen, en deze instellingen, inclusief API-sleutels.',
-  "Everything works without an account. With one, your imported portfolio and saved periods are kept, to open them again later or on another device. You sign in with a passkey: the fingerprint, face or PIN of your device, no password. Your data goes to the account only when you save it, and is then stored on the app's server.":
-    'Alles werkt zonder account. Met een account worden je geïmporteerde portefeuille en bewaarde periodes bijgehouden, om ze later of op een ander toestel weer te openen. Je meldt je aan met een passkey: de vingerafdruk, het gezicht of de pincode van je toestel, geen wachtwoord. Je gegevens gaan pas naar het account als je ze bewaart, en staan dan op de server van de app.',
+  'Everything works without an account. With one, your imported portfolio and saved periods are kept, to open them again later or on another device. You sign in with a passkey: the fingerprint, face or PIN of your device. Your portfolio is encrypted in this browser with an encryption password of your own before it goes to the account: the server cannot read it.':
+    'Alles werkt zonder account. Met een account worden je geïmporteerde portefeuille en bewaarde periodes bijgehouden, om ze later of op een ander toestel weer te openen. Je meldt je aan met een passkey: de vingerafdruk, het gezicht of de pincode van je toestel. Je portefeuille wordt in deze browser versleuteld met een eigen versleutelingswachtwoord voor ze naar het account gaat: de server kan ze niet lezen.',
   Exemption: 'Vrijstelling',
   'Exit full screen': 'Volledig scherm verlaten',
   'Exit full screen (F)': 'Volledig scherm verlaten (F)',

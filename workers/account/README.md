@@ -18,7 +18,7 @@ The optional account of the app. Everything works without it. With an account, t
 - **Challenges:** used once, valid for 5 minutes, deleted on use.
 - **Sessions:** random 256-bit tokens, valid for 90 days. Only their SHA-256 is stored.
 - **Origins:** only origins in `ALLOWED_ORIGINS` (`wrangler.toml`) get an answer.
-- **Your data:** sent to the account only when the person saves it (or imports while signed in). It is stored in D1. Cloudflare encrypts it at rest; it is not end-to-end encrypted.
+- **Your data:** sent to the account only when the person saves it (or after an import or change while signed in). It is end-to-end encrypted: the app compresses it and encrypts it with AES-GCM under a key derived (PBKDF2, 600,000 rounds) from an encryption password the person chooses, before it leaves the browser. The Worker stores only those sealed bytes in D1 and cannot read them. A forgotten password cannot be reset; the data on the devices stays.
 
 ## Set up (once)
 
