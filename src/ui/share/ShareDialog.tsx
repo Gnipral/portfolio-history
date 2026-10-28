@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { Position } from '../../engine/positions.ts'
 import type { DailyPoint } from '../../engine/series.ts'
 import type { Slice } from '../dashboard/allocation.ts'
 import type { BenchmarkLine } from '../dashboard/benchmarkLines.ts'
@@ -12,6 +13,8 @@ interface Props {
   benchmarks: BenchmarkLine[]
   /** The value per type of asset on the last day. */
   slices: Slice[]
+  /** The open positions on the last day. */
+  positions: Position[]
   onClose: () => void
 }
 
@@ -25,15 +28,20 @@ async function copy(text: string): Promise<boolean> {
 }
 
 /** Makes a picture of the return in percent to post or send, with a text to go with it. */
-export function ShareDialog({ points, from, to, benchmarks, slices, onClose }: Props) {
+export function ShareDialog({ points, from, to, benchmarks, slices, positions, onClose }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const [format, setFormat] = useState<ShareFormat>('wide')
   const [compare, setCompare] = useState(true)
   const [showAllocation, setShowAllocation] = useState(true)
+  // Off at first: names say more about someone than percentages.
+  const [showPositions, setShowPositions] = useState(false)
   const [fontsReady, setFontsReady] = useState(false)
   const [status, setStatus] = useState('')
   const benchmark = compare ? benchmarks[0] : undefined
-  const card = useMemo(() => shareCard(points, from, to, benchmark, slices), [points, from, to, benchmark, slices])
+  const card = useMemo(
+    () => shareCard(points, from, to, benchmark, slices, showPositions ? positions : []),
+    [points, from, to, benchmark, slices, positions, showPositions],
+  )
   const text = shareText(card)
 
   useEffect(() => {
@@ -41,8 +49,8 @@ export function ShareDialog({ points, from, to, benchmarks, slices, onClose }: P
   }, [])
 
   useEffect(() => {
-    if (canvas.current) drawShareCard(canvas.current, card, format, showAllocation)
-  }, [card, format, showAllocation, fontsReady])
+    if (canvas.current) drawShareCard(canvas.current, card, format, { allocation: showAllocation, positions: showPositions })
+  }, [card, format, showAllocation, showPositions, fontsReady])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -92,7 +100,11 @@ export function ShareDialog({ points, from, to, benchmarks, slices, onClose }: P
             ✕
           </button>
         </div>
-        <p className="muted small">Only percentages and dates: no amounts, quantities or product names.</p>
+        <p className="muted small">
+          {showPositions
+            ? 'Percentages, dates and the names of your positions: no amounts or quantities.'
+            : 'Only percentages and dates: no amounts, quantities or product names.'}
+        </p>
         <canvas ref={canvas} className={`share-preview ${format}`} role="img" aria-label={text} />
         <div className="share-options">
           <div className="segmented" role="group" aria-label="Format">
@@ -111,6 +123,12 @@ export function ShareDialog({ points, from, to, benchmarks, slices, onClose }: P
           {slices.length > 0 && (
             <label>
               <input type="checkbox" checked={showAllocation} onChange={(e) => setShowAllocation(e.target.checked)} /> Show the mix by type
+            </label>
+          )}
+          {positions.length > 0 && (
+            <label>
+              <input type="checkbox" checked={showPositions} onChange={(e) => setShowPositions(e.target.checked)} /> Show my positions
+              (weight and return)
             </label>
           )}
         </div>
