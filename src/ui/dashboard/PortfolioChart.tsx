@@ -244,7 +244,8 @@ export function PortfolioChart({
       localization: { locale: locale() },
       // Only the vertical line: the values stand next to the points, a horizontal line and price box would repeat them.
       crosshair: { mode: CrosshairMode.Magnet, horzLine: { visible: false, labelVisible: false } },
-      layout: { fontSize: 13, panes: { enableResize: false } },
+      // The TradingView credit is at the bottom of Settings; in the chart it sat over the profit line.
+      layout: { fontSize: 13, attributionLogo: false, panes: { enableResize: false } },
       rightPriceScale: { borderVisible: false },
       timeScale: { borderVisible: false, ...ZOOM_TIME_SCALE },
       ...ZOOM_OPTIONS,
