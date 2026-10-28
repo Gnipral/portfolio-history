@@ -1058,6 +1058,9 @@ code {
 /* A pill dock: the active segment is a tinted pill in accent color. */
 .segmented {
   display: inline-flex;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
   gap: 0.25rem;
   padding: 0.25rem;
   background: var(--surface);
@@ -1066,6 +1069,7 @@ code {
 }
 
 .segmented button {
+  flex: none;
   border: none;
   border-radius: 999px;
   padding: 0.3rem 0.8rem;
@@ -1910,4 +1914,108 @@ progress {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.input-suffix {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.input-suffix input {
+  width: 8rem;
+}
+
+.field-with-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.table .percent-input {
+  width: 4.5rem;
+  text-align: right;
+}
+
+.projection-chart {
+  margin: 0;
+}
+
+.projection-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.projection-value {
+  fill: none;
+  stroke: var(--chart-value);
+  stroke-width: 2;
+}
+
+.projection-contributed {
+  fill: none;
+  stroke: var(--chart-invested);
+  stroke-width: 1.5;
+}
+
+.projection-fill {
+  stroke: none;
+}
+
+.projection-fill.projection-value {
+  fill: color-mix(in srgb, var(--chart-value) 18%, transparent);
+}
+
+.projection-fill.projection-contributed {
+  fill: color-mix(in srgb, var(--chart-invested) 22%, transparent);
+}
+
+.projection-real {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.projection-target {
+  stroke: var(--warning);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 3;
+}
+
+.projection-tick {
+  fill: var(--text-muted);
+  font-size: 11px;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 2px;
+  margin-left: 0.5rem;
+  vertical-align: -0.05em;
+  border: 2px solid;
+}
+
+.legend-swatch.projection-value {
+  border-color: var(--chart-value);
+}
+
+.legend-swatch.projection-contributed {
+  border-color: var(--chart-invested);
+}
+
+.legend-swatch.projection-real,
+.legend-swatch.projection-target {
+  height: 0;
+  border-width: 1px 0 0;
+  border-style: dashed;
+  border-color: var(--text-muted);
+}
+
+.legend-swatch.projection-target {
+  border-color: var(--warning);
 }

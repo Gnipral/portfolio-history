@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { db } from '../../data/db.ts'
 import { CostsSection } from '../analysis/CostsSection.tsx'
 import { DividendsSection } from '../analysis/DividendsSection.tsx'
+import { PlanningSection } from '../analysis/PlanningSection.tsx'
 import { RealizedSection } from '../analysis/RealizedSection.tsx'
 import { RiskSection } from '../analysis/RiskSection.tsx'
 import { TaxesSection } from '../analysis/TaxesSection.tsx'
@@ -17,6 +18,7 @@ const TABS = [
   { key: 'realized', label: 'Realized' },
   { key: 'costs', label: 'Costs' },
   { key: 'risk', label: 'Risk' },
+  { key: 'planning', label: 'Planning' },
 ] as const
 
 type Tab = (typeof TABS)[number]['key']
@@ -64,6 +66,7 @@ export function AnalysisPage() {
           {tab === 'realized' && <RealizedSection inputs={inputs} options={options} />}
           {tab === 'costs' && <CostsSection inputs={inputs} options={options} series={series} />}
           {tab === 'risk' && <RiskSection series={series} />}
+          {tab === 'planning' && <PlanningSection inputs={inputs} options={options} series={series} planning={settings.planning} />}
         </div>
       )}
     </section>
