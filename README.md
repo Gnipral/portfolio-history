@@ -20,6 +20,7 @@ Live app: https://gnipral.github.io/portfolio-history/
    - cards for value, invested capital, profit/loss, simple return, time-weighted return (TWR) and money-weighted return (XIRR) on the selected day;
    - the positions and an allocation chart for that day, by position, type, currency or country of the ISIN; click a position for its own chart with its trades;
    - benchmarks (MSCI World, FTSE All-World, S&P 500 ETF, or your own mix of them) bought and sold with exactly the same money on the same days;
+   - a **Share** button that makes a picture of the time-weighted return over the chosen period (post or story size), optionally against a benchmark and with the mix by type, plus a text to paste with it. It shows only percentages and dates: no amounts, quantities or product names;
    - toggles to include or exclude dividends, transaction costs, taxes, FX costs and deposits. Options the export has no data for are disabled, with the reason.
 4. **Analysis**, per year:
    - **Taxes**: stock exchange tax (TOB) and withheld taxes paid, and an estimate of the tax on capital gains under the rules of a country: Belgium (from 2026), Germany, France, the Netherlands, or your own. Rate, yearly exemption and its carry-over, loss carry-forward, FIFO or average cost and a reference date for gains that are not taxed can all be adjusted;

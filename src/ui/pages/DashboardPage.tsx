@@ -23,6 +23,7 @@ import { formatPercent, formatSignedEur, trendClass } from '../format.ts'
 const PortfolioChart = lazy(() => import('../dashboard/PortfolioChart.tsx').then((m) => ({ default: m.PortfolioChart })))
 const AllocationChart = lazy(() => import('../dashboard/AllocationChart.tsx').then((m) => ({ default: m.AllocationChart })))
 const PositionChart = lazy(() => import('../dashboard/PositionChart.tsx').then((m) => ({ default: m.PositionChart })))
+const ShareDialog = lazy(() => import('../share/ShareDialog.tsx').then((m) => ({ default: m.ShareDialog })))
 
 export function DashboardPage() {
   const settings = useSettings() ?? DEFAULT_SETTINGS
@@ -36,6 +37,7 @@ export function DashboardPage() {
   const [mode, setMode] = useState<ChartMode>('eur')
   const [dimension, setDimension] = useState<AllocationDimension>('position')
   const [positionKey, setPositionKey] = useState<string | null>(null)
+  const [sharing, setSharing] = useState(false)
 
   const points = useMemo(() => series?.points ?? [], [series])
   const dates = useMemo(() => points.map((p) => p.date), [points])
@@ -59,6 +61,7 @@ export function DashboardPage() {
     () => (dimension === 'position' ? allocationSlices(positions, slots) : groupedSlices(positions, dimension, facts)),
     [positions, slots, facts, dimension],
   )
+  const typeSlices = useMemo(() => (sharing ? groupedSlices(positions, 'assetClass', facts) : []), [sharing, positions, facts])
   const selectedPosition = positions.find((p) => p.key === positionKey)
   const history = useMemo(
     () => (inputs && positionKey ? positionSeries(inputs.transactions, inputs.prices, options, positionKey, localToday()) : null),
@@ -101,6 +104,11 @@ export function DashboardPage() {
           <Link to="/prices" className="small">
             {syncProblems} {syncProblems === 1 ? 'product has' : 'products have'} no price yet
           </Link>
+        )}
+        {point && (
+          <button type="button" className="share-button" onClick={() => setSharing(true)}>
+            Share
+          </button>
         )}
       </div>
 
@@ -190,6 +198,18 @@ export function DashboardPage() {
             )}
           </div>
         </>
+      )}
+      {sharing && point && (
+        <Suspense fallback={null}>
+          <ShareDialog
+            points={points}
+            from={visible.from}
+            to={selected}
+            benchmarks={benchmarks}
+            slices={typeSlices}
+            onClose={() => setSharing(false)}
+          />
+        </Suspense>
       )}
     </section>
   )
