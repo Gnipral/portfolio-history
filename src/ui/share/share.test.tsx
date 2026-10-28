@@ -74,6 +74,23 @@ describe('shareCard', () => {
     ])
   })
 
+  it('sums up what does not fit in one row, and can put the best return first', () => {
+    const many = [...positions, position('SHELL PLC', 600, 500), position('ASML HOLDING', 500, 250)]
+    expect(shareCard(points, 0, 399, undefined, [], many, { limit: 3 }).positions).toEqual([
+      { name: 'VWCE', weight: 64, return: 0.339 },
+      { name: 'AAPL', weight: 21, return: 0.25 },
+      // 1,000 + 600 + 500 on a cost of 1,250 + 500 + 250.
+      { name: 'Other 3', weight: 14, return: 0.05, others: 3 },
+    ])
+    expect(shareCard(points, 0, 399, undefined, [], many, { order: 'return', limit: 10 }).positions.map((p) => p.name)).toEqual([
+      'ASML HOLDING',
+      'VWCE',
+      'AAPL',
+      'SHELL PLC',
+      'DEMO BANK NV',
+    ])
+  })
+
   it('never contains amounts or quantities, only percentages and dates', () => {
     const json = JSON.stringify(shareCard(points, 0, 399, benchmark, slices, positions))
     for (const amount of ['123456', '98765', '24691', '99999', '1234', '90000', '34000', '3125', '9375', '2500', '7000', '1250', '4321']) expect(json).not.toContain(amount)
@@ -116,8 +133,9 @@ describe('ShareDialog', () => {
   it('shows the positions only when asked', () => {
     render(<ShareDialog points={points} from={0} to={399} benchmarks={[]} slices={[]} positions={positions} onClose={() => undefined} />)
     expect(screen.getByText(/no amounts, quantities or product names/)).toBeTruthy()
-    fireEvent.click(screen.getByLabelText(/Show my positions/))
+    fireEvent.click(screen.getByRole('button', { name: 'Largest' }))
     expect(screen.getByText(/the names of your positions: no amounts or quantities/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Largest' }).getAttribute('aria-pressed')).toBe('true')
   })
 
   it('closes with Escape and the close button', () => {
@@ -127,6 +145,6 @@ describe('ShareDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     expect(onClose).toHaveBeenCalledTimes(2)
     expect(screen.queryByLabelText(/Compare with/)).toBeNull()
-    expect(screen.queryByLabelText(/Show my positions/)).toBeNull()
+    expect(screen.queryByRole('group', { name: 'My positions' })).toBeNull()
   })
 })

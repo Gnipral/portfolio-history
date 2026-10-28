@@ -1338,3 +1338,22 @@ progress {
   font: inherit;
   font-size: 0.85rem;
 }
+
+.share-positions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+.share-positions > span:first-child {
+  font-weight: 600;
+}
+
+.share-positions .small {
+  flex-basis: 100%;
+}
