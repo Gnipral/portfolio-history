@@ -128,9 +128,25 @@ describe('Ledger: splits', () => {
     expect(holding(B)).toMatchObject({ quantity: 15, cost: 75, lastTradePrice: 5 })
   })
 
-  it('reports a split of a position that is not held', () => {
-    const { ledger } = replay([tx('split', '2024-01-16', { isin: A, quantity: 4, split: { ratio: 4, fromQuantity: 1 } })])
-    expect(ledger.issues).toHaveLength(1)
+  it('brings in a position split before the export starts, at its market value of that day', () => {
+    const ledger = new Ledger(DEFAULT_OPTIONS, false, { priceOf: () => 25 })
+    const flows = ledger.apply(tx('split', '2024-01-16', { isin: A, quantity: 4, split: { ratio: 4, fromQuantity: 1 } }))
+    expect(ledger.issues).toMatchObject([{ missingHistory: A }])
+    expect(ledger.holdings.get(A)).toMatchObject({ quantity: 4, cost: 100 })
+    expect(flows).toEqual({ inflow: 100, outflow: 0 })
+    expect(ledger.realized).toBe(0)
+  })
+
+  it('makes no profit on units sold that were bought before the export starts', () => {
+    const ledger = new Ledger(DEFAULT_OPTIONS, false)
+    ledger.apply(tx('buy', '2026-01-02', { isin: A, quantity: 2, amount: 200 }))
+    // Five sold, two of them known: the three others come in at the sale price.
+    const flows = ledger.apply(tx('sell', '2026-03-02', { isin: A, quantity: 5, amount: 600 }))
+    expect(ledger.issues).toMatchObject([{ missingHistory: A }])
+    expect(flows).toEqual({ inflow: 0, outflow: 240 })
+    // Only the two known units make a profit: 240 for what cost 200.
+    expect(ledger.realized).toBeCloseTo(40, 10)
+    expect(ledger.holdings.get(A)?.quantity).toBe(0)
   })
 })
 

@@ -251,6 +251,9 @@ export const part3: Record<string, string> = {
   'A free key from twelvedata.com is enough: up to 800 prices a day.': 'Een gratis sleutel van twelvedata.com volstaat: tot 800 koersen per dag.',
   'Alpha Vantage API key (optional)': 'Alpha Vantage API-sleutel (optioneel)',
   'A free key from alphavantage.co gives 25 prices a day, of the last 100 trading days only: a last resort.': 'Een gratis sleutel van alphavantage.co geeft 25 koersen per dag, alleen van de laatste 100 beursdagen: een laatste redmiddel.',
+  'Your export does not go back far enough.': 'Je export gaat niet ver genoeg terug.',
+  'It contains sales or splits of {products}, but not when you bought them. Those shares count from that day at their value of that moment, without the profit or loss before it.': 'Er staan verkopen of splits in van {products}, maar niet wanneer je ze kocht. Die aandelen tellen vanaf die dag mee aan hun waarde op dat moment, zonder de winst of het verlies van daarvoor.',
+  'For the right figures, export your transactions again from the day you opened your account, and import that file with Replace data.': 'Voor de juiste cijfers: exporteer je transacties opnieuw vanaf de dag dat je rekening geopend werd, en importeer dat bestand met Gegevens vervangen.',
   // Quick ranges and toggle groups, translated with t(key).
   '1M': '1M',
   '3M': '3M',
