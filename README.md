@@ -11,7 +11,7 @@ A Progressive Web App that reconstructs the value and profit of an investment po
 
 Live app: https://gnipral.github.io/portfolio-history/
 
-No broker export at hand? Open the app and press **Try the demo**: a made-up portfolio that needs no connection, no account and no file. Feedback and ideas are welcome in the [issues](https://github.com/Gnipral/portfolio-history/issues).
+No broker export at hand? Open the app and press **Try the demo**: a made-up portfolio that needs no connection, no account and no file. The app is in Dutch, with English as a choice in Settings. Feedback and ideas are welcome in the [issues](https://github.com/Gnipral/portfolio-history/issues).
 
 ![The dashboard of the demo portfolio: value, invested capital and profit since 2021, compared with the same money in IWDA](docs/screenshots/dashboard.png)
 
@@ -26,13 +26,13 @@ The screenshots show the demo portfolio; all names and numbers in it are made up
 1. **Import** a broker export (CSV, XLSX, XML or PDF). The file is read in the browser and stored in IndexedDB.
 2. **Prices** are fetched once per day for every product you ever held, together with splits and EUR exchange rates, and cached in the browser.
 3. The **dashboard** rebuilds the portfolio for every calendar day since the first transaction:
-   - a chart of value, invested capital and profit, in euros or percent, with a crosshair, a slider and a date picker that stay in sync, and quick ranges (1M, 3M, YTD, 1Y, ALL). Its style bar (between the legend and the chart, so nothing is covered) turns the fill under the value, the invested capital line, the profit pane and a logarithmic scale on or off, and picks the palette of the chart block (Standard, Colour-blind friendly, High contrast, Soft, Neon or Ocean; the rest of the app keeps its theme). Every benchmark line also has its own pattern and its name on the price axis, so the lines can be told apart without colors; the colour-blind palette is checked in the tests with a simulation of red-green and blue-yellow colour blindness;
+   - a chart of value, invested capital and profit, in euros or percent (the percentage is the time-weighted return of the securities, so a deposit does not move it), with a crosshair, a slider and a date picker that stay in sync, quick ranges (1M, 3M, YTD, 1Y, ALL), and zoom with the mouse wheel or two fingers. The name and value of every line stand next to its point on the day under the pointer. Its style bar (between the legend and the chart, so nothing is covered) turns the fill under the value, the invested capital line, the profit pane and a logarithmic scale on or off, and picks the palette of the chart block (Standard, Colour-blind friendly, High contrast or Neon; the rest of the app keeps its theme). Every benchmark line also has its own pattern and its name next to its point, so the lines can be told apart without colors; the colour-blind palette is checked in the tests with a simulation of red-green and blue-yellow colour blindness;
    - saved periods: the range shown, up to the selected day, saved under a name ("After the crash") and opened again with one click; a period up to today grows along. They are stored with the settings in this browser;
    - a filter on the type of asset (ETFs, stocks, crypto, …): the chart, the numbers, the positions and the benchmark then follow only those, as securities without cash;
    - the profit of the selected day, its month, its year and since the start, in euros and percent, with the best and the worst position and how much more or less the same money made in the benchmark;
    - cards for value, invested capital, profit/loss, simple return, time-weighted return (TWR) and money-weighted return (XIRR) on the selected day;
    - the positions and an allocation chart for that day, by position, type, currency or country of the ISIN; click a position for its own chart with its trades;
-   - benchmarks (MSCI World, FTSE All-World, S&P 500 ETF, or your own mix of them) bought and sold with exactly the same money on the same days;
+   - benchmarks (MSCI World, FTSE All-World, S&P 500 ETF, any stock, fund or index found with the search, or your own mix of them) bought and sold with exactly the same money on the same days. The default is set in Settings; under the chart you compare with something else for a moment;
    - a **Share** button that makes a picture of the time-weighted return over the chosen period (post or story size), optionally against a benchmark, with the mix by type and with your positions (their weight and return, the largest or the best first; a large portfolio sums up the rest in one row), plus a text to paste with it, or a link that opens the card read-only (the card itself is compressed into the part after #, so no server ever sees it). It never shows amounts or quantities, and product names only when you choose to show the positions;
    - toggles to include or exclude dividends, transaction costs, taxes, FX costs and deposits. Options the export has no data for are disabled, with the reason.
 4. **Analysis**, per year:
@@ -46,7 +46,7 @@ The screenshots show the demo portfolio; all names and numbers in it are made up
 
 ### Optional account
 
-Everything works without an account. Where the optional account service is set up ([workers/account](workers/account/README.md)), **Settings → Account** creates one with a passkey (fingerprint, face or PIN, no password). It keeps the imported portfolio and the saved periods, to open them again later or on another device. Data goes to the account only when you save it, or import while signed in. The demo never goes to an account.
+Everything works without an account. Where the optional account service is set up ([workers/account](workers/account/README.md)), **Settings → Account** creates one with a passkey (fingerprint, face or PIN, no password). It keeps the imported portfolio and the saved periods, to open them again later or on another device. The data is **end-to-end encrypted** in the browser with an encryption password of your own before it goes to the account: the server only stores bytes it cannot read. Data goes to the account only when you save it, or after a change while signed in. The demo never goes to an account.
 
 ### Privacy
 
