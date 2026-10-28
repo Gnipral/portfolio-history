@@ -4,6 +4,7 @@ import type { ChargesYear } from '../../engine/analysis/charges.ts'
 import type { IncomeRow } from '../../engine/analysis/income.ts'
 import { reportYears, taxReport, taxReportCsv } from '../../engine/analysis/taxReport.ts'
 import { localToday } from '../../market/dates.ts'
+import { displayCurrency } from '../format.ts'
 import { taxReportHtml } from './taxReportHtml.ts'
 
 interface Props {
@@ -53,7 +54,7 @@ export function TaxReportPanel({ gains, income, charges, rulesLabel }: Props) {
             ))}
           </select>
         </label>
-        <button type="button" onClick={() => save(`﻿${taxReportCsv(report())}`, 'text/csv;charset=utf-8', `tax-report-${year}.csv`)}>
+        <button type="button" onClick={() => save(`﻿${taxReportCsv(report(), displayCurrency())}`, 'text/csv;charset=utf-8', `tax-report-${year}.csv`)}>
           Download CSV
         </button>
         <button type="button" onClick={print}>

@@ -3,6 +3,7 @@ import { deleteAllData } from '../../data/portfolio.ts'
 import { isDemo } from '../../demo/demoMode.ts'
 import { AccountSection } from '../components/AccountSection.tsx'
 import { DemoButton } from '../components/DemoBanner.tsx'
+import { BASE_CURRENCIES, type BaseCurrency } from '../../engine/baseCurrency.ts'
 import type { CostBasisMethod } from '../../engine/options.ts'
 import { BENCHMARKS } from '../../market/benchmarks.ts'
 import { DEFAULT_SETTINGS, saveSettings, useSettings, type Settings, type TextSetting } from '../../settings/settings.ts'
@@ -159,6 +160,24 @@ export function SettingsPage() {
         </fieldset>
         <fieldset>
           <legend>Calculation</legend>
+          <label>
+            Currency
+            <select
+              value={form.baseCurrency}
+              onChange={(e) => {
+                setSaved(false)
+                setForm({ ...form, baseCurrency: e.target.value as BaseCurrency })
+              }}
+            >
+              {BASE_CURRENCIES.map((code) => (
+                <option key={code}>{code}</option>
+              ))}
+            </select>
+            <span className="muted small">
+              Every amount and return is calculated in this currency, at the ECB rate of each day. Exchange rate changes
+              then count in your result.
+            </span>
+          </label>
           <div className="radio-group" role="radiogroup" aria-label="Cost basis">
             {COST_BASIS.map((option) => (
               <label key={option.value} className="radio">

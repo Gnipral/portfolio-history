@@ -7,7 +7,7 @@ import { positionsOn } from '../../engine/positions.ts'
 import type { SeriesResult } from '../../engine/series.ts'
 import { localToday } from '../../market/dates.ts'
 import { DEFAULT_PLANNING, updateSettings, type PlanningSettings } from '../../settings/settings.ts'
-import { formatEur, formatPercent } from '../format.ts'
+import { displayCurrency, formatEur, formatPercent } from '../format.ts'
 import { NetWorthPanel } from './NetWorthPanel.tsx'
 
 interface Props {
@@ -69,7 +69,7 @@ export function PlanningSection({ inputs, options, series, planning, otherAssets
           get closer without selling anything.
         </p>
         <div className="actions">
-          <NumberField label="Deposit" value={planning.deposit} step={50} suffix="EUR" onChange={(deposit) => void save({ deposit })} />
+          <NumberField label="Deposit" value={planning.deposit} step={50} suffix={displayCurrency()} onChange={(deposit) => void save({ deposit })} />
           <button
             type="button"
             onClick={() =>
@@ -141,7 +141,7 @@ export function PlanningSection({ inputs, options, series, planning, otherAssets
           and down; this only shows the effect of time and saving.
         </p>
         <div className="form-grid settings-form">
-          <NumberField label="Every month" value={planning.monthly} step={50} suffix="EUR" onChange={(monthly) => void save({ monthly })} />
+          <NumberField label="Every month" value={planning.monthly} step={50} suffix={displayCurrency()} onChange={(monthly) => void save({ monthly })} />
           <div className="field-with-action">
             <NumberField label="Return per year" value={planning.yearlyReturn} step={0.5} suffix="%" onChange={(yearlyReturn) => void save({ yearlyReturn })} />
             {ownReturn !== undefined && (
@@ -156,7 +156,7 @@ export function PlanningSection({ inputs, options, series, planning, otherAssets
             label="Spending per year to live from it"
             value={planning.yearlySpending}
             step={1000}
-            suffix="EUR"
+            suffix={displayCurrency()}
             onChange={(yearlySpending) => void save({ yearlySpending })}
           />
         </div>

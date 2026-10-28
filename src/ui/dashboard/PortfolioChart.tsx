@@ -20,7 +20,7 @@ import type { DailyPoint } from '../../engine/series.ts'
 import { DEFAULT_CHART_STYLE, type ChartStyle } from '../../settings/settings.ts'
 import { PALETTES, storePalette } from '../../theme/theme.ts'
 import { usePalette } from '../usePalette.ts'
-import { formatDate, formatEur, formatPercent } from '../format.ts'
+import { displayCurrency, formatDate, formatEur, formatPercent } from '../format.ts'
 import { chartData, type ChartMode } from './chartData.ts'
 import { fullHex, useThemeColors } from './useThemeColors.ts'
 
@@ -432,7 +432,7 @@ function StylePanel({
       className="chip"
       aria-pressed={chartStyle[key]}
       disabled={eurOnly && percent}
-      title={eurOnly && percent ? 'Only in EUR' : undefined}
+      title={eurOnly && percent ? `Only in ${displayCurrency()}` : undefined}
       onClick={() => onChange({ [key]: !chartStyle[key] })}
     >
       {label}
