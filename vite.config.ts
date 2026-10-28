@@ -43,7 +43,7 @@ export default defineConfig({
         name: 'Portfolio History',
         short_name: 'Portfolio',
         description: 'See the value and profit of your investment portfolio at any moment in its history.',
-        lang: 'nl',
+        lang: 'en',
         start_url: base,
         scope: base,
         display: 'standalone',
@@ -81,7 +81,5 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'workers/**/*.test.ts'],
-    // The tests read the English texts; the app itself starts in Dutch.
-    setupFiles: ['src/i18n/englishForTests.ts'],
   },
 })

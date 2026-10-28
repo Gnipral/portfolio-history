@@ -20,7 +20,7 @@ import {
   type ThemePreference,
 } from '../../theme/theme.ts'
 import { resetSyncSession } from '../dashboard/usePortfolio.ts'
-import { LANGUAGES, language, setLanguage, t, type Language } from '../../i18n/i18n.ts'
+import { t } from '../../i18n/i18n.ts'
 import { Rich } from '../../i18n/Rich.tsx'
 
 const COST_BASIS: { value: CostBasisMethod; label: string; hint: string }[] = [
@@ -260,16 +260,6 @@ export function SettingsPage() {
       <div className="stack settings-form">
         <fieldset>
           <legend>{t('Appearance')}</legend>
-          <label>
-            {t('Language')}
-            <select value={language()} onChange={(e) => setLanguage(e.target.value as Language)}>
-              {LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
-          </label>
           <label>
             {t('Theme')}
             <select

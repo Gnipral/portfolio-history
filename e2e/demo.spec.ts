@@ -13,8 +13,6 @@ function watchErrors(page: Page): string[] {
 // The tests do not depend on the live price proxy, which only answers the app's own site: it answers here
 // as Yahoo does for a symbol without data.
 test.beforeEach(async ({ page }) => {
-  // The app starts in Dutch; most tests read the English texts.
-  await page.addInitScript(() => localStorage.setItem('portfolio-history:language', 'en'))
   await page.route('https://portfolio-history-price-proxy.tibo-dhave.workers.dev/**', (route) =>
     route.fulfill({
       status: 200,
@@ -68,25 +66,17 @@ test('the share card is drawn', async ({ page }) => {
   expect(errors).toEqual([])
 })
 
-test.describe('in Dutch', () => {
-  // No language chosen yet, in an English browser.
-  test.use({ locale: 'en-US' })
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => localStorage.removeItem('portfolio-history:language'))
-  })
+test.describe('in a Dutch browser', () => {
+  test.use({ locale: 'nl-BE' })
 
-  test('the app starts in Dutch', async ({ page }) => {
+  test('the app is in English, with euros and dates as on the continent', async ({ page }) => {
     const errors = watchErrors(page)
-    await page.goto('./')
-    await page.getByRole('button', { name: 'Probeer de demo' }).first().click()
-    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Posities' })).toBeVisible()
-    await expect(page.locator('html')).toHaveAttribute('lang', 'nl')
-    await page.getByRole('link', { name: 'Analyse' }).click()
-    for (const tab of ['Belastingen', 'Dividenden', 'Gerealiseerd', 'Kosten', 'Risico', 'Planning']) {
-      await page.getByRole('tab', { name: tab }).click()
-      await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true')
-    }
+    // Someone who chose Dutch in an earlier version gets English too.
+    await page.addInitScript(() => localStorage.setItem('portfolio-history:language', 'nl'))
+    await openDemo(page)
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+    await expect(page.getByRole('heading', { name: 'Positions' })).toBeVisible()
+    await expect(page.locator('.chart-legend')).toContainText(/\d{1,2} [A-Z][a-z]{2} \d{4}/)
     expect(errors).toEqual([])
   })
 })
