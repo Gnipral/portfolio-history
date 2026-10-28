@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { EngineInputs } from '../../engine/loadInputs.ts'
+import type { OtherAsset } from '../../engine/otherAssets.ts'
 import type { EngineOptions } from '../../engine/options.ts'
 import { fireTarget, project, rebalance, type ProjectionYear } from '../../engine/planning.ts'
 import { positionsOn } from '../../engine/positions.ts'
@@ -7,12 +8,14 @@ import type { SeriesResult } from '../../engine/series.ts'
 import { localToday } from '../../market/dates.ts'
 import { DEFAULT_PLANNING, updateSettings, type PlanningSettings } from '../../settings/settings.ts'
 import { formatEur, formatPercent } from '../format.ts'
+import { NetWorthPanel } from './NetWorthPanel.tsx'
 
 interface Props {
   inputs: EngineInputs
   options: EngineOptions
   series: SeriesResult
   planning: PlanningSettings
+  otherAssets: OtherAsset[]
 }
 
 function save(changes: Partial<PlanningSettings>) {
@@ -32,7 +35,7 @@ function NumberField({ label, value, step, suffix, onChange }: { label: string; 
 }
 
 /** Where the next deposit should go to reach a target mix, and what the portfolio can grow to. */
-export function PlanningSection({ inputs, options, series, planning }: Props) {
+export function PlanningSection({ inputs, options, series, planning, otherAssets }: Props) {
   const today = localToday()
   const positions = useMemo(() => positionsOn(inputs.transactions, inputs.prices, options, today), [inputs, options, today])
   const holdings = useMemo(
@@ -58,6 +61,7 @@ export function PlanningSection({ inputs, options, series, planning }: Props) {
 
   return (
     <>
+      <NetWorthPanel portfolioValue={start} assets={otherAssets} />
       <div className="panel">
         <h3>Rebalance with your next deposit</h3>
         <p className="muted small">

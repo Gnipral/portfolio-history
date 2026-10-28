@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type PortfolioDatabase } from '../data/db.ts'
 import { DEFAULT_TAX_RULES, type CapitalGainsRules } from '../engine/analysis/capitalGains.ts'
 import { DEFAULT_OPTIONS, type CostBasisMethod, type Toggles } from '../engine/options.ts'
+import type { OtherAsset } from '../engine/otherAssets.ts'
 import { DEFAULT_BENCHMARK_ID } from '../market/benchmarks.ts'
 
 /** How the dashboard chart is drawn; switched in its own menu. */
@@ -67,6 +68,8 @@ export interface Settings {
   /** Saved periods, oldest saved first. */
   periods: NamedPeriod[]
   planning: PlanningSettings
+  /** Savings, pension savings, real estate and debts outside the brokers, for the net worth. */
+  otherAssets: OtherAsset[]
 }
 
 /** Settings edited as text in the settings form. */
@@ -91,6 +94,7 @@ export const DEFAULT_SETTINGS: Settings = {
   chartStyle: DEFAULT_CHART_STYLE,
   periods: [],
   planning: DEFAULT_PLANNING,
+  otherAssets: [],
 }
 
 const SETTINGS_KEY = 'settings'
