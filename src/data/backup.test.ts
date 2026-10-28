@@ -38,6 +38,14 @@ describe('backup', () => {
     expect(await target.prices.count()).toBe(1)
   })
 
+  it('says when the backup brings another price proxy', async () => {
+    await fill()
+    await saveSettings({ proxyUrl: 'https://proxy.someone-else.example' }, source)
+    const text = await backupText(await collectBackup(source))
+    expect(await restoreBackup(await readBackup(text), target)).toEqual({ newProxyUrl: 'https://proxy.someone-else.example' })
+    expect(await restoreBackup(await readBackup(text), target)).toEqual({ newProxyUrl: null })
+  })
+
   it('encrypts with a password', async () => {
     await fill()
     const text = await backupText(await collectBackup(source), 'hunter2')
