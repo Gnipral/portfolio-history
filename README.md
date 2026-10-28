@@ -26,7 +26,7 @@ Live app: https://gnipral.github.io/portfolio-history/
    - toggles to include or exclude dividends, transaction costs, taxes, FX costs and deposits. Options the export has no data for are disabled, with the reason.
 4. **Analysis**, per year:
    - **Taxes**: stock exchange tax (TOB) and withheld taxes paid, and an estimate of the tax on capital gains under the rules of a country: Belgium (from 2026), Germany, France, the Netherlands, or your own. Rate, yearly exemption and its carry-over, loss carry-forward, FIFO or average cost and a reference date for gains that are not taxed can all be adjusted;
-   - **Dividends**: per month, year, kind and position, gross and net, with the yield on cost;
+   - **Dividends**: per month, year, kind and position, gross and net, with the yield on cost, and an estimate of the next 12 months: every dividend of the last 12 months per share, paid again a year later on the shares held today with the same withholding tax, per month and per position with the forward yield;
    - **Realized**: every sale with its cost basis and result;
    - **Costs**: transaction costs, FX costs and taxes, and how much profit and time-weighted return they cost;
    - **Risk**: largest fall and recovery, volatility, best and worst month, and the return of every month.
