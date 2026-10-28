@@ -51,22 +51,33 @@ interface PointLabel {
   x?: number
   left?: number
   top?: number
-  /** Near the right edge: the label goes left of the point. */
+  /** Left of the point instead of right of it. */
   flip?: boolean
 }
 
 /** Height a label needs, so two lines close together get labels that do not cover each other. */
 const LABEL_HEIGHT = 20
 
-/** Pushes labels of the same pane apart, from the top down, keeping their order. */
-export function spreadLabels(labels: PointLabel[]): PointLabel[] {
+/**
+ * Keeps every label at the height of its own point. Labels go right of the point (left near the right edge);
+ * one that would cover another on that side goes to the other side, and only when both sides are taken is it
+ * moved down, as little as needed.
+ */
+export function spreadLabels(labels: PointLabel[], preferLeft = false): PointLabel[] {
   const out: PointLabel[] = []
   for (const pane of [0, 1] as const) {
-    let below = -Infinity
+    const placed: { y: number; flip: boolean }[] = []
+    const free = (y: number, flip: boolean) => placed.every((p) => p.flip !== flip || Math.abs(p.y - y) >= LABEL_HEIGHT)
     for (const label of labels.filter((l) => l.pane === pane).sort((a, b) => a.y - b.y)) {
-      const y = Math.max(label.y, below)
-      out.push({ ...label, y })
-      below = y + LABEL_HEIGHT
+      let y = label.y
+      let flip = preferLeft
+      if (!free(y, flip)) flip = !flip
+      if (!free(y, flip)) {
+        flip = preferLeft
+        while (!free(y, flip)) y += 1
+      }
+      placed.push({ y, flip })
+      out.push({ ...label, y, flip })
     }
   }
   return out
@@ -230,7 +241,8 @@ export function PortfolioChart({
       autoSize: true,
       // The app is in English, whatever the browser language.
       localization: { locale: locale() },
-      crosshair: { mode: CrosshairMode.Magnet },
+      // Only the vertical line: the values stand next to the points, a horizontal line and price box would repeat them.
+      crosshair: { mode: CrosshairMode.Magnet, horzLine: { visible: false, labelVisible: false } },
       layout: { fontSize: 13, panes: { enableResize: false } },
       rightPriceScale: { borderVisible: false },
       timeScale: { borderVisible: false, ...ZOOM_TIME_SCALE },
@@ -289,6 +301,7 @@ export function PortfolioChart({
         panes: { separatorColor: colors.chart.grid, separatorHoverColor: colors.chart.grid },
       },
       grid: { vertLines: { visible: false }, horzLines: { color: colors.chart.grid } },
+      crosshair: { vertLine: { color: colors.textMuted, labelBackgroundColor: colors.chart.value } },
     })
     const fill = chartStyle.fill
     r.main.applyOptions({
@@ -394,7 +407,7 @@ export function PortfolioChart({
       const profit = data.pnl[i]?.value
       add(r.pnl, profit, (profit ?? 0) < 0 ? colors.chart.negative : colors.chart.positive, t('Profit'), 1)
     }
-    setPointLabels(spreadLabels(labels).map((l) => ({ ...l, x, left: element.offsetLeft, top: element.offsetTop, flip: x > element.clientWidth * 0.62 })))
+    setPointLabels(spreadLabels(labels, x > element.clientWidth * 0.62).map((l) => ({ ...l, x, left: element.offsetLeft, top: element.offsetTop })))
   }
   // biome-ignore lint/correctness/useExhaustiveDependencies: placed again when anything that moves the lines changes
   useEffect(() => {
