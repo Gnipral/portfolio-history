@@ -19,9 +19,15 @@ function IncomeTooltip({ active, payload }: { active?: boolean; payload?: { payl
 }
 
 /** Bars of the net income of each month. */
-export function MonthlyIncomeChart({ data }: { data: { month: string; net: number }[] }) {
+export function MonthlyIncomeChart({
+  data,
+  label: ariaLabel = 'Net dividends and interest per month',
+}: {
+  data: { month: string; net: number }[]
+  label?: string
+}) {
   return (
-    <div className="income-chart" role="img" aria-label="Net dividends and interest per month">
+    <div className="income-chart" role="img" aria-label={ariaLabel}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--border)" />
