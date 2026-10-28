@@ -10,6 +10,7 @@ import { RiskSection } from '../analysis/RiskSection.tsx'
 import { TaxesSection } from '../analysis/TaxesSection.tsx'
 import { engineOptions } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
+import { ErrorBoundary } from '../errors/ErrorBoundary.tsx'
 import { DEFAULT_SETTINGS, saveSettings, useSettings } from '../../settings/settings.ts'
 
 const TABS = [
@@ -59,14 +60,16 @@ export function AnalysisPage() {
         <p role="status">Calculating…</p>
       ) : (
         <div role="tabpanel" className="stack">
-          {tab === 'taxes' && (
-            <TaxesSection inputs={inputs} rules={settings.taxRules} onRulesChange={(taxRules) => void saveSettings({ taxRules })} />
-          )}
-          {tab === 'dividends' && <DividendsSection inputs={inputs} options={options} />}
-          {tab === 'realized' && <RealizedSection inputs={inputs} options={options} />}
-          {tab === 'costs' && <CostsSection inputs={inputs} options={options} series={series} />}
-          {tab === 'risk' && <RiskSection series={series} />}
-          {tab === 'planning' && <PlanningSection inputs={inputs} options={options} series={series} planning={settings.planning} otherAssets={settings.otherAssets} />}
+          <ErrorBoundary label="This analysis" resetKey={tab}>
+            {tab === 'taxes' && (
+              <TaxesSection inputs={inputs} rules={settings.taxRules} onRulesChange={(taxRules) => void saveSettings({ taxRules })} />
+            )}
+            {tab === 'dividends' && <DividendsSection inputs={inputs} options={options} />}
+            {tab === 'realized' && <RealizedSection inputs={inputs} options={options} />}
+            {tab === 'costs' && <CostsSection inputs={inputs} options={options} series={series} />}
+            {tab === 'risk' && <RiskSection series={series} />}
+            {tab === 'planning' && <PlanningSection inputs={inputs} options={options} series={series} planning={settings.planning} otherAssets={settings.otherAssets} />}
+          </ErrorBoundary>
         </div>
       )}
     </section>
