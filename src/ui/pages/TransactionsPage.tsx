@@ -19,6 +19,7 @@ import type { AssetClass, Transaction } from '../../model/transaction.ts'
 import { formatDate, formatEur } from '../format.ts'
 import { locale, t } from '../../i18n/i18n.ts'
 import { Rich } from '../../i18n/Rich.tsx'
+import { useAccountSync } from '../components/AccountSync.tsx'
 
 const PAGE = 50
 
@@ -60,6 +61,7 @@ export function TransactionsPage() {
   const [editing, setEditing] = useState<Editing | null>(null)
   // The transaction whose delete button was pressed once: a second press deletes it.
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const account = useAccountSync()
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -77,9 +79,10 @@ export function TransactionsPage() {
       <p className="muted">
         {t('Add a transaction by hand, for a broker without an export or a row that is missing, or correct an imported one.')}
       </p>
+      {account.notice}
 
       {editing ? (
-        <TransactionForm key={editing.base?.id ?? 'new'} editing={editing} onDone={() => setEditing(null)} />
+        <TransactionForm key={editing.base?.id ?? 'new'} editing={editing} onSaved={account.sync} onDone={() => setEditing(null)} />
       ) : (
         <div className="actions">
           <button type="button" className="primary" onClick={() => setEditing({ input: emptyInput() })}>
@@ -134,7 +137,7 @@ export function TransactionsPage() {
                             className="link-button danger-text"
                             onClick={() => {
                               setConfirmDelete(null)
-                              void deleteTransaction(tx.id)
+                              void deleteTransaction(tx.id).then(account.sync)
                             }}
                           >
                             {t('Yes, delete')}
@@ -193,7 +196,7 @@ function NumberInput({ label, value, onChange, hint }: { label: string; value: n
   )
 }
 
-function TransactionForm({ editing, onDone }: { editing: Editing; onDone: () => void }) {
+function TransactionForm({ editing, onSaved, onDone }: { editing: Editing; onSaved: () => void; onDone: () => void }) {
   const [input, setInput] = useState(editing.input)
   const [error, setError] = useState<string>()
   const set = (changes: Partial<ManualInput>) => setInput({ ...input, ...changes })
@@ -208,6 +211,7 @@ function TransactionForm({ editing, onDone }: { editing: Editing; onDone: () => 
     try {
       const context = input.currency.trim().toUpperCase() === 'EUR' ? { toEur: (amount: number) => amount } : await loadImportContext()
       await saveTransaction(buildTransaction(input, context, editing.base))
+      onSaved()
       onDone()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))

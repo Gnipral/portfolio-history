@@ -85,13 +85,23 @@ export class Ledger {
   /** Instrument and day of every dividend, as `key|date`. */
   private readonly dividendDays: Set<string>
 
+  /**
+   * Brokers in the import without a single deposit or withdrawal. With cash in the portfolio, their trades
+   * are paid with money from outside, as if it was deposited for each buy and taken out after each sale or
+   * dividend; otherwise their buys would spend the cash of another broker.
+   */
+  private readonly fundedFromOutside: Set<string>
+
   constructor(
     private readonly options: EngineOptions,
     /** Whether the portfolio includes cash, with deposits and withdrawals as the only external flows. */
     readonly cashMode: boolean,
     private readonly context: LedgerContext = {},
   ) {
-    this.dividendDays = new Set((context.transactions ?? []).filter((t) => t.type === 'dividend').map((t) => `${instrumentKey(t)}|${t.date}`))
+    const transactions = context.transactions ?? []
+    this.dividendDays = new Set(transactions.filter((t) => t.type === 'dividend').map((t) => `${instrumentKey(t)}|${t.date}`))
+    const withCash = new Set(transactions.filter((t) => t.type === 'deposit' || t.type === 'withdrawal').map((t) => t.source.broker))
+    this.fundedFromOutside = new Set(transactions.map((t) => t.source.broker).filter((broker) => !withCash.has(broker)))
   }
 
   private holding(t: Transaction, key = instrumentKey(t)): Holding {
@@ -107,6 +117,7 @@ export class Ledger {
   /** Applies one transaction and returns the external flows it causes. */
   apply(t: Transaction): DayFlows {
     const flows: DayFlows = { inflow: 0, outflow: 0 }
+    const cashBefore = this.cash
     const charges = includedCharges(t, this.options)
 
     switch (t.type) {
@@ -255,6 +266,13 @@ export class Ledger {
         break
     }
 
+    if (this.cashMode && this.fundedFromOutside.has(t.source.broker)) {
+      // The money comes from outside and goes back out: the cash of the other brokers stays as it was.
+      const change = this.cash - cashBefore
+      this.cash -= change
+      this.netDeposits -= change
+      return flows
+    }
     if (this.cashMode) {
       if (t.type === 'deposit') return { inflow: Math.abs(t.amountEur), outflow: 0 }
       if (t.type === 'withdrawal') return { inflow: 0, outflow: Math.abs(t.amountEur) }

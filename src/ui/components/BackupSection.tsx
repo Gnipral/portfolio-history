@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { backupFileName, backupNeedsPassword, backupText, collectBackup, readBackup, restoreBackup } from '../../data/backup.ts'
 import { resetSyncSession } from '../dashboard/usePortfolio.ts'
+import { useAccountSync } from './AccountSync.tsx'
 import { t } from '../../i18n/i18n.ts'
 
 function download(content: string, name: string) {
@@ -23,6 +24,7 @@ export function BackupSection() {
   const [status, setStatus] = useState('')
   const [file, setFile] = useState<{ name: string; text: string; locked: boolean } | null>(null)
   const [filePassword, setFilePassword] = useState('')
+  const account = useAccountSync()
 
   async function save() {
     setBusy(true)
@@ -63,6 +65,7 @@ export function BackupSection() {
       const data = await readBackup(file.text, filePassword)
       await restoreBackup(data)
       resetSyncSession()
+      account.sync()
       setFile(null)
       setStatus(t('Backup restored: {count} transactions.', { count: data.transactions.length }))
     } catch (error) {
@@ -113,6 +116,7 @@ export function BackupSection() {
           </div>
         </div>
       )}
+      {account.notice}
       {status && (
         <p className="small" role="status">
           {status}
