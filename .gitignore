@@ -8,3 +8,5 @@ coverage/
 .wrangler/
 # never commit personal broker exports
 samples-private/
+test-results/
+playwright-report/

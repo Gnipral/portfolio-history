@@ -137,6 +137,7 @@ export function PortfolioChart({
   const [expanded, setExpanded] = useState(false)
   const [styleOpen, setStyleOpen] = useState(false)
   // The bar above the chart moves it down: the divider over the panes moves along.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: opening the style bar moves the panes, so they are measured again; measurePanes only reads refs
   useEffect(() => {
     requestAnimationFrame(measurePanes)
   }, [styleOpen])
@@ -186,6 +187,7 @@ export function PortfolioChart({
   }, [])
 
   // Create the chart once.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the chart is created once; measurePanes only reads refs
   useEffect(() => {
     if (!container.current) return
     const chart = createChart(container.current, {
@@ -255,6 +257,7 @@ export function PortfolioChart({
   }, [colors, chartStyle.fill])
 
   // Data and mode.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: colors restyle the series, which is redone here; measurePanes only reads refs
   useEffect(() => {
     const r = refs.current
     if (!r) return

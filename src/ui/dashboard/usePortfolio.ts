@@ -49,6 +49,7 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
   const [attempt, setAttempt] = useState(0)
   const online = useOnline()
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is raised to try the prices again
   useEffect(() => {
     // benchmarkId is undefined while the settings load, and empty when every benchmark is off.
     if (!transactionCount || benchmarkId === undefined) {
