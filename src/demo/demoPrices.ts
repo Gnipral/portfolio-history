@@ -23,6 +23,10 @@ export const DEMO_INSTRUMENTS: DemoInstrument[] = [
   { symbol: 'demo:europe', product: 'DEMO EUROPE ETF', isin: 'IE00DEMO0002', ticker: 'DEUR', assetClass: 'etf', currency: 'EUR', start: 50, drift: 0.05, volatility: 0.16 },
   { symbol: 'demo:tech', product: 'DEMO TECH INC', isin: 'US00DEMO0003', ticker: 'DTEC', assetClass: 'stock', currency: 'USD', start: 120, drift: 0.14, volatility: 0.32 },
   { symbol: 'demo:bank', product: 'DEMO BANK NV', isin: 'BE00DEMO0004', ticker: 'DBNK', assetClass: 'stock', currency: 'EUR', start: 30, drift: 0.03, volatility: 0.24 },
+  { symbol: 'demo:pharma', product: 'DEMO PHARMA AG', isin: 'DE00DEMO0005', ticker: 'DPHA', assetClass: 'stock', currency: 'EUR', start: 90, drift: 0.06, volatility: 0.2 },
+  { symbol: 'demo:chips', product: 'DEMO CHIPS NV', isin: 'NL00DEMO0006', ticker: 'DCHP', assetClass: 'stock', currency: 'EUR', start: 300, drift: 0.18, volatility: 0.38 },
+  { symbol: 'demo:retail', product: 'DEMO RETAIL SA', isin: 'FR00DEMO0007', ticker: 'DRTL', assetClass: 'stock', currency: 'EUR', start: 40, drift: -0.02, volatility: 0.26 },
+  { symbol: 'demo:energy', product: 'DEMO ENERGY NV', isin: 'NL00DEMO0008', ticker: 'DNRG', assetClass: 'stock', currency: 'EUR', start: 25, drift: 0.04, volatility: 0.3 },
   { symbol: 'demo:coin', product: 'Demo Coin', ticker: 'DMC', assetClass: 'crypto', currency: 'EUR', start: 2000, drift: 0.2, volatility: 0.7 },
 ]
 

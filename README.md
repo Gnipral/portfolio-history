@@ -20,7 +20,7 @@ Live app: https://gnipral.github.io/portfolio-history/
    - cards for value, invested capital, profit/loss, simple return, time-weighted return (TWR) and money-weighted return (XIRR) on the selected day;
    - the positions and an allocation chart for that day, by position, type, currency or country of the ISIN; click a position for its own chart with its trades;
    - benchmarks (MSCI World, FTSE All-World, S&P 500 ETF, or your own mix of them) bought and sold with exactly the same money on the same days;
-   - a **Share** button that makes a picture of the time-weighted return over the chosen period (post or story size), optionally against a benchmark, with the mix by type and with your positions (their weight and return), plus a text to paste with it. It never shows amounts or quantities, and product names only when you choose to show the positions;
+   - a **Share** button that makes a picture of the time-weighted return over the chosen period (post or story size), optionally against a benchmark, with the mix by type and with your positions (their weight and return, the largest or the best first; a large portfolio sums up the rest in one row), plus a text to paste with it. It never shows amounts or quantities, and product names only when you choose to show the positions;
    - toggles to include or exclude dividends, transaction costs, taxes, FX costs and deposits. Options the export has no data for are disabled, with the reason.
 4. **Analysis**, per year:
    - **Taxes**: stock exchange tax (TOB) and withheld taxes paid, and an estimate of the tax on capital gains under the rules of a country: Belgium (from 2026), Germany, France, the Netherlands, or your own. Rate, yearly exemption and its carry-over, loss carry-forward, FIFO or average cost and a reference date for gains that are not taxed can all be adjusted;
@@ -29,7 +29,7 @@ Live app: https://gnipral.github.io/portfolio-history/
    - **Costs**: transaction costs, FX costs and taxes, and how much profit and time-weighted return they cost;
    - **Risk**: largest fall and recovery, volatility, best and worst month, and the return of every month.
 5. **Settings**: API keys, price proxy, cost basis (average or FIFO), benchmarks and mix, theme, and deleting all data.
-6. **Demo mode**: "Try the demo" (on the empty dashboard, the Import page or in Settings) opens a made-up portfolio from March 2021 until today, with deposits, ETFs, a US stock, a dividend payer, crypto, a sale and a withdrawal. Its prices are generated in the browser, so it needs no connection or API key. It lives in its own database with its own settings: your own data is never touched. A banner on every page leads back.
+6. **Demo mode**: "Try the demo" (on the empty dashboard, the Import page or in Settings) opens a made-up portfolio from March 2021 until today, with deposits, ETFs, six stocks and crypto (one stock in USD, one paying dividends), a sale and a withdrawal. Its prices are generated in the browser, so it needs no connection or API key. It lives in its own database with its own settings: your own data is never touched. A banner on every page leads back.
 
 ### Privacy
 

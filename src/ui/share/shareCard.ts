@@ -24,9 +24,15 @@ export interface ShareCard {
   benchmark?: { label: string; twr: number; curve: number[] } | undefined
   /** Share of the value per type of asset, in whole percent. */
   allocation: { label: string; percent: number; slot: number }[]
-  /** The open positions, largest first, when chosen: weight in whole percent, return rounded to 0.1 %. */
+  /**
+   * The open positions when chosen, in the chosen order: weight in whole percent, return rounded
+   * to 0.1 %. When there are more than fit, the last row is all the others together.
+   */
   positions: SharedPosition[]
 }
+
+/** Which positions a card shows first: the largest, or those with the best return. */
+export type PositionOrder = 'weight' | 'return'
 
 export interface SharedPosition {
   name: string
@@ -34,6 +40,8 @@ export interface SharedPosition {
   weight: number
   /** Unrealized return on the cost basis, as a fraction. */
   return: number
+  /** Set on the row that stands for the positions that did not fit: how many there are. */
+  others?: number
 }
 
 /** A short name: the ticker without its exchange when known, else the product name. */
@@ -43,13 +51,26 @@ function shortName(position: Position): string {
   return position.product.length > 28 ? `${position.product.slice(0, 27).trimEnd()}…` : position.product
 }
 
-function sharedPositions(positions: Position[]): SharedPosition[] {
+const rounded = (fraction: number) => Math.round(fraction * 1000) / 1000
+
+/**
+ * At most `limit` rows. A large portfolio keeps `limit - 1` positions and sums up the rest in one
+ * row, with their weight together and their return on their cost together.
+ */
+function sharedPositions(positions: Position[], order: PositionOrder, limit: number): SharedPosition[] {
   const open = positions.filter((p) => p.value > 0)
   const total = open.reduce((sum, p) => sum + p.value, 0)
-  if (total <= 0) return []
-  return open
-    .sort((a, b) => b.value - a.value)
-    .map((p) => ({ name: shortName(p), weight: Math.round((p.value / total) * 100), return: Math.round(p.pnlPercent * 1000) / 1000 }))
+  if (total <= 0 || limit <= 0) return []
+  const sorted = open.sort((a, b) => (order === 'return' ? b.pnlPercent - a.pnlPercent : 0) || b.value - a.value)
+  const shown = sorted.length > limit ? sorted.slice(0, limit - 1) : sorted
+  const rows: SharedPosition[] = shown.map((p) => ({ name: shortName(p), weight: Math.round((p.value / total) * 100), return: rounded(p.pnlPercent) }))
+  const rest = sorted.slice(shown.length)
+  if (rest.length > 0) {
+    const value = rest.reduce((sum, p) => sum + p.value, 0)
+    const cost = rest.reduce((sum, p) => sum + p.costBasis, 0)
+    rows.push({ name: `Other ${rest.length}`, weight: Math.round((value / total) * 100), return: cost > 0 ? rounded(value / cost - 1) : 0, others: rest.length })
+  }
+  return rows
 }
 
 interface ReturnPoint {
@@ -84,6 +105,7 @@ export function shareCard(
   benchmark: BenchmarkLine | undefined,
   slices: Slice[],
   positions: Position[] = [],
+  { order = 'weight', limit = 5 }: { order?: PositionOrder; limit?: number } = {},
 ): ShareCard {
   return {
     from: points[from]?.date ?? '',
@@ -96,7 +118,7 @@ export function shareCard(
       curve: curve(benchmark.points, from, to),
     },
     allocation: slices.map((s) => ({ label: s.label, percent: Math.round(s.share * 100), slot: s.slot })).filter((s) => s.percent > 0),
-    positions: sharedPositions(positions),
+    positions: sharedPositions(positions, order, limit),
   }
 }
 
