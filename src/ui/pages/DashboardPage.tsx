@@ -210,6 +210,7 @@ export function DashboardPage() {
             to={selected}
             benchmarks={benchmarks}
             slices={typeSlices}
+            positions={positions}
             onClose={() => setSharing(false)}
           />
         </Suspense>
