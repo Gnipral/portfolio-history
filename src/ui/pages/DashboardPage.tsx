@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { DemoButton } from '../components/DemoBanner.tsx'
+import { usePalette } from '../usePalette.ts'
 import { positionSeries } from '../../engine/analysis/positionSeries.ts'
 import { db } from '../../data/db.ts'
 import { positionsOn } from '../../engine/positions.ts'
@@ -49,6 +50,7 @@ export function DashboardPage() {
   const [dimension, setDimension] = useState<AllocationDimension>('position')
   const [positionKey, setPositionKey] = useState<string | null>(null)
   const [sharing, setSharing] = useState(false)
+  const palette = usePalette()
 
   const points = useMemo(() => series?.points ?? [], [series])
   const dates = useMemo(() => points.map((p) => p.date), [points])
@@ -160,43 +162,46 @@ export function DashboardPage() {
             states={toggles}
             onChange={(key, value) => void saveSettings({ toggles: { ...settings.toggles, [key]: value } })}
           />
-          <Suspense fallback={<div className="chart-wrapper chart-placeholder" />}>
-            <PortfolioChart
-              points={points}
-              from={visible.from}
-              to={visible.to}
-              selected={selected}
-              mode={mode}
-              onHover={setSelectedIndex}
-              benchmarks={benchmarks}
-              chartStyle={settings.chartStyle}
-              onStyleChange={(change) => void updateSettings((current) => ({ chartStyle: { ...current.chartStyle, ...change } }))}
+          {/* The chart, its benchmarks, filter and summary: the block the chart palette colors. */}
+          <div className="chart-block stack" data-palette={palette === 'standard' ? undefined : palette}>
+            <Suspense fallback={<div className="chart-wrapper chart-placeholder" />}>
+              <PortfolioChart
+                points={points}
+                from={visible.from}
+                to={visible.to}
+                selected={selected}
+                mode={mode}
+                onHover={setSelectedIndex}
+                benchmarks={benchmarks}
+                chartStyle={settings.chartStyle}
+                onStyleChange={(change) => void updateSettings((current) => ({ chartStyle: { ...current.chartStyle, ...change } }))}
+              />
+            </Suspense>
+            <BenchmarkPicker settings={settings} lines={benchmarks} onChange={(change) => void updateSettings(change)} />
+            <AssetFilter
+              classes={classes}
+              chosen={assetClasses}
+              onChange={(next) => {
+                setAssetClasses(next)
+                setPositionKey(null)
+              }}
             />
-          </Suspense>
-          <BenchmarkPicker settings={settings} lines={benchmarks} onChange={(change) => void updateSettings(change)} />
-          <AssetFilter
-            classes={classes}
-            chosen={assetClasses}
-            onChange={(next) => {
-              setAssetClasses(next)
-              setPositionKey(null)
-            }}
-          />
-          <p className="muted small">
-            {range === 'ALL' ? 'Since the first transaction' : `Last ${range === 'YTD' ? 'year to date' : range}`}:{' '}
-            <span className={trendClass(change.pnl)}>{formatSignedEur(change.pnl)}</span>, time-weighted{' '}
-            <span className={trendClass(change.twr)}>{formatPercent(change.twr)}</span>
-            {benchmarks.map((line) => {
-              const lineChange = rangeChange(line.points, visible.from, visible.to)
-              return (
-                <span key={line.id}>
-                  . The same money in {line.label}:{' '}
-                  <span className={trendClass(lineChange.pnl)}>{formatSignedEur(lineChange.pnl)}</span>, time-weighted{' '}
-                  <span className={trendClass(lineChange.twr)}>{formatPercent(lineChange.twr)}</span>
-                </span>
-              )
-            })}
-          </p>
+            <p className="muted small">
+              {range === 'ALL' ? 'Since the first transaction' : `Last ${range === 'YTD' ? 'year to date' : range}`}:{' '}
+              <span className={trendClass(change.pnl)}>{formatSignedEur(change.pnl)}</span>, time-weighted{' '}
+              <span className={trendClass(change.twr)}>{formatPercent(change.twr)}</span>
+              {benchmarks.map((line) => {
+                const lineChange = rangeChange(line.points, visible.from, visible.to)
+                return (
+                  <span key={line.id}>
+                    . The same money in {line.label}:{' '}
+                    <span className={trendClass(lineChange.pnl)}>{formatSignedEur(lineChange.pnl)}</span>, time-weighted{' '}
+                    <span className={trendClass(lineChange.twr)}>{formatPercent(lineChange.twr)}</span>
+                  </span>
+                )
+              })}
+            </p>
+          </div>
           <ProfitOverview
             periods={periods}
             date={point.date}

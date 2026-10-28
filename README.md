@@ -16,7 +16,7 @@ Live app: https://gnipral.github.io/portfolio-history/
 1. **Import** a broker export (CSV, XLSX, XML or PDF). The file is read in the browser and stored in IndexedDB.
 2. **Prices** are fetched once per day for every product you ever held, together with splits and EUR exchange rates, and cached in the browser.
 3. The **dashboard** rebuilds the portfolio for every calendar day since the first transaction:
-   - a chart of value, invested capital and profit, in euros or percent, with a crosshair, a slider and a date picker that stay in sync, and quick ranges (1M, 3M, YTD, 1Y, ALL). Its style bar (between the legend and the chart, so nothing is covered) turns the fill under the value, the invested capital line, the profit pane and a logarithmic scale on or off, and picks the color palette;
+   - a chart of value, invested capital and profit, in euros or percent, with a crosshair, a slider and a date picker that stay in sync, and quick ranges (1M, 3M, YTD, 1Y, ALL). Its style bar (between the legend and the chart, so nothing is covered) turns the fill under the value, the invested capital line, the profit pane and a logarithmic scale on or off, and picks the palette of the chart block (Standard, Colour-blind friendly, High contrast, Soft, Neon or Ocean; the rest of the app keeps its theme);
    - a filter on the type of asset (ETFs, stocks, crypto, …): the chart, the numbers, the positions and the benchmark then follow only those, as securities without cash;
    - the profit of the selected day, its month, its year and since the start, in euros and percent, with the best and the worst position and how much more or less the same money made in the benchmark;
    - cards for value, invested capital, profit/loss, simple return, time-weighted return (TWR) and money-weighted return (XIRR) on the selected day;
@@ -30,7 +30,7 @@ Live app: https://gnipral.github.io/portfolio-history/
    - **Realized**: every sale with its cost basis and result;
    - **Costs**: transaction costs, FX costs and taxes, and how much profit and time-weighted return they cost;
    - **Risk**: largest fall and recovery, volatility, best and worst month, and the return of every month.
-5. **Settings**: API keys, price proxy, cost basis (average or FIFO), benchmarks and mix, theme, colors (standard, colour-blind friendly with blue for gains and orange for losses, high contrast, or soft), and deleting all data.
+5. **Settings**: API keys, price proxy, cost basis (average or FIFO), benchmarks and mix, theme, chart colors (the same palettes as in the chart), and deleting all data.
 6. **Demo mode**: "Try the demo" (on the empty dashboard, the Import page or in Settings) opens a made-up portfolio from March 2021 until today, with deposits, ETFs, six stocks and crypto (one stock in USD, one paying dividends), a sale and a withdrawal. Its prices are generated in the browser, so it needs no connection or API key. It lives in its own database with its own settings: your own data is never touched. A banner on every page leads back.
 
 ### Privacy

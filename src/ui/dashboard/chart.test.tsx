@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DailyPoint } from '../../engine/series.ts'
 import { chartData } from './chartData.ts'
+import { storePalette } from '../../theme/theme.ts'
 import { PortfolioChart } from './PortfolioChart.tsx'
 
 function point(date: string, value: number, extra: Partial<DailyPoint> = {}): DailyPoint {
@@ -157,9 +158,9 @@ describe('PortfolioChart', () => {
     expect(onStyleChange).toHaveBeenCalledWith({ log: true })
     // The colors are there too, and stored like in Settings.
     fireEvent.click(screen.getByRole('radio', { name: /Colour-blind friendly/ }))
-    expect(document.documentElement.getAttribute('data-palette')).toBe('colorblind')
-    localStorage.clear()
-    document.documentElement.removeAttribute('data-palette')
+    expect(localStorage.getItem('palette')).toBe('colorblind')
+    expect(screen.getByRole('radio', { name: /Colour-blind friendly/ }).getAttribute('aria-checked')).toBe('true')
+    act(() => storePalette('standard'))
 
     rerender(
       <PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} chartStyle={{ ...style, invested: false, profitPane: false }} onStyleChange={onStyleChange} />,
