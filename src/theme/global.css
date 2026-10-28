@@ -1145,8 +1145,14 @@ code {
   align-items: start;
 }
 
+/* Nothing in a column may push it wider and over its neighbour: what does not fit scrolls inside it. */
+.dashboard-grid > * {
+  min-width: 0;
+  overflow-x: auto;
+}
+
 /* The positions table needs about 900px: below this the allocation goes under it instead of beside it. */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
   .dashboard-grid {
     grid-template-columns: minmax(0, 1fr);
   }
