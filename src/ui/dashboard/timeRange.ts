@@ -41,6 +41,17 @@ export function visibleRange(dates: { date: string }[], range: RangeKey): Visibl
   return { from: indexOfDate(first, rangeStart(range, first, last)), to: dates.length - 1 }
 }
 
+/** The days of a saved period, within the history; an open end runs up to the last day. */
+export function periodRange(dates: { date: string }[], period: { from: string; to: string | null }): VisibleRange {
+  const first = dates[0]?.date
+  const lastIndex = dates.length - 1
+  if (!first || lastIndex < 0) return { from: 0, to: -1 }
+  const clamp = (index: number) => Math.max(0, Math.min(lastIndex, index))
+  const from = clamp(indexOfDate(first, period.from))
+  const to = period.to ? clamp(indexOfDate(first, period.to)) : lastIndex
+  return { from: Math.min(from, to), to }
+}
+
 /** Keeps a selected index inside the visible range, defaulting to its end. */
 export function clampIndex(index: number | null, range: VisibleRange): number {
   if (index === null || index > range.to) return range.to
