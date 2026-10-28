@@ -180,13 +180,22 @@ describe('PortfolioChart', () => {
 describe('spreadLabels', () => {
   const label = (key: string, y: number, pane: 0 | 1 = 0) => ({ key, y, pane, color: '#000', text: key })
 
-  it('pushes labels apart that would cover each other, per pane and in their order', () => {
+  it('keeps each label at its point, and puts one that would cover another on the other side', () => {
     const spread = spreadLabels([label('IWDA', 105), label('Value', 100), label('Invested', 200), label('Profit', 102, 1)])
-    expect(spread.map((l) => [l.key, l.y])).toEqual([
-      ['Value', 100],
-      ['IWDA', 120],
-      ['Invested', 200],
-      ['Profit', 102],
+    expect(spread.map((l) => [l.key, l.y, l.flip])).toEqual([
+      ['Value', 100, false],
+      ['IWDA', 105, true],
+      ['Invested', 200, false],
+      ['Profit', 102, false],
+    ])
+  })
+
+  it('moves a label down only when both sides are taken, and starts left near the right edge', () => {
+    const spread = spreadLabels([label('A', 100), label('B', 104), label('C', 108)], true)
+    expect(spread.map((l) => [l.key, l.y, l.flip])).toEqual([
+      ['A', 100, true],
+      ['B', 104, false],
+      ['C', 120, true],
     ])
   })
 })
