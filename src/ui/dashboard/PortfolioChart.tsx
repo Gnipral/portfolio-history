@@ -49,6 +49,8 @@ interface ChartRefs {
   pnl: ISeriesApi<'Baseline'> | null
   /** The 0 line: on the profit in EUR, on the return in percent; none in EUR without the profit pane. */
   zero: { line: IPriceLine; on: ISeriesApi<'Area'> | ISeriesApi<'Baseline'> } | null
+  /** The labels on the price axis: the value of each line on the day under the pointer, not on the last day. */
+  labels: { line: IPriceLine; on: ISeriesApi<'Area'> | ISeriesApi<'Line'> | ISeriesApi<'Baseline'> }[]
 }
 
 function pnlColors({ chart }: ReturnType<typeof useThemeColors>) {
@@ -204,11 +206,12 @@ export function PortfolioChart({
       timeScale: { borderVisible: false, ...ZOOM_TIME_SCALE },
       ...ZOOM_OPTIONS,
     })
-    const main = chart.addSeries(AreaSeries, { lineWidth: 3, priceLineVisible: false, title: t('Value') })
+    // No labels of the last value: the labels effect below puts those of the selected day on the axis.
+    const main = chart.addSeries(AreaSeries, { lineWidth: 3, priceLineVisible: false, lastValueVisible: false })
     // Room under the value for the divider label.
     main.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.12 } })
-    const secondary = chart.addSeries(LineSeries, { lineWidth: 2, lineStyle: LineStyle.Dashed, priceLineVisible: false })
-    refs.current = { chart, main, secondary, benchmarks: [], pnl: null, zero: null }
+    const secondary = chart.addSeries(LineSeries, { lineWidth: 2, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
+    refs.current = { chart, main, secondary, benchmarks: [], pnl: null, zero: null, labels: [] }
     // A new size (full screen, rotation): refit the days to the width and grow the profit pane along.
     const resize =
       typeof ResizeObserver === 'undefined'
@@ -283,11 +286,10 @@ export function PortfolioChart({
     while (r.benchmarks.length > data.benchmarks.length) r.chart.removeSeries(r.benchmarks.pop() as ISeriesApi<'Line'>)
     while (r.benchmarks.length < data.benchmarks.length) {
       const { lineStyle, lineWidth } = benchmarkPattern(r.benchmarks.length)
-      r.benchmarks.push(r.chart.addSeries(LineSeries, { lineWidth, lineStyle, priceLineVisible: false }, 0))
+      r.benchmarks.push(r.chart.addSeries(LineSeries, { lineWidth, lineStyle, priceLineVisible: false, lastValueVisible: false }, 0))
     }
     r.benchmarks.forEach((line, i) => {
-      // The name next to the last value on the axis: no need to match colors with the legend.
-      line.applyOptions({ color: cssColor(benchmarksRef.current[i]?.color, wrapper.current), title: benchmarksRef.current[i]?.label ?? '' })
+      line.applyOptions({ color: cssColor(benchmarksRef.current[i]?.color, wrapper.current) })
       line.setData(data.benchmarks[i] ?? [])
     })
     // The 0 line moves with the pane it belongs to; it is made again below.
@@ -301,9 +303,9 @@ export function PortfolioChart({
       if (!r.pnl) {
         const options = {
           baseValue: { type: 'price' as const, price: 0 },
-          title: t('Profit'),
           lineWidth: 3 as const,
           priceLineVisible: false,
+          lastValueVisible: false,
           autoscaleInfoProvider: withZero,
           ...pnlColors(colorsRef.current),
         }
@@ -326,6 +328,36 @@ export function PortfolioChart({
     const point = data.main[selected - from]
     if (r && point) r.chart.setCrosshairPosition(point.value, point.time, r.main)
   }, [data, selected, from])
+
+  // The labels on the price axis show the day under the pointer (the last day when there is none), with the
+  // name of each line next to its value: every figure on the chart follows the same day.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the lines are redrawn with the data, mode and style, which this follows
+  useEffect(() => {
+    const r = refs.current
+    if (!r) return
+    for (const { line, on } of r.labels) {
+      try {
+        on.removePriceLine(line)
+      } catch {
+        // Its line was removed with the data (a benchmark switched off, or the profit pane): the label went too.
+      }
+    }
+    r.labels = []
+    const i = selected - from
+    const label = (on: ISeriesApi<'Area'> | ISeriesApi<'Line'> | ISeriesApi<'Baseline'>, value: number | undefined, color: string, title: string) => {
+      if (value === undefined) return
+      r.labels.push({ on, line: on.createPriceLine({ price: value, color, lineVisible: false, axisLabelVisible: true, title }) })
+    }
+    label(r.main, data.main[i]?.value, colors.chart.value, t('Value'))
+    if (chartStyle.invested && mode === 'eur') label(r.secondary, data.secondary[i]?.value, colors.chart.invested, t('Invested'))
+    r.benchmarks.forEach((line, k) => {
+      label(line, data.benchmarks[k]?.[i]?.value, cssColor(benchmarksRef.current[k]?.color, wrapper.current), benchmarksRef.current[k]?.label ?? '')
+    })
+    if (r.pnl) {
+      const profit = data.pnl[i]?.value
+      label(r.pnl, profit, (profit ?? 0) < 0 ? colors.chart.negative : colors.chart.positive, t('Profit'))
+    }
+  }, [data, selected, from, mode, colors, chartStyle.invested, chartStyle.profitPane])
 
   const point = points[selected]
   const benchmarkLegend = benchmarks.map((b, i) => ({
