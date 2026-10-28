@@ -2066,3 +2066,23 @@ progress {
   flex-basis: 100%;
   max-width: 32rem;
 }
+
+/* Name and value of a line, next to its point at the day under the pointer. */
+.point-label {
+  position: absolute;
+  z-index: 2;
+  transform: translate(8px, -50%);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+}
+
+.point-label.flip {
+  transform: translate(calc(-100% - 8px), -50%);
+}
