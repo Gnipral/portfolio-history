@@ -161,6 +161,8 @@ export function DashboardPage() {
               mode={mode}
               onHover={setSelectedIndex}
               benchmarks={benchmarks}
+              chartStyle={settings.chartStyle}
+              onStyleChange={(change) => void updateSettings((current) => ({ chartStyle: { ...current.chartStyle, ...change } }))}
             />
           </Suspense>
           <BenchmarkPicker settings={settings} lines={benchmarks} onChange={(change) => void updateSettings(change)} />
