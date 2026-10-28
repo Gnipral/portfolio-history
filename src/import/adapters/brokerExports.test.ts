@@ -37,6 +37,7 @@ describe.skipIf(!folder)('broker exports folder', () => {
         const warnings = result.issues.filter((i) => i.severity === 'warning')
         if (errors.length > 0) failures++
         const types = Object.entries(
+          // biome-ignore lint/performance/noAccumulatingSpread: a handful of types in a test
           result.transactions.reduce<Record<string, number>>((n, t) => ({ ...n, [t.type]: (n[t.type] ?? 0) + 1 }), {}),
         )
           .map(([type, count]) => `${type} ${count}`)

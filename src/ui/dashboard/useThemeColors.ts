@@ -69,6 +69,7 @@ function read(element?: Element | null): ThemeColors {
 export function useThemeColors(element?: RefObject<Element | null>, palette?: string): ThemeColors {
   const [colors, setColors] = useState(() => read())
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the variables are read again when the palette changes
   useEffect(() => {
     setColors(read(element?.current))
   }, [element, palette])
