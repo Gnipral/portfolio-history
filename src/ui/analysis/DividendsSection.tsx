@@ -1,8 +1,9 @@
 import { lazy, Suspense, useMemo } from 'react'
+import { dividendForecast, type DividendForecast } from '../../engine/analysis/forecast.ts'
 import { incomeRows, incomeTotals, type IncomeRow } from '../../engine/analysis/income.ts'
 import type { EngineInputs } from '../../engine/loadInputs.ts'
 import type { EngineOptions } from '../../engine/options.ts'
-import { positionsOn } from '../../engine/positions.ts'
+import { positionsOn, type Position } from '../../engine/positions.ts'
 import { addDays, localToday } from '../../market/dates.ts'
 import { formatDate, formatEur, formatPercent } from '../format.ts'
 
@@ -32,6 +33,7 @@ export function DividendsSection({ inputs, options }: Props) {
   const today = localToday()
   const rows = useMemo(() => incomeRows(inputs.transactions), [inputs])
   const positions = useMemo(() => positionsOn(inputs.transactions, inputs.prices, options, today), [inputs, options, today])
+  const forecast = useMemo(() => dividendForecast(inputs.transactions, today), [inputs, today])
   if (rows.length === 0) return <p className="muted">The export contains no dividends or interest.</p>
 
   const yearAgo = addDays(today, -365)
@@ -65,6 +67,8 @@ export function DividendsSection({ inputs, options }: Props) {
           <span className="muted small">{sum(rows, 'gross') > 0 ? formatPercent(sum(rows, 'taxes') / sum(rows, 'gross'), false) : '–'} of gross</span>
         </div>
       </div>
+
+      <ForecastPanel forecast={forecast} positions={positions} />
 
       <div className="panel">
         <h3>Net income per month</h3>
@@ -162,5 +166,82 @@ export function DividendsSection({ inputs, options }: Props) {
         <p className="muted small">All payments as booked, whatever the dashboard toggles say. Yield on cost only for positions held today.</p>
       </div>
     </>
+  )
+}
+
+/** What the next 12 months will probably pay: last year's dividends per share on the shares held today. */
+function ForecastPanel({ forecast, positions }: { forecast: DividendForecast; positions: Position[] }) {
+  const value = positions.reduce((sum, p) => sum + Math.max(p.value, 0), 0)
+  return (
+    <div className="panel stack forecast">
+      <h3>Expected in the next 12 months</h3>
+      {forecast.payments.length === 0 ? (
+        <p className="muted">
+          No dividends expected: none of the positions held today paid a dividend in the last 12 months.
+        </p>
+      ) : (
+        <>
+          <div className="cards">
+            <div className="card">
+              <span className="card-label">Expected, net</span>
+              <span className="card-value positive">{formatEur(forecast.net)}</span>
+              <span className="muted small">Gross {formatEur(forecast.gross)}</span>
+            </div>
+            <div className="card">
+              <span className="card-label">A month on average</span>
+              <span className="card-value">{formatEur(forecast.net / 12)}</span>
+              <span className="muted small">Net, spread over the year</span>
+            </div>
+            <div className="card">
+              <span className="card-label">Forward yield</span>
+              <span className="card-value">{value > 0 ? formatPercent(forecast.gross / value, false) : '–'}</span>
+              <span className="muted small">Gross, on the value of the portfolio today</span>
+            </div>
+          </div>
+          <Suspense fallback={<div className="income-chart" />}>
+            <MonthlyIncomeChart data={forecast.months} label="Expected net dividends per month" />
+          </Suspense>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th className="num">Payments a year</th>
+                <th className="num">Next payment</th>
+                <th className="num">Expected gross</th>
+                <th className="num">Expected net</th>
+                <th className="num" title="Expected gross dividends divided by the value of the position today">
+                  Yield
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {forecast.positions.map((p) => {
+                const position = positions.find((pos) => pos.key === p.key)
+                return (
+                  <tr key={p.key}>
+                    <td>
+                      <div>{p.product}</div>
+                      {p.isin && <div className="muted small">{p.isin}</div>}
+                    </td>
+                    <td className="num">{p.payments}</td>
+                    <td className="num">{formatDate(p.next)}</td>
+                    <td className="num">{formatEur(p.gross)}</td>
+                    <td className="num">
+                      <strong>{formatEur(p.net)}</strong>
+                    </td>
+                    <td className="num">{position && position.value > 0 ? formatPercent(p.gross / position.value, false) : '–'}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </>
+      )}
+      <p className="muted small">
+        An estimate: every dividend of the last 12 months, per share, paid again a year later on the shares held today, with
+        the same withholding tax. Dividends can be raised, cut or moved; accumulating funds and positions that paid nothing
+        last year count as zero.
+      </p>
+    </div>
   )
 }

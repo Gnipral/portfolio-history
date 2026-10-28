@@ -46,6 +46,10 @@ describe('AnalysisPage', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Dividends' }))
     expect(await screen.findByText('Per position')).toBeTruthy()
     expect(screen.getAllByText('€21.00').length).toBeGreaterThan(0)
+    // Expected: 3 euros a share gross on the 5 shares left, with the same 30 % tax.
+    expect(screen.getByText('Expected in the next 12 months')).toBeTruthy()
+    expect(screen.getAllByText('€10.50').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('€15.00').length).toBeGreaterThan(0)
 
     fireEvent.click(screen.getByRole('tab', { name: 'Realized' }))
     // 600 - 2 - 2.1 proceeds, minus half of 1005.5 cost.
