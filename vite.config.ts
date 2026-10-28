@@ -3,6 +3,31 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+/**
+ * Content-Security-Policy of the built app: only its own scripts run, so an injected script (say through a
+ * broker file) cannot. Requests may go to any https host, because the price proxy URL is the user's choice.
+ * Only in the build: the dev server needs inline scripts for hot reload.
+ */
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  "connect-src 'self' https:",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ')
+
+const csp = {
+  name: 'content-security-policy',
+  apply: 'build' as const,
+  transformIndexHtml: () => [{ tag: 'meta', attrs: { 'http-equiv': 'Content-Security-Policy', content: CSP }, injectTo: 'head-prepend' as const }],
+}
+
 // Served from https://gnipral.github.io/portfolio-history/
 const base = '/portfolio-history/'
 
@@ -10,6 +35,7 @@ export default defineConfig({
   base,
   plugins: [
     react(),
+    csp,
     VitePWA({
       registerType: 'prompt',
       pwaAssets: { config: true },
@@ -26,7 +52,7 @@ export default defineConfig({
       },
       workbox: {
         // mjs: the pdf.js worker, so PDF statements can be imported offline too.
-        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,webmanifest}'],
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,webmanifest,woff2}'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         // Avatar and social preview are for GitHub, not for the app.
         globIgnores: ['brand/*.png'],
