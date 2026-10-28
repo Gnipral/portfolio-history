@@ -233,7 +233,7 @@ export function DashboardPage() {
             pnl={point.pnl}
             benchmark={mainBenchmark && benchmarkPnl !== undefined ? { label: mainBenchmark.label, pnl: benchmarkPnl } : undefined}
           />
-          <SummaryCards point={point} cashMode={series?.cashMode ?? false} />
+          <SummaryCards point={point} cashMode={series?.cashMode ?? false} otherAssets={settings.otherAssets} />
           <div className="dashboard-grid">
             <div className="panel">
               <h3>Positions</h3>

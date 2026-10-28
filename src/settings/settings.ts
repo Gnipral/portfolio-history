@@ -3,6 +3,7 @@ import { db, type PortfolioDatabase } from '../data/db.ts'
 import { DEFAULT_TAX_RULES, type CapitalGainsRules } from '../engine/analysis/capitalGains.ts'
 import type { BaseCurrency } from '../engine/baseCurrency.ts'
 import { DEFAULT_OPTIONS, type CostBasisMethod, type Toggles } from '../engine/options.ts'
+import type { OtherAsset } from '../engine/otherAssets.ts'
 import { DEFAULT_BENCHMARK_ID } from '../market/benchmarks.ts'
 
 /** How the dashboard chart is drawn; switched in its own menu. */
@@ -70,6 +71,8 @@ export interface Settings {
   planning: PlanningSettings
   /** Currency in which every amount is shown and calculated, converted at the ECB rate of each day. */
   baseCurrency: BaseCurrency
+  /** Savings, pension savings, real estate and debts outside the brokers, for the net worth. */
+  otherAssets: OtherAsset[]
 }
 
 /** Settings edited as text in the settings form. */
@@ -95,6 +98,7 @@ export const DEFAULT_SETTINGS: Settings = {
   periods: [],
   planning: DEFAULT_PLANNING,
   baseCurrency: 'EUR',
+  otherAssets: [],
 }
 
 const SETTINGS_KEY = 'settings'

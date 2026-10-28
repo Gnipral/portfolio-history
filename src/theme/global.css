@@ -2019,3 +2019,112 @@ progress {
 .legend-swatch.projection-target {
   border-color: var(--warning);
 }
+
+.compare-input {
+  flex: 1;
+  min-width: 12rem;
+  max-width: 32rem;
+}
+
+.compare-chart {
+  margin: 0;
+}
+
+.compare-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.compare-grid {
+  stroke: var(--chart-grid);
+}
+
+.compare-zero {
+  stroke: var(--chart-zero);
+}
+
+.compare-line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.compare-line.own {
+  stroke-dasharray: 6 4;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.compare-line.series-1 {
+  stroke: var(--series-1);
+}
+
+.legend-dot.series-1 {
+  color: var(--series-1);
+}
+
+.compare-line.series-2 {
+  stroke: var(--series-2);
+}
+
+.legend-dot.series-2 {
+  color: var(--series-2);
+}
+
+.compare-line.series-3 {
+  stroke: var(--series-3);
+}
+
+.legend-dot.series-3 {
+  color: var(--series-3);
+}
+
+.compare-line.series-4 {
+  stroke: var(--series-4);
+}
+
+.legend-dot.series-4 {
+  color: var(--series-4);
+}
+
+.compare-line.series-5 {
+  stroke: var(--series-5);
+}
+
+.legend-dot.series-5 {
+  color: var(--series-5);
+}
+
+.compare-line.series-6 {
+  stroke: var(--series-6);
+}
+
+.legend-dot.series-6 {
+  color: var(--series-6);
+}
+
+.compare-line.series-7 {
+  stroke: var(--series-7);
+}
+
+.legend-dot.series-7 {
+  color: var(--series-7);
+}
+
+.inline-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inline-form input {
+  width: 8rem;
+  text-align: right;
+}
