@@ -22,7 +22,7 @@ import { PALETTES, storePalette } from '../../theme/theme.ts'
 import { usePalette } from '../usePalette.ts'
 import { formatDate, formatEur, formatPercent } from '../format.ts'
 import { chartData, type ChartMode } from './chartData.ts'
-import { useThemeColors } from './useThemeColors.ts'
+import { fullHex, useThemeColors } from './useThemeColors.ts'
 
 interface Props {
   points: DailyPoint[]
@@ -101,7 +101,7 @@ function canFullscreen(element: HTMLElement | null): boolean {
  * its block); lightweight-charts needs the color itself.
  */
 function cssColor(variable: string | undefined, element: Element | null): string {
-  return variable ? getComputedStyle(element ?? document.documentElement).getPropertyValue(variable).trim() || '#888' : '#888'
+  return variable ? fullHex(getComputedStyle(element ?? document.documentElement).getPropertyValue(variable).trim()) || '#888' : '#888'
 }
 
 /** Value and profit over time with a crosshair that follows, and drives, the selected day. */
