@@ -1,3 +1,4 @@
+import { otherAssetsOn, type OtherAsset } from '../../engine/otherAssets.ts'
 import type { DailyPoint } from '../../engine/series.ts'
 import { formatDate, formatEur, formatPercent, formatSignedEur, trendClass } from '../format.ts'
 
@@ -35,7 +36,8 @@ function ValueCard({ point, cashMode }: { point: DailyPoint; cashMode: boolean }
   )
 }
 
-export function SummaryCards({ point, cashMode }: { point: DailyPoint; cashMode: boolean }) {
+export function SummaryCards({ point, cashMode, otherAssets = [] }: { point: DailyPoint; cashMode: boolean; otherAssets?: OtherAsset[] }) {
+  const others = otherAssetsOn(otherAssets, point.date)
   const cards: Card[] = [
     {
       label: 'Invested',
@@ -53,6 +55,9 @@ export function SummaryCards({ point, cashMode }: { point: DailyPoint; cashMode:
     },
     { label: 'Time-weighted return', value: formatPercent(point.twr), trend: point.twr, hint: 'TWR, independent of deposits' },
     moneyWeighted(point),
+    ...(others.count > 0
+      ? [{ label: 'Net worth', value: formatEur(point.value + others.total), hint: `With ${others.count} other ${others.count === 1 ? 'asset' : 'assets'} (Analysis > Planning)` }]
+      : []),
   ]
 
   return (
