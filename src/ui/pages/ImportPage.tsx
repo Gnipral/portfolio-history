@@ -104,7 +104,8 @@ export function ImportPage() {
         portfolio. Your data is processed and stored only on this device.
       </p>
       <p className="muted small demo-hint">
-        No export at hand? <DemoButton className="link-button" /> with a made-up portfolio.
+        No export at hand? <DemoButton className="link-button" /> with a made-up portfolio, or{' '}
+        <Link to="/transactions">enter transactions by hand</Link>.
       </p>
       <details className="supported-brokers">
         <summary>Supported brokers and which file to export</summary>
@@ -159,7 +160,8 @@ export function ImportPage() {
       {state.phase === 'done' && (
         <div className="callout success" role="status">
           Imported {state.count} transactions.
-          {state.skipped > 0 && ` Skipped ${state.skipped} that were already stored.`} <Link to="/">Go to the dashboard</Link>
+          {state.skipped > 0 && ` Skipped ${state.skipped} that were already stored.`} <Link to="/">Go to the dashboard</Link> or{' '}
+          <Link to="/transactions">check the transactions</Link>
         </div>
       )}
 
