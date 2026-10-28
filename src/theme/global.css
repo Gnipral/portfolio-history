@@ -1357,3 +1357,13 @@ progress {
 .share-positions .small {
   flex-basis: 100%;
 }
+
+.connection-notice {
+  display: grid;
+  gap: 0.2rem;
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+}
+
+.connection-notice p {
+  margin: 0;
+}
