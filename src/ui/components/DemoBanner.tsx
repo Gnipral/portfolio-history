@@ -1,4 +1,5 @@
 import { enterDemo, isDemo, leaveDemo } from '../../demo/demoMode.ts'
+import { t } from '../../i18n/i18n.ts'
 
 /** Shown above every page in demo mode, with the way back to the own data. */
 export function DemoBanner() {
@@ -6,10 +7,10 @@ export function DemoBanner() {
   return (
     <div className="demo-banner" role="status">
       <span>
-        <strong>Demo mode:</strong> a made-up portfolio. Your own data is kept apart and stays untouched.
+        <strong>{t('Demo mode:')}</strong> {t('a made-up portfolio. Your own data is kept apart and stays untouched.')}
       </span>
       <button type="button" onClick={leaveDemo}>
-        Leave demo
+        {t('Leave demo')}
       </button>
     </div>
   )
@@ -20,7 +21,7 @@ export function DemoButton({ className }: { className?: string }) {
   const demo = isDemo()
   return (
     <button type="button" className={className} onClick={demo ? leaveDemo : enterDemo}>
-      {demo ? 'Leave demo' : 'Try the demo'}
+      {demo ? t('Leave demo') : t('Try the demo')}
     </button>
   )
 }

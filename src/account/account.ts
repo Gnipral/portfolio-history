@@ -3,6 +3,7 @@ import type { PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequest
 import { db, type ImportRecord, type PortfolioDatabase } from '../data/db.ts'
 import type { Transaction } from '../model/transaction.ts'
 import { loadSettings, saveSettings, type NamedPeriod } from '../settings/settings.ts'
+import { t } from '../i18n/i18n.ts'
 
 /**
  * The optional account (workers/account). Everything works without it; with it, the imported
@@ -57,7 +58,7 @@ async function callJson<T>(path: string, body?: unknown, method = 'POST'): Promi
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   })
   const answer = (await response.json().catch(() => ({}))) as T & { error?: string }
-  if (!response.ok) throw new AccountError(answer.error ?? `The account service answered ${response.status}`)
+  if (!response.ok) throw new AccountError(answer.error ?? t('The account service answered {status}', { status: response.status }))
   return answer
 }
 
@@ -110,7 +111,7 @@ export async function packData(data: SavedData): Promise<Uint8Array<ArrayBuffer>
 
 export async function unpackData(bytes: Uint8Array<ArrayBuffer>): Promise<SavedData> {
   const data = JSON.parse(new TextDecoder().decode(await pipe(bytes, new DecompressionStream('gzip')))) as SavedData
-  if (data.v !== 1 || !Array.isArray(data.transactions) || !Array.isArray(data.periods)) throw new AccountError('The saved data could not be read')
+  if (data.v !== 1 || !Array.isArray(data.transactions) || !Array.isArray(data.periods)) throw new AccountError(t('The saved data could not be read'))
   return data
 }
 
@@ -120,15 +121,15 @@ export async function saveToAccount(database: PortfolioDatabase = db): Promise<s
   const body = await packData({ v: 1, transactions, importRecord: importRecord ?? null, periods: settings.periods })
   const response = await call('/data', { method: 'PUT', headers: { 'Content-Type': 'application/octet-stream' }, body })
   const answer = (await response.json().catch(() => ({}))) as { updatedAt?: string; error?: string }
-  if (!response.ok || !answer.updatedAt) throw new AccountError(answer.error ?? 'Saving failed')
+  if (!response.ok || !answer.updatedAt) throw new AccountError(answer.error ?? t('Saving failed'))
   return answer.updatedAt
 }
 
 /** Replaces the portfolio and periods of this browser with those of the account. */
 export async function loadFromAccount(database: PortfolioDatabase = db): Promise<{ transactions: number }> {
   const response = await call('/data', { method: 'GET' })
-  if (response.status === 404) throw new AccountError('Nothing is saved in this account yet')
-  if (!response.ok) throw new AccountError('Loading failed')
+  if (response.status === 404) throw new AccountError(t('Nothing is saved in this account yet'))
+  if (!response.ok) throw new AccountError(t('Loading failed'))
   const data = await unpackData(new Uint8Array(await response.arrayBuffer()))
   await database.transaction('rw', database.transactions, database.imports, async () => {
     await database.transactions.clear()

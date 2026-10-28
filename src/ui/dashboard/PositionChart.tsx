@@ -1,16 +1,17 @@
 import { AreaSeries, ColorType, CrosshairMode, LineSeries, LineStyle, createChart, createSeriesMarkers, type SeriesMarker, type Time } from 'lightweight-charts'
 import { useEffect, useRef } from 'react'
 import type { PositionPoint, PositionTrade } from '../../engine/analysis/positionSeries.ts'
+import { locale, t } from '../../i18n/i18n.ts'
 import { formatEur } from '../format.ts'
 import { useThemeColors } from './useThemeColors.ts'
 
 const MARKERS: Partial<Record<PositionTrade['type'], { shape: SeriesMarker<Time>['shape']; position: 'belowBar' | 'aboveBar'; text: string }>> = {
-  buy: { shape: 'arrowUp', position: 'belowBar', text: 'B' },
-  transferIn: { shape: 'arrowUp', position: 'belowBar', text: 'In' },
-  sell: { shape: 'arrowDown', position: 'aboveBar', text: 'S' },
-  transferOut: { shape: 'arrowDown', position: 'aboveBar', text: 'Out' },
-  dividend: { shape: 'circle', position: 'aboveBar', text: 'D' },
-  split: { shape: 'square', position: 'aboveBar', text: 'Split' },
+  buy: { shape: 'arrowUp', position: 'belowBar', text: t('B') },
+  transferIn: { shape: 'arrowUp', position: 'belowBar', text: t('In') },
+  sell: { shape: 'arrowDown', position: 'aboveBar', text: t('S') },
+  transferOut: { shape: 'arrowDown', position: 'aboveBar', text: t('Out') },
+  dividend: { shape: 'circle', position: 'aboveBar', text: t('D') },
+  split: { shape: 'square', position: 'aboveBar', text: t('Split') },
 }
 
 /** Value and cost basis of one position over time, with its trades as markers. */
@@ -22,7 +23,7 @@ export function PositionChart({ points, trades }: { points: PositionPoint[]; tra
     if (!container.current || points.length === 0) return
     const chart = createChart(container.current, {
       autoSize: true,
-      localization: { locale: 'en-GB', priceFormatter: (v: number) => formatEur(v, true) },
+      localization: { locale: locale(), priceFormatter: (v: number) => formatEur(v, true) },
       crosshair: { mode: CrosshairMode.Magnet },
       layout: { background: { type: ColorType.Solid, color: colors.surface }, textColor: colors.textMuted },
       grid: { vertLines: { color: colors.border }, horzLines: { color: colors.border } },
@@ -57,12 +58,12 @@ export function PositionChart({ points, trades }: { points: PositionPoint[]; tra
     <div className="chart-wrapper">
       <div className="chart-legend">
         <span>
-          <i className="swatch main" /> Value
+          <i className="swatch main" /> {t('Value')}
         </span>
         <span>
-          <i className="swatch secondary" /> Cost basis
+          <i className="swatch secondary" /> {t('Cost basis')}
         </span>
-        <span className="muted small">B buy · S sell · D dividend</span>
+        <span className="muted small">{t('B buy · S sell · D dividend')}</span>
       </div>
       <div ref={container} className="chart position-chart" data-testid="position-chart" />
     </div>

@@ -14,6 +14,7 @@ import { tradeRepublicAdapter } from './adapters/tradeRepublic.ts'
 import { trading212Adapter } from './adapters/trading212.ts'
 import { xtbAdapter } from './adapters/xtb.ts'
 import type { BrokerAdapter, ImportContext, ImportResult, RawTable } from './types.ts'
+import { t } from '../i18n/i18n.ts'
 
 /** Every supported broker. Adding a broker means adding its adapter here. */
 export const adapters: BrokerAdapter[] = [
@@ -77,7 +78,7 @@ export interface ImportOptions {
  * workbook are ignored, an entirely unrecognized file is an error.
  */
 export function importTables(tables: RawTable[], { context, candidates = adapters }: ImportOptions = {}): ImportResult {
-  if (tables.length === 0) throw new ImportError('The selected file is empty.')
+  if (tables.length === 0) throw new ImportError(t('The selected file is empty.'))
 
   const detections = tables.map((t) => detectTable(t, candidates))
   const recognized = detections.filter((d) => d.adapter)
@@ -86,15 +87,15 @@ export function importTables(tables: RawTable[], { context, candidates = adapter
 
   if (unrecognizedFiles.length > 0) {
     throw new ImportError(
-      'File not recognized as a supported broker export.',
+      t('File not recognized as a supported broker export.'),
       unrecognizedFiles.flatMap((f) => {
         const table = tables.find((t) => t.fileName === f)
         if (table?.text !== undefined) {
           const start = table.text.split('\n').find((line) => line.trim())?.trim() ?? ''
-          return [`${f}: no supported broker recognized this PDF.`, `First line: ${start || '(no text: a scanned PDF cannot be read)'}`]
+          return [`${f}: ${t('no supported broker recognized this PDF.')}`, t('First line: {text}', { text: start || t('(no text: a scanned PDF cannot be read)') })]
         }
         const header = table?.rows[0]?.filter((c) => c !== null).join(', ') ?? ''
-        return [`${f}: no supported broker matched the header row.`, `Header found: ${header || '(empty)'}`]
+        return [`${f}: ${t('no supported broker matched the header row.')}`, t('Header found: {text}', { text: header || t('(empty)') })]
       }),
     )
   }
@@ -102,7 +103,7 @@ export function importTables(tables: RawTable[], { context, candidates = adapter
   const brokers = [...new Set(recognized.map((d) => d.adapter as BrokerAdapter))]
   if (brokers.length > 1) {
     throw new ImportError(
-      'All files must come from the same broker.',
+      t('All files must come from the same broker.'),
       recognized.map((d) => `${describe(d.table)}: ${d.adapter?.label}`),
     )
   }

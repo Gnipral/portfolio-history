@@ -1,4 +1,5 @@
 import type { ToggleKey } from '../../engine/options.ts'
+import { t } from '../../i18n/i18n.ts'
 import { TOGGLE_GROUPS, type ToggleState } from './toggles.ts'
 
 /**
@@ -8,12 +9,12 @@ import { TOGGLE_GROUPS, type ToggleState } from './toggles.ts'
 export function ToggleBar({ states, onChange }: { states: ToggleState[]; onChange: (key: ToggleKey, value: boolean) => void }) {
   return (
     <fieldset className="toggle-bar">
-      <legend>What counts in the result</legend>
-      <p className="muted small toggle-intro">Switch an item off to leave it out of every number, as if it never happened.</p>
+      <legend>{t('What counts in the result')}</legend>
+      <p className="muted small toggle-intro">{t('Switch an item off to leave it out of every number, as if it never happened.')}</p>
       <div className="toggle-groups">
         {TOGGLE_GROUPS.map((group) => (
           <div key={group} className="toggle-group">
-            <span className="toggle-group-title">{group}</span>
+            <span className="toggle-group-title">{t(group)}</span>
             {states
               .filter((state) => state.group === group)
               .map((state) => (
@@ -28,10 +29,10 @@ export function ToggleBar({ states, onChange }: { states: ToggleState[]; onChang
                   />
                   <span>
                     <span className="toggle-label" id={`${state.key}-label`}>
-                      {state.label}
+                      {t(state.label)}
                     </span>
                     <span className="toggle-description" id={`${state.key}-description`}>
-                      {state.disabledReason ?? state.description}
+                      {t(state.disabledReason ?? state.description)}
                     </span>
                   </span>
                 </label>

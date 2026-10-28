@@ -26,6 +26,8 @@ import { engineOptions, toggleStates } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
 import { ErrorBoundary } from '../errors/ErrorBoundary.tsx'
 import { DEFAULT_SETTINGS, saveSettings, updateSettings, useSettings } from '../../settings/settings.ts'
+import { t, tn } from '../../i18n/i18n.ts'
+import { Rich } from '../../i18n/Rich.tsx'
 import { displayCurrency, formatPercent, formatSignedEur, trendClass } from '../format.ts'
 
 // The chart libraries are large; load them only when the dashboard shows data.
@@ -104,10 +106,12 @@ export function DashboardPage() {
   if (transactionCount === 0) {
     return (
       <section>
-        <h2>Dashboard</h2>
+        <h2>{t('Dashboard')}</h2>
         <p>
-          No portfolio loaded yet. <Link to="/import">Import a broker export</Link> to see its history, or look around in a
-          made-up portfolio first.
+          <Rich
+            text={t('No portfolio loaded yet. <link>Import a broker export</link> to see its history, or look around in a made-up portfolio first.')}
+            tags={{ link: (s) => <Link to="/import">{s}</Link> }}
+          />
         </p>
         <DemoButton />
       </section>
@@ -119,14 +123,14 @@ export function DashboardPage() {
   return (
     <section className="stack">
       <div className="dashboard-header">
-        <h2>Dashboard</h2>
+        <h2>{t('Dashboard')}</h2>
         {syncing && (
           <span className="progress" role="status">
             <progress max={sync.total || 1} value={sync.done} />
             {sync.message}
           </span>
         )}
-        <div className="segmented" role="group" aria-label="Chart unit">
+        <div className="segmented" role="group" aria-label={t('Chart unit')}>
           <button type="button" aria-pressed={mode === 'eur'} onClick={() => setMode('eur')}>
             {displayCurrency()}
           </button>
@@ -136,19 +140,19 @@ export function DashboardPage() {
         </div>
         {!syncing && syncProblems > 0 && (
           <Link to="/prices" className="small">
-            {syncProblems} {syncProblems === 1 ? 'product has' : 'products have'} no price yet
+            {tn(syncProblems, '{count} product has no price yet', '{count} products have no price yet')}
           </Link>
         )}
         {point && (
           <button type="button" className="share-button" onClick={() => setSharing(true)}>
-            Share
+            {t('Share')}
           </button>
         )}
       </div>
       <ConnectionNotice offline={!online} weak={slowConnection} pricesFrom={pricesFrom} />
 
       {!point ? (
-        <p role="status">Calculating…</p>
+        <p role="status">{t('Calculating…')}</p>
       ) : (
         <>
           <TimeControls
@@ -189,7 +193,7 @@ export function DashboardPage() {
           />
           {/* The chart, its benchmarks, filter and summary: the block the chart palette colors. */}
           <div className="chart-block stack" data-palette={palette === 'standard' ? undefined : palette}>
-            <ErrorBoundary label="The chart">
+            <ErrorBoundary label={t('The chart')}>
               <Suspense fallback={<div className="chart-wrapper chart-placeholder" />}>
                 <PortfolioChart
                   points={points}
@@ -214,15 +218,15 @@ export function DashboardPage() {
               }}
             />
             <p className="muted small">
-              {period ? period.name : range === 'ALL' ? 'Since the first transaction' : `Last ${range === 'YTD' ? 'year to date' : range}`}:{' '}
-              <span className={trendClass(change.pnl)}>{formatSignedEur(change.pnl)}</span>, time-weighted{' '}
+              {period ? period.name : range === 'ALL' ? t('Since the first transaction') : range === 'YTD' ? t('Year to date') : t('Last {range}', { range })}:{' '}
+              <span className={trendClass(change.pnl)}>{formatSignedEur(change.pnl)}</span>, {t('time-weighted')}{' '}
               <span className={trendClass(change.twr)}>{formatPercent(change.twr)}</span>
               {benchmarks.map((line) => {
                 const lineChange = rangeChange(line.points, visible.from, visible.to)
                 return (
                   <span key={line.id}>
-                    . The same money in {line.label}:{' '}
-                    <span className={trendClass(lineChange.pnl)}>{formatSignedEur(lineChange.pnl)}</span>, time-weighted{' '}
+                    . {t('The same money in {name}', { name: line.label })}:{' '}
+                    <span className={trendClass(lineChange.pnl)}>{formatSignedEur(lineChange.pnl)}</span>, {t('time-weighted')}{' '}
                     <span className={trendClass(lineChange.twr)}>{formatPercent(lineChange.twr)}</span>
                   </span>
                 )
@@ -239,7 +243,7 @@ export function DashboardPage() {
           <SummaryCards point={point} cashMode={series?.cashMode ?? false} otherAssets={settings.otherAssets} />
           <div className="dashboard-grid">
             <div className="panel">
-              <h3>Positions</h3>
+              <h3>{t('Positions')}</h3>
               <PositionsTable
                 positions={positions}
                 date={point.date}
@@ -249,9 +253,9 @@ export function DashboardPage() {
               {selectedPosition && history && (
                 <div className="stack position-detail">
                   <h4>
-                    {selectedPosition.product} <span className="muted small">since the first transaction</span>
+                    {selectedPosition.product} <span className="muted small">{t('since the first transaction')}</span>
                   </h4>
-                  <ErrorBoundary label="The position chart" resetKey={positionKey}>
+                  <ErrorBoundary label={t('The position chart')} resetKey={positionKey}>
                     <Suspense fallback={<div className="chart-wrapper chart-placeholder" />}>
                       <PositionChart points={history.points} trades={history.trades} />
                     </Suspense>
@@ -262,16 +266,16 @@ export function DashboardPage() {
             {slices.length > 0 && (
               <div className="panel">
                 <div className="panel-header">
-                  <h3>Allocation</h3>
-                  <div className="segmented" role="group" aria-label="Group the allocation by">
+                  <h3>{t('Allocation')}</h3>
+                  <div className="segmented" role="group" aria-label={t('Group the allocation by')}>
                     {DIMENSIONS.map((d) => (
                       <button key={d.key} type="button" aria-pressed={dimension === d.key} onClick={() => setDimension(d.key)}>
-                        {d.label}
+                        {t(d.label)}
                       </button>
                     ))}
                   </div>
                 </div>
-                <ErrorBoundary label="The allocation" resetKey={dimension}>
+                <ErrorBoundary label={t('The allocation')} resetKey={dimension}>
                   <Suspense fallback={null}>
                     <AllocationChart slices={slices} />
                   </Suspense>

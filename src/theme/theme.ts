@@ -1,3 +1,4 @@
+import { msg } from '../i18n/i18n.ts'
 export type ThemePreference = 'system' | 'light' | 'dark'
 
 const STORAGE_KEY = 'theme'
@@ -46,22 +47,22 @@ export type Palette = 'standard' | 'colorblind' | 'high-contrast' | 'soft' | 'ne
 
 /** `swatches`: background, value line, gain, loss and a benchmark color, to show in the pickers. */
 export const PALETTES: { id: Palette; label: string; description: string; swatches: string[] }[] = [
-  { id: 'standard', label: 'Standard', description: 'The colors of the app: green for gains, red for losses.', swatches: ['#14181d', '#5cc8f0', '#3ddc97', '#ff7b7b', '#ffb95f'] },
+  { id: 'standard', label: msg('Standard'), description: msg('The colors of the app: green for gains, red for losses.'), swatches: ['#14181d', '#5cc8f0', '#3ddc97', '#ff7b7b', '#ffb95f'] },
   {
     id: 'colorblind',
-    label: 'Colour-blind friendly',
-    description: 'Blue for gains, orange for losses, and every line clearly apart with red-green and blue-yellow colour blindness.',
+    label: msg('Colour-blind friendly'),
+    description: msg('Blue for gains, orange for losses, and every line clearly apart with red-green and blue-yellow colour blindness.'),
     swatches: ['#10131a', '#eedd88', '#4fb3ff', '#ff9f1c', '#66ccee'],
   },
   {
     id: 'high-contrast',
-    label: 'High contrast',
-    description: 'Pure black or white, thick bright colors: as readable as it gets.',
+    label: msg('High contrast'),
+    description: msg('Pure black or white, thick bright colors: as readable as it gets.'),
     swatches: ['#000000', '#00e5ff', '#00ff66', '#ff3355', '#ffb000'],
   },
-  { id: 'soft', label: 'Soft', description: 'Pastel colors on a calm background: easy on the eyes.', swatches: ['#1c2026', '#9db6cc', '#8fbf9f', '#c99a96', '#c9b08a'] },
-  { id: 'neon', label: 'Neon', description: 'Glowing colors on deep black, in light and dark.', swatches: ['#07060f', '#00f0ff', '#39ff14', '#ff2079', '#ffe600'] },
-  { id: 'ocean', label: 'Ocean', description: 'Deep blues with teal for gains and coral for losses.', swatches: ['#071a2b', '#4fc3f7', '#2ee6c5', '#ff7b54', '#ffc15e'] },
+  { id: 'soft', label: msg('Soft'), description: msg('Pastel colors on a calm background: easy on the eyes.'), swatches: ['#1c2026', '#9db6cc', '#8fbf9f', '#c99a96', '#c9b08a'] },
+  { id: 'neon', label: msg('Neon'), description: msg('Glowing colors on deep black, in light and dark.'), swatches: ['#07060f', '#00f0ff', '#39ff14', '#ff2079', '#ffe600'] },
+  { id: 'ocean', label: msg('Ocean'), description: msg('Deep blues with teal for gains and coral for losses.'), swatches: ['#071a2b', '#4fc3f7', '#2ee6c5', '#ff7b54', '#ffc15e'] },
 ]
 
 const PALETTE_KEY = 'palette'

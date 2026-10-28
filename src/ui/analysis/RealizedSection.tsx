@@ -4,6 +4,7 @@ import type { EngineInputs } from '../../engine/loadInputs.ts'
 import type { EngineOptions } from '../../engine/options.ts'
 import { formatEur, formatSignedEur, trendClass } from '../format.ts'
 import { SalesTable } from './SalesTable.tsx'
+import { t } from '../../i18n/i18n.ts'
 
 interface Props {
   inputs: EngineInputs
@@ -14,22 +15,22 @@ interface Props {
 export function RealizedSection({ inputs, options }: Props) {
   const sales = useMemo(() => realizedSales(inputs.transactions, options), [inputs, options])
   const years = useMemo(() => realizedByYear(sales), [sales])
-  if (sales.length === 0) return <p className="muted">No sales yet.</p>
+  if (sales.length === 0) return <p className="muted">{t('No sales yet.')}</p>
 
   return (
     <>
       <div className="panel">
-        <h3>Realized per year</h3>
+        <h3>{t('Realized per year')}</h3>
         <table className="table">
           <thead>
             <tr>
-              <th>Year</th>
-              <th className="num">Sales</th>
-              <th className="num">Proceeds</th>
-              <th className="num">Cost basis</th>
-              <th className="num">Gains</th>
-              <th className="num">Losses</th>
-              <th className="num">Net</th>
+              <th>{t('Year')}</th>
+              <th className="num">{t('Sales')}</th>
+              <th className="num">{t('Proceeds')}</th>
+              <th className="num">{t('Cost basis')}</th>
+              <th className="num">{t('Gains')}</th>
+              <th className="num">{t('Losses')}</th>
+              <th className="num">{t('Net')}</th>
             </tr>
           </thead>
           <tbody>
@@ -49,12 +50,13 @@ export function RealizedSection({ inputs, options }: Props) {
           </tbody>
         </table>
         <p className="muted small">
-          Cost basis by the {options.costBasis === 'fifo' ? 'FIFO' : 'average cost'} method of the settings. Costs and taxes count
-          as the dashboard toggles say. Dividends are not included; see Dividends.
+          {options.costBasis === 'fifo'
+            ? t('Cost basis by the FIFO method of the settings. Costs and taxes count as the dashboard toggles say. Dividends are not included; see Dividends.')
+            : t('Cost basis by the average cost method of the settings. Costs and taxes count as the dashboard toggles say. Dividends are not included; see Dividends.')}
         </p>
       </div>
       <div className="panel">
-        <h3>Every sale</h3>
+        <h3>{t('Every sale')}</h3>
         <SalesTable sales={sales} />
       </div>
     </>

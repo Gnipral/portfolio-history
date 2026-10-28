@@ -1,3 +1,4 @@
+import { t } from '../../i18n/i18n.ts'
 import { simulateBenchmark, simulateMix, type BenchmarkPoint } from '../../engine/benchmark.ts'
 import type { LoadedBenchmark } from '../../engine/loadInputs.ts'
 import type { Settings } from '../../settings/settings.ts'
@@ -62,7 +63,7 @@ export function benchmarkLines(days: FlowPoint[], loaded: LoadedBenchmark[], set
   if (mix) {
     lines.push({
       id: 'mix',
-      label: `Mix ${mix.map((p) => `${Math.round(p.weight * 100)}% ${shortLabel(p.benchmark)}`).join(' / ')}`,
+      label: t('Mix {parts}', { parts: mix.map((p) => `${Math.round(p.weight * 100)}% ${shortLabel(p.benchmark)}`).join(' / ') }),
       points: simulateMix(days, mix.map((p) => ({ prices: p.benchmark.series, weight: p.weight }))),
       color: '',
     })

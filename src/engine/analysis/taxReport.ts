@@ -2,6 +2,7 @@ import type { Sale } from '../ledger.ts'
 import type { CapitalGainsResult, CapitalGainsYear } from './capitalGains.ts'
 import type { ChargesYear } from './charges.ts'
 import type { IncomeRow } from './income.ts'
+import { t } from '../../i18n/i18n.ts'
 
 /** Everything about one calendar year that a tax return asks for, in the base currency. */
 export interface TaxReport {
@@ -62,25 +63,25 @@ function csvCell(value: string | number): string {
  * columns. Amounts use a decimal point so every spreadsheet reads them as numbers when imported.
  */
 export function taxReportCsv(report: TaxReport, currency = 'EUR'): string {
-  const rows: (string | number)[][] = [[`Tax report ${report.year}`], [`All amounts in ${currency}`], []]
+  const rows: (string | number)[][] = [[t('Tax report {year}', { year: report.year })], [t('All amounts in {currency}', { currency })], []]
   if (report.gains) {
     const g = report.gains
-    rows.push(['Capital gains (estimate)'], ['Gains', 'Losses', 'Net', 'Earlier losses used', 'Exemption', 'Taxable', 'Estimated tax'])
+    rows.push([t('Capital gains (estimate)')], [t('Gains'), t('Losses'), t('Net'), t('Earlier losses used'), t('Exemption'), t('Taxable'), t('Estimated tax')])
     rows.push([g.gains, g.losses, g.net, g.lossesCarriedIn, g.exemption, g.taxable, g.tax].map(amount), [])
   }
   if (report.sales.length > 0) {
-    rows.push(['Sales'], ['Date', 'Product', 'ISIN', 'Quantity', 'Proceeds', 'Cost basis', 'Result'])
+    rows.push([t('Sales')], [t('Date'), t('Product'), 'ISIN', t('Quantity'), t('Proceeds'), t('Cost basis'), t('Result')])
     for (const s of report.sales) rows.push([s.date, s.product, s.isin ?? '', s.quantity, amount(s.proceeds), amount(s.cost), amount(s.gain)])
     rows.push([])
   }
   if (report.income.length > 0) {
-    rows.push(['Dividends and interest'], ['Date', 'Product', 'ISIN', 'Kind', 'Gross', 'Withheld tax', 'Costs', 'Net'])
+    rows.push([t('Dividends and interest')], [t('Date'), t('Product'), 'ISIN', t('Kind'), t('Gross'), t('Withheld tax'), t('Costs'), t('Net')])
     for (const r of report.income) rows.push([r.date, r.product, r.isin ?? '', r.kind, amount(r.gross), amount(r.taxes), amount(r.costs), amount(r.net)])
     rows.push([])
   }
   if (report.charges) {
     const c = report.charges
-    rows.push(['Costs and taxes paid'], ['Transaction costs', 'Currency costs', 'Stock exchange tax (TOB)', 'Withheld on income', 'Other taxes'])
+    rows.push([t('Costs and taxes paid')], [t('Transaction costs'), t('Currency costs'), t('Stock exchange tax (TOB)'), t('Withheld on income'), t('Other taxes')])
     rows.push([c.transactionCosts, c.fxCosts, c.tradeTaxes, c.incomeTaxes, c.otherTaxes].map(amount))
   }
   return `${rows.map((row) => row.map(csvCell).join(';')).join('\r\n')}\r\n`

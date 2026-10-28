@@ -1,7 +1,8 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { locale, t } from '../../i18n/i18n.ts'
 import { formatEur } from '../format.ts'
 
-const monthFormat = new Intl.DateTimeFormat('en-GB', { month: 'short', year: '2-digit', timeZone: 'UTC' })
+const monthFormat = new Intl.DateTimeFormat(locale(), { month: 'short', year: '2-digit', timeZone: 'UTC' })
 
 function label(month: string): string {
   return monthFormat.format(new Date(`${month}-01T00:00:00Z`))
@@ -21,7 +22,7 @@ function IncomeTooltip({ active, payload }: { active?: boolean; payload?: { payl
 /** Bars of the net income of each month. */
 export function MonthlyIncomeChart({
   data,
-  label: ariaLabel = 'Net dividends and interest per month',
+  label: ariaLabel = t('Net dividends and interest per month'),
 }: {
   data: { month: string; net: number }[]
   label?: string

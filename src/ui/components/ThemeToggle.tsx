@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
+import { t } from '../../i18n/i18n.ts'
 import { THEME_EVENT, nextThemePreference, readThemePreference, storeThemePreference } from '../../theme/theme.ts'
 
-const LABELS = { system: 'System', light: 'Light', dark: 'Dark' } as const
+const LABELS = { system: t('System'), light: t('Light'), dark: t('Dark') } as const
 
 export function ThemeToggle() {
   const [preference, setPreference] = useState(readThemePreference)
@@ -19,8 +20,8 @@ export function ThemeToggle() {
   }
 
   return (
-    <button type="button" onClick={cycle} title="Switch theme">
-      Theme: {LABELS[preference]}
+    <button type="button" onClick={cycle} title={t('Switch theme')}>
+      {t('Theme: {name}', { name: t(LABELS[preference]) })}
     </button>
   )
 }

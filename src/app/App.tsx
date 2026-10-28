@@ -1,4 +1,5 @@
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router'
+import { t } from '../i18n/i18n.ts'
 import { useSettings } from '../settings/settings.ts'
 import { DemoBanner } from '../ui/components/DemoBanner.tsx'
 import { NavIcon } from '../ui/components/NavIcon.tsx'
@@ -32,23 +33,23 @@ export function App() {
         <nav className="app-nav">
           <NavLink to="/" end>
             <NavIcon name="dashboard" />
-            Dashboard
+            {t('Dashboard')}
           </NavLink>
           <NavLink to="/analysis">
             <NavIcon name="analysis" />
-            Analysis
+            {t('Analysis')}
           </NavLink>
           <NavLink to="/import">
             <NavIcon name="import" />
-            Import
+            {t('Import')}
           </NavLink>
           <NavLink to="/prices">
             <NavIcon name="prices" />
-            Prices
+            {t('Prices')}
           </NavLink>
           <NavLink to="/settings">
             <NavIcon name="settings" />
-            Settings
+            {t('Settings')}
           </NavLink>
         </nav>
         <OfflineBadge />
