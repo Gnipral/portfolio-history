@@ -5,6 +5,7 @@ import type { Slice } from '../dashboard/allocation.ts'
 import type { BenchmarkLine } from '../dashboard/benchmarkLines.ts'
 import { cardFile, drawShareCard, loadCardFonts, POSITION_ROWS, type ShareFormat } from './drawShareCard.ts'
 import { shareCard, shareText, type PositionOrder } from './shareCard.ts'
+import { shareLink } from './shareLink.ts'
 
 interface Props {
   points: DailyPoint[]
@@ -165,6 +166,16 @@ export function ShareDialog({ points, from, to, benchmarks, slices, positions, o
           </button>
           <button type="button" onClick={() => void copy(text).then((ok) => setStatus(ok ? 'Text copied.' : 'Copying is not allowed here.'))}>
             Copy text
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              void shareLink(card)
+                .then(copy)
+                .then((ok) => setStatus(ok ? 'Link copied: it opens this card, read-only. Everything is in the link itself.' : 'Copying is not allowed here.'))
+            }
+          >
+            Copy link
           </button>
         </div>
         <p className="small" role="status">
