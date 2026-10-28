@@ -80,7 +80,9 @@ function drawCurve(ctx: CanvasRenderingContext2D, card: ShareCard, box: Box) {
   ctx.fillStyle = gradient
   ctx.beginPath()
   ctx.moveTo(scale.x(0), scale.y(0))
-  card.curve.forEach((v, i) => ctx.lineTo(scale.x(i), scale.y(v)))
+  card.curve.forEach((v, i) => {
+    ctx.lineTo(scale.x(i), scale.y(v))
+  })
   ctx.lineTo(scale.x(card.curve.length - 1), scale.y(0))
   ctx.closePath()
   ctx.fill()
@@ -93,7 +95,10 @@ function drawCurve(ctx: CanvasRenderingContext2D, card: ShareCard, box: Box) {
     ctx.lineCap = 'round'
     ctx.setLineDash(dash)
     ctx.beginPath()
-    values.forEach((v, i) => (i === 0 ? ctx.moveTo(s.x(i), s.y(v)) : ctx.lineTo(s.x(i), s.y(v))))
+    values.forEach((v, i) => {
+      if (i === 0) ctx.moveTo(s.x(i), s.y(v))
+      else ctx.lineTo(s.x(i), s.y(v))
+    })
     ctx.stroke()
     ctx.setLineDash([])
   }

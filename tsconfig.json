@@ -8,6 +8,9 @@
       "path": "./tsconfig.node.json"
     },
     {
+      "path": "./e2e"
+    },
+    {
       "path": "./workers/price-proxy"
     },
     {

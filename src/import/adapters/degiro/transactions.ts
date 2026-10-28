@@ -108,10 +108,13 @@ export function parseTransactions(table: RawTable): { transactions: Transaction[
   }
 
   const parsed: ParsedRow[] = []
+  // biome-ignore lint/suspicious/useIterableCallbackReturn: return only ends the row; fail() has no value
   table.rows.slice(1).forEach((cells, i) => {
     const row = i + 2
     if (cells.every(isBlank)) return
-    const fail = (message: string) => issues.push({ severity: 'error', file, row, message })
+    const fail = (message: string) => {
+      issues.push({ severity: 'error', file, row, message })
+    }
 
     const date = parseDate(get(cells, 'date'))
     if (!date) return fail(`Invalid date "${cellText(get(cells, 'date'))}"`)

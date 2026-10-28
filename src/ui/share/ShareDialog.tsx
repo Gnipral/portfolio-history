@@ -55,6 +55,7 @@ export function ShareDialog({ points, from, to, benchmarks, slices, positions, o
     void loadCardFonts().then(() => setFontsReady(true))
   }, [])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the card is drawn again once the fonts are loaded
   useEffect(() => {
     if (canvas.current) drawShareCard(canvas.current, card, format, { allocation: showAllocation, positions: showPositions })
   }, [card, format, showAllocation, showPositions, fontsReady])
@@ -99,6 +100,8 @@ export function ShareDialog({ points, from, to, benchmarks, slices, positions, o
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: a click on the backdrop closes the dialog, like the close button
+    // biome-ignore lint/a11y/useKeyWithClickEvents: Escape closes the dialog through the window listener above
     <div className="share-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="share-dialog" role="dialog" aria-modal="true" aria-labelledby="share-title">
         <div className="panel-header">
