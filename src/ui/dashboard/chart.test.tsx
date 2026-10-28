@@ -56,8 +56,8 @@ describe('chartData', () => {
     expect(chartData(points, 0, 2, 'eur').benchmarks).toEqual([])
   })
 
-  it('shows the simple return only for the full history', () => {
-    expect(chartData(points, 0, 2, 'percent').secondary.map((p) => p.value)).toEqual([0, 10, 21])
+  it('draws no simple return in percent, since deposits move it', () => {
+    expect(chartData(points, 0, 2, 'percent').secondary).toEqual([])
   })
 })
 

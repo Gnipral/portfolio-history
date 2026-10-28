@@ -47,7 +47,8 @@ export function AllocationChart({ slices }: { slices: Slice[] }) {
         </ResponsiveContainer>
       </div>
       <ul className="allocation-legend">
-        {slices.map((slice) => (
+        {/* Largest first; "Other" stays last. The colors stay those of the slices. */}
+        {[...slices].sort((a, b) => (a.slot === 0 ? 1 : b.slot === 0 ? -1 : b.share - a.share)).map((slice) => (
           <li key={slice.key}>
             <i className="legend-dot" style={{ background: color(slice.slot) }} />
             <span className="legend-label">{t(slice.label)}</span>

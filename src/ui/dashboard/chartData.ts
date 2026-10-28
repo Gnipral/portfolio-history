@@ -47,7 +47,8 @@ export function chartData(
       return line.slice(from, to + 1).map((p) => ({ time: p.date, value: round(((1 + p.twr) / lineBase - 1) * 100) }))
     }),
     main: visible.map((p) => ({ time: p.date, value: round(((1 + p.twr) / base - 1) * 100) })),
-    secondary: from === 0 ? visible.map((p) => ({ time: p.date, value: round(p.simpleReturn * 100) })) : [],
+    // No invested line in percent: the simple return moves with deposits, and the percentages show prices only.
+    secondary: [],
     pnl: [],
   }
 }
