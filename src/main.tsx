@@ -8,6 +8,7 @@ import { seedDemo } from './demo/demoPortfolio.ts'
 import { localToday } from './market/dates.ts'
 import { language } from './i18n/i18n.ts'
 import { applyStoredTheme } from './theme/theme.ts'
+import './theme/fonts.ts'
 import './theme/global.css'
 
 applyStoredTheme()
