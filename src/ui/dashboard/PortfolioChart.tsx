@@ -105,8 +105,9 @@ function pnlColors({ chart }: ReturnType<typeof useThemeColors>) {
   }
 }
 
+/** The 0 line, without a box on the axis: a dark "0" there moved with the scale and looked like a stray label. */
 function zeroLine({ chart }: ReturnType<typeof useThemeColors>) {
-  return { price: 0, color: chart.zero, lineWidth: 2 as const, lineStyle: LineStyle.Solid, axisLabelVisible: true, title: '' }
+  return { price: 0, color: chart.zero, lineWidth: 2 as const, lineStyle: LineStyle.Solid, axisLabelVisible: false, title: '' }
 }
 
 /** Keeps 0 in view on the profit scale, so the 0 line never sits on the edge or out of sight. */
