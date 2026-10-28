@@ -11,6 +11,7 @@ import { AssetFilter } from '../dashboard/AssetFilter.tsx'
 import { assetClassesOf } from '../dashboard/assetClasses.ts'
 import { BenchmarkPicker } from '../dashboard/BenchmarkPicker.tsx'
 import { ConnectionNotice } from '../dashboard/ConnectionNotice.tsx'
+import { CurrencyNotice } from '../dashboard/CurrencyNotice.tsx'
 import { benchmarkLines } from '../dashboard/benchmarkLines.ts'
 import { localToday } from '../../market/dates.ts'
 import type { ChartMode } from '../dashboard/chartData.ts'
@@ -43,7 +44,7 @@ export function DashboardPage() {
   const baseOptions = useMemo(() => engineOptions(settings, capabilities), [settings, capabilities])
   const toggles = toggleStates(settings.toggles, capabilities, importRecord?.missingReasons)
   const [assetClasses, setAssetClasses] = useState<string[]>([])
-  const { transactionCount, allInputs, inputs, options, series, sync, syncProblems, slowConnection, online } = usePortfolio(
+  const { transactionCount, allInputs, inputs, options, series, sync, syncProblems, slowConnection, online, currencyFallback } = usePortfolio(
     baseOptions,
     assetClasses,
   )
@@ -150,6 +151,7 @@ export function DashboardPage() {
         )}
       </div>
       <ConnectionNotice offline={!online} weak={slowConnection} pricesFrom={pricesFrom} />
+      <CurrencyNotice currency={currencyFallback} />
 
       {!point ? (
         <p role="status">{t('Calculating…')}</p>

@@ -44,6 +44,10 @@ describe('TransactionsPage', () => {
     expect((await db.transactions.toArray())[0]).toMatchObject({ totalEur: -125, quantity: 5 })
 
     fireEvent.click(screen.getByRole('button', { name: /^Delete Buy Example World ETF/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(await db.transactions.count()).toBe(1)
+    fireEvent.click(screen.getByRole('button', { name: /^Delete Buy Example World ETF/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, delete' }))
     await screen.findByText(/import a broker export/)
     expect(await db.transactions.count()).toBe(0)
   })

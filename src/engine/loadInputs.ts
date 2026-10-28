@@ -19,6 +19,8 @@ export interface EngineInputs {
   prices: PriceBook
   /** The benchmarks asked for that have closes, in the order asked. */
   benchmarks: LoadedBenchmark[]
+  /** The currency of every amount: the base asked for, or EUR while no rate of it is stored yet. */
+  currency: string
 }
 
 /** Reads everything the engine needs from IndexedDB in one go, converted to `base` (EUR by default). */
@@ -32,7 +34,11 @@ export async function loadEngineInputs(database: PortfolioDatabase, benchmarks: 
   ])
 
   const fx = new FxRates(fxDays)
-  const rate = new BaseRate(fx, fxDays, base)
+  const asked = new BaseRate(fx, fxDays, base)
+  // Without any rate of the base currency (offline before the first sync), stay in EUR instead of
+  // calling a euro a dollar.
+  const rate = asked.known ? asked : new BaseRate(fx, fxDays, 'EUR')
+  base = rate.base
   const transactions = base === 'EUR' ? stored : stored.map((t) => rebaseTransaction(t, rate))
 
   const symbols = new Map(symbolRecords.flatMap((r) => (r.symbol ? [[r.key, r.symbol] as const] : [])))
@@ -59,6 +65,7 @@ export async function loadEngineInputs(database: PortfolioDatabase, benchmarks: 
     transactions,
   )
   return {
+    currency: base,
     transactions,
     prices,
     benchmarks: benchmarks.flatMap((info) => {

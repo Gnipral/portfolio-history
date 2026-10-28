@@ -31,27 +31,39 @@ export async function replacePortfolio(
 }
 
 /** Same transaction regardless of the file it came from: an overlapping export of the same broker matches. */
-function signature(t: Transaction): string {
+export function signature(t: Transaction): string {
   return [t.source.broker, t.date, t.type, t.isin ?? t.product, t.quantity, t.totalEur.toFixed(2)].join('|')
 }
 
 /**
  * The transactions of `incoming` that are not stored yet. Matching counts occurrences, so two identical buys
  * on one day stay two buys when a second export repeats them, while a third one is added.
+ *
+ * Ids come from the file name and row, so a newer export with the same file name reuses the ids of other
+ * transactions: a new one then gets an id of its own. A row corrected by hand counts as the row it was imported as.
  */
 export function newTransactions(stored: Transaction[], incoming: Transaction[]): Transaction[] {
   const ids = new Set(stored.map((t) => t.id))
   const left = new Map<string, number>()
-  for (const t of stored) left.set(signature(t), (left.get(signature(t)) ?? 0) + 1)
-  return incoming.filter((t) => {
+  for (const t of stored) {
+    // A row corrected by hand still stands for the row as it was imported.
+    const key = t.edited ?? signature(t)
+    left.set(key, (left.get(key) ?? 0) + 1)
+  }
+  const added: Transaction[] = []
+  for (const t of incoming) {
     const key = signature(t)
     const count = left.get(key) ?? 0
     if (count > 0) {
       left.set(key, count - 1)
-      return false
+      continue
     }
-    return !ids.has(t.id)
-  })
+    let id = t.id
+    for (let n = 2; ids.has(id); n++) id = `${t.id}#${n}`
+    ids.add(id)
+    added.push(id === t.id ? t : { ...t, id })
+  }
+  return added
 }
 
 function mergeCapabilities(a: ImportRecord, b: ImportResult): Pick<ImportRecord, 'capabilities' | 'missingReasons'> {

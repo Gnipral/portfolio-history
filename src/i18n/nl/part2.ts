@@ -65,6 +65,8 @@ export const part2: Record<string, string> = {
   'No answer': 'Geen antwoord',
   'No dividends expected: none of the positions held today paid a dividend in the last 12 months.':
     'Geen dividenden verwacht: geen van je huidige posities keerde de laatste 12 maanden een dividend uit.',
+  'No exchange rates for {currency} yet: amounts are shown in EUR until they are fetched.':
+    'Nog geen wisselkoersen voor {currency}: bedragen staan in EUR tot ze opgehaald zijn.',
   'No export at hand? <demo></demo> with a made-up portfolio, or <link>enter transactions by hand</link>.':
     'Geen export bij de hand? <demo></demo> met een verzonnen portefeuille, of <link>voer transacties met de hand in</link>.',
   'No internet connection': 'Geen internetverbinding',
