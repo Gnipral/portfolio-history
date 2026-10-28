@@ -1,12 +1,12 @@
 import 'fake-indexeddb/auto'
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '../../data/db.ts'
 import { tx } from '../../engine/testing.ts'
 import { localToday, addDays } from '../../market/dates.ts'
 import { syncMarketData } from '../../market/sync.ts'
-import { saveSettings } from '../../settings/settings.ts'
+import { loadSettings, saveSettings } from '../../settings/settings.ts'
 import { resetSyncSession } from '../dashboard/usePortfolio.ts'
 import { DashboardPage } from './DashboardPage.tsx'
 
@@ -123,6 +123,24 @@ describe('DashboardPage', () => {
     expect((await screen.findByText(/The same money in IWDA/)).textContent).toContain('+€50.00')
     // The profit overview puts the gap in euros next to it.
     expect(screen.getByText('Versus IWDA')).toBeTruthy()
+  })
+
+  it('compares with another benchmark for now, without changing the default', async () => {
+    await seed()
+    await db.prices.bulkPut([
+      { symbol: 'IWDA.AS', date: start, close: 50 },
+      { symbol: 'IWDA.AS', date: today, close: 52.5 },
+      { symbol: 'VWCE.DE', date: start, close: 100 },
+      { symbol: 'VWCE.DE', date: today, close: 110 },
+    ])
+    renderPage()
+    await screen.findByText(/The same money in IWDA/)
+    fireEvent.click(screen.getByRole('button', { name: /VWCE/ }))
+    expect((await screen.findByText(/The same money in VWCE/)).textContent).toContain('+€100.00')
+    // Only the chart changed: the default in the settings stays IWDA alone.
+    expect((await loadSettings()).extraBenchmarkIds).toEqual([])
+    fireEvent.click(screen.getByRole('button', { name: 'Back to the default' }))
+    await waitFor(() => expect(screen.queryByText(/The same money in VWCE/)).toBeNull())
   })
 
   it('recalculates instantly when costs are excluded, and explains unavailable options', async () => {
