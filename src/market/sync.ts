@@ -1,7 +1,7 @@
 import type { PortfolioDatabase } from '../data/db.ts'
 import type { Transaction } from '../model/transaction.ts'
 import type { Settings } from '../settings/settings.ts'
-import { BENCHMARKS } from './benchmarks.ts'
+import { BENCHMARKS, isCustomBenchmark, type Benchmark } from './benchmarks.ts'
 import { deriveInstruments, type Instrument } from './instruments.ts'
 import { isNetworkError } from './http.ts'
 import { resolveIsins } from './openFigi.ts'
@@ -27,7 +27,7 @@ export interface SyncOptions {
   settings: Settings
   today: string
   now: Date
-  benchmarkIds?: string[]
+  benchmarks?: Benchmark[]
   onProgress?: (progress: SyncProgress) => void
   providers?: PriceProvider[]
   queues?: Record<string, RequestQueue>
@@ -164,9 +164,10 @@ export async function syncMarketData(options: SyncOptions): Promise<SyncReport> 
   onProgress?.({ phase: 'fx', done: 0, total: 1, message: t('Updating exchange rates') })
   errors.push(...(await syncFx(database, today)).errors)
 
-  const benchmarks = BENCHMARKS.filter((b) => (options.benchmarkIds ?? ['iwda']).includes(b.id))
+  const benchmarks = options.benchmarks ?? BENCHMARKS.filter((b) => b.id === 'iwda')
   onProgress?.({ phase: 'benchmarks', done: 0, total: benchmarks.length, message: t('Loading benchmark data') })
-  for (const benchmark of benchmarks) {
+  // Built-in benchmarks come from the daily snapshot; a stock the user added is fetched like a position.
+  for (const benchmark of benchmarks.filter((b) => !isCustomBenchmark(b))) {
     try {
       await syncStaticBenchmark(database, benchmark, today)
     } catch (error) {
@@ -184,9 +185,12 @@ export async function syncMarketData(options: SyncOptions): Promise<SyncReport> 
     const symbol = records.get(instrument.key)?.symbol
     if (symbol) jobs.push({ key: instrument.key, symbol, kind: instrument.kind, range: instrument.range })
   }
+  // A benchmark is needed from the first transaction on: the same money goes into it on the same days.
+  const firstDate = transactions.reduce<string | undefined>((first, t) => (first === undefined || t.date < first ? t.date : first), undefined) ?? today
   for (const benchmark of benchmarks) {
     const coverage = await database.coverage.get(benchmark.symbol)
-    if (coverage) jobs.push({ key: benchmark.symbol, symbol: benchmark.symbol, kind: 'security', range: { from: coverage.from, to: today } })
+    if (isCustomBenchmark(benchmark)) jobs.push({ key: benchmark.symbol, symbol: benchmark.symbol, kind: 'security', range: { from: firstDate, to: today } })
+    else if (coverage) jobs.push({ key: benchmark.symbol, symbol: benchmark.symbol, kind: 'security', range: { from: coverage.from, to: today } })
   }
 
   let done = 0

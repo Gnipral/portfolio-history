@@ -60,7 +60,7 @@ describe('demo portfolio', () => {
       settings: DEFAULT_SETTINGS,
       today,
       now: new Date(`${today}T12:00:00Z`),
-      benchmarkIds: [],
+      benchmarks: [],
       providers: [demoProvider],
       queues: { demo: new RequestQueue({ maxRetries: 0 }) },
     })

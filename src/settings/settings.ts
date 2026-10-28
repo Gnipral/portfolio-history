@@ -4,6 +4,7 @@ import { DEFAULT_TAX_RULES, type CapitalGainsRules } from '../engine/analysis/ca
 import type { BaseCurrency } from '../engine/baseCurrency.ts'
 import { DEFAULT_OPTIONS, type CostBasisMethod, type Toggles } from '../engine/options.ts'
 import type { OtherAsset } from '../engine/otherAssets.ts'
+import type { Benchmark } from '../market/benchmarks.ts'
 import { DEFAULT_BENCHMARK_ID } from '../market/benchmarks.ts'
 
 /** How the dashboard chart is drawn; switched in its own menu. */
@@ -75,6 +76,8 @@ export interface Settings {
   otherAssets: OtherAsset[]
   /** Instruments switched off on the Prices page: left out of every figure and chart, as if never traded. */
   excludedInstruments: string[]
+  /** Stocks, funds or indices found with the search, to compare with besides the built-in benchmarks. */
+  customBenchmarks: Benchmark[]
 }
 
 /** Settings edited as text in the settings form. */
@@ -102,6 +105,7 @@ export const DEFAULT_SETTINGS: Settings = {
   baseCurrency: 'EUR',
   otherAssets: [],
   excludedInstruments: [],
+  customBenchmarks: [],
 }
 
 const SETTINGS_KEY = 'settings'

@@ -1,17 +1,27 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { t } from '../../i18n/i18n.ts'
-import { BENCHMARKS } from '../../market/benchmarks.ts'
+import type { Benchmark } from '../../market/benchmarks.ts'
 import type { Settings } from '../../settings/settings.ts'
+import { BenchmarkSearch } from '../components/BenchmarkSearch.tsx'
 import { chosenBenchmarkIds, toggleBenchmark, type BenchmarkLine } from './benchmarkLines.ts'
 
-type Choice = Pick<Settings, 'benchmarkId' | 'extraBenchmarkIds' | 'benchmarkMix' | 'benchmarkMixShown'>
+export type BenchmarkChoice = Pick<Settings, 'benchmarkId' | 'extraBenchmarkIds' | 'benchmarkMix' | 'benchmarkMixShown'>
 
 interface Props {
-  settings: Choice
+  /** What the chart compares with now. */
+  settings: BenchmarkChoice
+  /** Every benchmark there is to choose from: the built-in ones and the stocks added with the search. */
+  catalog: Benchmark[]
   /** The lines drawn now, for the color of each switched-on chip. */
   lines: BenchmarkLine[]
-  /** Gets the stored choice at the moment of saving, so quick clicks build on each other. */
-  onChange: (change: (current: Choice) => Partial<Choice>) => void
+  /** Gets the choice at the moment of the click, so quick clicks build on each other. */
+  onChange: (change: (current: BenchmarkChoice) => Partial<BenchmarkChoice>) => void
+  /** A stock found with the search: added to the catalog and switched on. */
+  onAdd: (benchmark: Benchmark) => void
+  /** The chart shows another choice than the default of the settings; `onReset` goes back to it. */
+  temporary: boolean
+  onReset: () => void
 }
 
 function mixComplete(mix: Record<string, number>): boolean {
@@ -19,8 +29,9 @@ function mixComplete(mix: Record<string, number>): boolean {
   return parts.length >= 2 && Math.abs(parts.reduce((sum, percent) => sum + percent, 0) - 100) < 1e-9
 }
 
-/** Benchmarks to compare with, switched on and off right under the chart. */
-export function BenchmarkPicker({ settings, lines, onChange }: Props) {
+/** Benchmarks to compare with, switched on and off right under the chart, for now; the default is in Settings. */
+export function BenchmarkPicker({ settings, catalog, lines, onChange, onAdd, temporary, onReset }: Props) {
+  const [searching, setSearching] = useState(false)
   const chosen = chosenBenchmarkIds(settings)
   const color = (id: string) => lines.find((line) => line.id === id)?.color
   const mixLine = lines.find((line) => line.id === 'mix')
@@ -29,7 +40,7 @@ export function BenchmarkPicker({ settings, lines, onChange }: Props) {
     <div className="benchmark-picker" role="group" aria-label={t('Compare with')}>
       <span className="label-caps">{t('Compare with')}</span>
       <div className="chips">
-        {BENCHMARKS.map((b) => {
+        {catalog.map((b) => {
           const on = chosen.includes(b.id)
           const swatch = on ? color(b.id) : undefined
           return (
@@ -58,10 +69,30 @@ export function BenchmarkPicker({ settings, lines, onChange }: Props) {
             {t('Mix')}
           </button>
         )}
+        <button type="button" className="chip" aria-expanded={searching} onClick={() => setSearching(!searching)}>
+          + {t('Other stock')}
+        </button>
       </div>
-      <Link to="/settings" className="small">
-        {mixComplete(settings.benchmarkMix) ? t('Edit mix') : t('Own mix')}
-      </Link>
+      {temporary ? (
+        <button type="button" className="link-button small" onClick={onReset}>
+          {t('Back to the default')}
+        </button>
+      ) : (
+        <Link to="/settings" className="small">
+          {t('Default and mix')}
+        </Link>
+      )}
+      {searching && (
+        <div className="benchmark-picker-search">
+          <BenchmarkSearch
+            autoFocus
+            onPick={(benchmark) => {
+              onAdd(benchmark)
+              setSearching(false)
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }

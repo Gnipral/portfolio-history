@@ -5,6 +5,7 @@ import { degiroAdapter } from '../import/adapters/degiro/index.ts'
 import { SAMPLE_ROWS, table } from '../import/adapters/degiro/fixtures.ts'
 import { tx } from '../engine/testing.ts'
 import { DEFAULT_SETTINGS } from '../settings/settings.ts'
+import { customBenchmark } from './benchmarks.ts'
 import { deriveInstruments } from './instruments.ts'
 import { loadSeries } from './priceCache.ts'
 import { TimeoutError } from './http.ts'
@@ -67,7 +68,15 @@ describe('syncMarketData', () => {
   })
 
   const run = (settings = { ...DEFAULT_SETTINGS, proxyUrl: 'https://proxy.example' }) =>
-    syncMarketData({ database, transactions, settings, today, now, benchmarkIds: [], providers: [fake], queues })
+    syncMarketData({ database, transactions, settings, today, now, benchmarks: [], providers: [fake], queues })
+
+  it('fetches a stock added to compare with from the first transaction on, like a position', async () => {
+    const apple = customBenchmark({ symbol: 'AAPL', name: 'Apple Inc.' })
+    await syncMarketData({ database, transactions, settings: { ...DEFAULT_SETTINGS, proxyUrl: 'https://proxy.example' }, today, now, benchmarks: [apple], providers: [fake], queues })
+    const first = transactions.map((t) => t.date).sort()[0]
+    expect(fake.fetchDaily).toHaveBeenCalledWith('AAPL', expect.objectContaining({ from: first }), expect.anything())
+    expect(await database.coverage.get('AAPL')).toMatchObject({ currency: 'USD', from: first })
+  })
 
   it('resolves symbols, fetches prices and splits, and reports progress', async () => {
     const onProgress = vi.fn()
@@ -77,7 +86,7 @@ describe('syncMarketData', () => {
       settings: { ...DEFAULT_SETTINGS, proxyUrl: 'https://proxy.example' },
       today,
       now,
-      benchmarkIds: [],
+      benchmarks: [],
       providers: [fake],
       queues,
       onProgress,
@@ -109,7 +118,7 @@ describe('syncMarketData', () => {
       }),
     }
     await setManualSymbol(database, 'US0000000002', 'NOPE', 'security', now)
-    const report = await syncMarketData({ database, transactions, settings: { ...DEFAULT_SETTINGS, proxyUrl: 'https://proxy.example' }, today, now, benchmarkIds: [], providers: [slow], queues })
+    const report = await syncMarketData({ database, transactions, settings: { ...DEFAULT_SETTINGS, proxyUrl: 'https://proxy.example' }, today, now, benchmarks: [], providers: [slow], queues })
     expect(report.problems.US0000000002).toMatch(/unknown symbol/)
     expect(report.connection).not.toContain('US0000000002')
     expect(report.connection.length).toBeGreaterThan(0)
@@ -137,7 +146,7 @@ describe('syncMarketData', () => {
       settings: DEFAULT_SETTINGS,
       today,
       now,
-      benchmarkIds: [],
+      benchmarks: [],
       providers: [fake],
       queues,
     })

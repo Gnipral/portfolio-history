@@ -168,7 +168,6 @@ export const part1: Record<string, string> = {
   'Each position with its weight and its return, never the amounts.': 'Elke positie met haar gewicht en rendement, nooit de bedragen.',
   'Earlier losses used': 'Gebruikte eerdere verliezen',
   Edit: 'Bewerken',
-  'Edit mix': 'Mix bewerken',
   'Edit transaction': 'Transactie bewerken',
   'Enter a date.': 'Vul een datum in.',
   'Enter a price.': 'Vul een prijs in.',
