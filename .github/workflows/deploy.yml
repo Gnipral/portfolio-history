@@ -35,6 +35,10 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+        env:
+          # The optional account (workers/account): set the repository variable ACCOUNT_URL to its
+          # address to show it in the app; without it, the app has no account at all.
+          VITE_ACCOUNT_URL: ${{ vars.ACCOUNT_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
