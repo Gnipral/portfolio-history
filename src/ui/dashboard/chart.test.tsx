@@ -102,6 +102,7 @@ vi.mock('lightweight-charts', () => ({
   ColorType: { Solid: 'solid' },
   CrosshairMode: { Magnet: 1 },
   LineStyle: { Solid: 0, Dashed: 2 },
+  PriceScaleMode: { Normal: 0, Logarithmic: 1 },
 }))
 
 afterEach(cleanup)
@@ -143,5 +144,27 @@ describe('PortfolioChart', () => {
     expect(await screen.findByText('Profit / loss')).toBeTruthy()
     rerender(<PortfolioChart points={points} from={0} to={2} selected={2} mode="percent" onHover={() => {}} />)
     expect(screen.queryByText('Profit / loss')).toBeNull()
+  })
+
+  it('changes its style from its own menu, and keeps EUR-only options for EUR', () => {
+    const onStyleChange = vi.fn()
+    const style = { fill: true, invested: true, profitPane: true, log: false }
+    const { rerender } = render(
+      <PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} chartStyle={style} onStyleChange={onStyleChange} />,
+    )
+    fireEvent.click(screen.getByLabelText(/Logarithmic scale/))
+    expect(onStyleChange).toHaveBeenCalledWith({ log: true })
+
+    rerender(
+      <PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} chartStyle={{ ...style, invested: false, profitPane: false }} onStyleChange={onStyleChange} />,
+    )
+    expect(screen.queryByText(/Invested €/)).toBeNull()
+    expect(screen.queryByText(/Profit €/)).toBeNull()
+    expect(screen.queryByText('Profit / loss')).toBeNull()
+
+    rerender(
+      <PortfolioChart points={points} from={0} to={2} selected={2} mode="percent" onHover={() => {}} chartStyle={style} onStyleChange={onStyleChange} />,
+    )
+    expect((screen.getByLabelText(/Logarithmic scale/) as HTMLInputElement).disabled).toBe(true)
   })
 })
