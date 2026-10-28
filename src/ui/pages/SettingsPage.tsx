@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { deleteAllData } from '../../data/portfolio.ts'
 import { isDemo } from '../../demo/demoMode.ts'
+import { AccountSection } from '../components/AccountSection.tsx'
 import { DemoButton } from '../components/DemoBanner.tsx'
 import type { CostBasisMethod } from '../../engine/options.ts'
 import { BENCHMARKS } from '../../market/benchmarks.ts'
@@ -232,6 +233,8 @@ export function SettingsPage() {
             ))}
           </div>
         </fieldset>
+
+        <AccountSection />
 
         <fieldset>
           <legend>Demo</legend>

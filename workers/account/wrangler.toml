@@ -1,0 +1,15 @@
+name = "portfolio-history-account"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+preview_urls = false
+
+[vars]
+ALLOWED_ORIGINS = "https://gnipral.github.io,http://localhost:5173,http://localhost:4173"
+
+# Create the database once with `npx wrangler d1 create portfolio-history-account` and paste its id
+# here; then `npx wrangler d1 migrations apply portfolio-history-account --remote`.
+[[d1_databases]]
+binding = "DB"
+database_name = "portfolio-history-account"
+database_id = "REPLACE_WITH_THE_D1_DATABASE_ID"
