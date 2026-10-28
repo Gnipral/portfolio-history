@@ -1,5 +1,6 @@
 import { useState, type DragEvent } from 'react'
 import { Link } from 'react-router'
+import { saveAfterImport } from '../../account/account.ts'
 import { hasPortfolio, replacePortfolio } from '../../data/portfolio.ts'
 import { loadImportContext } from '../../import/fxContext.ts'
 import { readFile } from '../../import/readFile.ts'
@@ -64,6 +65,7 @@ export function ImportPage() {
     setState({ phase: 'saving' })
     try {
       await replacePortfolio(result, files)
+      void saveAfterImport()
       setState({ phase: 'done', count: result.transactions.length })
     } catch (error) {
       setState({ phase: 'error', message: 'Saving the import failed. Your previous data is unchanged.', details: [String(error)] })
