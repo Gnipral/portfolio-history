@@ -135,8 +135,65 @@ function drawAllocation(ctx: CanvasRenderingContext2D, card: ShareCard, box: Box
   }
 }
 
+/** Rows of positions: name, weight and return; the rest summed up as "+ n more". */
+function drawPositions(ctx: CanvasRenderingContext2D, card: ShareCard, box: Box, rows: number, fontSize: number) {
+  const rowHeight = fontSize * 1.75
+  const shown = card.positions.slice(0, card.positions.length > rows ? rows - 1 : rows)
+  const weightX = box.x + box.width * 0.62
+  const returnX = box.x + box.width
+  ctx.textBaseline = 'middle'
+  ctx.font = `500 ${Math.round(fontSize * 0.75)}px ${MONO}`
+  ctx.fillStyle = INK.muted
+  let y = box.y + fontSize * 0.5
+  ctx.fillText('POSITION', box.x, y)
+  ctx.textAlign = 'right'
+  ctx.fillText('WEIGHT', weightX, y)
+  ctx.fillText('RETURN', returnX, y)
+  ctx.textAlign = 'left'
+  y += fontSize * 0.9
+  for (const position of shown) {
+    ctx.strokeStyle = INK.border
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(box.x, y)
+    ctx.lineTo(returnX, y)
+    ctx.stroke()
+    const middle = y + rowHeight / 2
+    ctx.font = `600 ${fontSize}px ${DISPLAY}`
+    ctx.fillStyle = INK.text
+    let name = position.name
+    while (name.length > 4 && ctx.measureText(name).width > weightX - box.x - fontSize * 4) name = `${name.slice(0, -2)}…`
+    ctx.fillText(name, box.x, middle)
+    ctx.textAlign = 'right'
+    ctx.font = `500 ${fontSize}px ${MONO}`
+    ctx.fillStyle = INK.muted
+    ctx.fillText(`${position.weight}%`, weightX, middle)
+    ctx.fillStyle = trend(position.return)
+    ctx.fillText(`${position.return > 0 ? '+' : ''}${(position.return * 100).toFixed(1)}%`, returnX, middle)
+    ctx.textAlign = 'left'
+    y += rowHeight
+  }
+  const rest = card.positions.length - shown.length
+  if (rest > 0) {
+    ctx.font = `500 ${Math.round(fontSize * 0.8)}px ${MONO}`
+    ctx.fillStyle = INK.muted
+    ctx.fillText(`+ ${rest} more`, box.x, y + rowHeight / 2)
+  }
+}
+
+export interface CardOptions {
+  allocation: boolean
+  positions: boolean
+}
+
+/** Height of a block of position rows, header included. */
+function positionsHeight(rows: number, fontSize: number): number {
+  return fontSize * 1.4 + rows * fontSize * 1.75
+}
+
 /** Draws the card on a canvas of the size of its format. */
-export function drawShareCard(canvas: HTMLCanvasElement, card: ShareCard, format: ShareFormat, showAllocation: boolean): void {
+export function drawShareCard(canvas: HTMLCanvasElement, card: ShareCard, format: ShareFormat, options: CardOptions): void {
+  const showAllocation = options.allocation
   const { width, height } = SIZES[format]
   canvas.width = width
   canvas.height = height
@@ -201,13 +258,20 @@ export function drawShareCard(canvas: HTMLCanvasElement, card: ShareCard, format
 
   const footer = story ? 120 : 64
   const allocationHeight = showAllocation && card.allocation.length > 0 ? (story ? 190 : 0) : 0
+  const rows = options.positions ? Math.min(card.positions.length, story ? 8 : 5) : 0
   if (story) {
-    drawCurve(ctx, card, { x: pad, y: y + 40, width: inner, height: height - y - 40 - footer - allocationHeight - 80 })
+    const listFont = 34
+    const listHeight = rows ? positionsHeight(rows, listFont) + 40 : 0
+    drawCurve(ctx, card, { x: pad, y: y + 40, width: inner, height: height - y - 40 - footer - allocationHeight - listHeight - 80 })
+    if (rows) drawPositions(ctx, card, { x: pad, y: height - footer - allocationHeight - listHeight - 20, width: inner, height: listHeight }, rows, listFont)
     if (allocationHeight) drawAllocation(ctx, card, { x: pad, y: height - footer - allocationHeight, width: inner, height: allocationHeight }, 28)
   } else {
-    // Wide: the curve on the right half, the allocation under the numbers.
-    const chart = { x: width * 0.5, y: pad + 64, width: width * 0.5 - pad, height: height - pad - 64 - footer - 16 }
+    // Wide: the curve on the right half with the positions under it, the allocation under the numbers.
+    const listFont = 20
+    const listHeight = rows ? positionsHeight(rows, listFont) + 24 : 0
+    const chart = { x: width * 0.5, y: pad + 64, width: width * 0.5 - pad, height: height - pad - 64 - footer - 16 - listHeight }
     drawCurve(ctx, card, chart)
+    if (rows) drawPositions(ctx, card, { x: chart.x, y: chart.y + chart.height + 24, width: chart.width, height: listHeight }, rows, listFont)
     if (showAllocation && card.allocation.length > 0) {
       drawAllocation(ctx, card, { x: pad, y: Math.max(y, height - footer - 130), width: width * 0.5 - pad - 48, height: 100 }, 18)
     }

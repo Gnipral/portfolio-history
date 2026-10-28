@@ -1,3 +1,4 @@
+import type { Position } from '../../engine/positions.ts'
 import type { DailyPoint } from '../../engine/series.ts'
 import type { BenchmarkLine } from '../dashboard/benchmarkLines.ts'
 import type { Slice } from '../dashboard/allocation.ts'
@@ -10,8 +11,8 @@ export const PUBLIC_URL = 'https://gnipral.github.io/portfolio-history/'
 const CURVE_POINTS = 120
 
 /**
- * What a shared card shows. Only percentages and dates: never amounts, quantities or product
- * names, so it can be posted anywhere without telling how much someone owns.
+ * What a shared card shows. Only percentages, dates and, when chosen, the names of the positions:
+ * never amounts or quantities, so it can be posted anywhere without telling how much someone owns.
  */
 export interface ShareCard {
   from: string
@@ -23,6 +24,32 @@ export interface ShareCard {
   benchmark?: { label: string; twr: number; curve: number[] } | undefined
   /** Share of the value per type of asset, in whole percent. */
   allocation: { label: string; percent: number; slot: number }[]
+  /** The open positions, largest first, when chosen: weight in whole percent, return rounded to 0.1 %. */
+  positions: SharedPosition[]
+}
+
+export interface SharedPosition {
+  name: string
+  /** Share of the value of the positions, in whole percent. */
+  weight: number
+  /** Unrealized return on the cost basis, as a fraction. */
+  return: number
+}
+
+/** A short name: the ticker without its exchange when known, else the product name. */
+function shortName(position: Position): string {
+  const ticker = position.symbol && !position.symbol.includes(':') ? position.symbol.split('.')[0] : undefined
+  if (ticker) return ticker
+  return position.product.length > 28 ? `${position.product.slice(0, 27).trimEnd()}…` : position.product
+}
+
+function sharedPositions(positions: Position[]): SharedPosition[] {
+  const open = positions.filter((p) => p.value > 0)
+  const total = open.reduce((sum, p) => sum + p.value, 0)
+  if (total <= 0) return []
+  return open
+    .sort((a, b) => b.value - a.value)
+    .map((p) => ({ name: shortName(p), weight: Math.round((p.value / total) * 100), return: Math.round(p.pnlPercent * 1000) / 1000 }))
 }
 
 interface ReturnPoint {
@@ -56,6 +83,7 @@ export function shareCard(
   to: number,
   benchmark: BenchmarkLine | undefined,
   slices: Slice[],
+  positions: Position[] = [],
 ): ShareCard {
   return {
     from: points[from]?.date ?? '',
@@ -68,6 +96,7 @@ export function shareCard(
       curve: curve(benchmark.points, from, to),
     },
     allocation: slices.map((s) => ({ label: s.label, percent: Math.round(s.share * 100), slot: s.slot })).filter((s) => s.percent > 0),
+    positions: sharedPositions(positions),
   }
 }
 
