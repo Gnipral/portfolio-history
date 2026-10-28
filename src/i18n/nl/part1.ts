@@ -98,6 +98,7 @@ export const part1: Record<string, string> = {
   'Chart style and colors': 'Grafiekstijl en kleuren',
   'Chart unit': 'Eenheid van de grafiek',
   'Clear targets': 'Doelen wissen',
+  'Charts made with <link>TradingView Lightweight Charts</link>.': 'Grafieken gemaakt met <link>TradingView Lightweight Charts</link>.',
   Close: 'Sluiten',
   'Coin lookup failed: {error}': 'Munt opzoeken mislukt: {error}',
   'Coin not found on CoinGecko. Enter the symbol as crypto:<coingecko id>.': 'Munt niet gevonden op CoinGecko. Vul het symbool in als crypto:<coingecko id>.',
