@@ -1,3 +1,5 @@
+import { t } from '../../i18n/i18n.ts'
+
 interface Props {
   /** The types of asset held at some point. */
   classes: string[]
@@ -15,19 +17,19 @@ export function AssetFilter({ classes, chosen, onChange }: Props) {
     onChange(next.length === classes.length ? [] : next)
   }
   return (
-    <div className="benchmark-picker" role="group" aria-label="Show">
-      <span className="label-caps">Show</span>
+    <div className="benchmark-picker" role="group" aria-label={t('Show')}>
+      <span className="label-caps">{t('Show')}</span>
       <div className="chips">
         <button type="button" className="chip" aria-pressed={chosen.length === 0} onClick={() => onChange([])}>
-          All
+          {t('All')}
         </button>
         {classes.map((label) => (
           <button key={label} type="button" className="chip" aria-pressed={chosen.includes(label)} onClick={() => toggle(label)}>
-            {label}
+            {t(label)}
           </button>
         ))}
       </div>
-      {chosen.length > 0 && <span className="muted small">Securities only: deposits and cash are left out.</span>}
+      {chosen.length > 0 && <span className="muted small">{t('Securities only: deposits and cash are left out.')}</span>}
     </div>
   )
 }

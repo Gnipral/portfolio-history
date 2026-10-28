@@ -1,13 +1,14 @@
 import { summarize } from '../../import/summary.ts'
 import type { Capabilities, ImportResult } from '../../import/types.ts'
 import { formatDate } from '../format.ts'
+import { t } from '../../i18n/i18n.ts'
 
 const CAPABILITY_LABELS: Record<keyof Capabilities, string> = {
-  transactionCosts: 'Transaction costs',
-  fxCosts: 'Currency conversion costs',
-  taxes: 'Taxes',
-  dividends: 'Dividends',
-  deposits: 'Deposits and withdrawals',
+  transactionCosts: t('Transaction costs'),
+  fxCosts: t('Currency conversion costs'),
+  taxes: t('Taxes'),
+  dividends: t('Dividends'),
+  deposits: t('Deposits and withdrawals'),
 }
 
 export function ImportPreview({ result, files }: { result: ImportResult; files: string[] }) {
@@ -19,22 +20,22 @@ export function ImportPreview({ result, files }: { result: ImportResult; files: 
     <div className="stack">
       <div className="cards">
         <div className="card">
-          <span className="card-label">Broker</span>
+          <span className="card-label">{t('Broker')}</span>
           <span className="card-value">{result.broker}</span>
           <span className="muted small">{files.join(', ')}</span>
         </div>
         <div className="card">
-          <span className="card-label">Transactions</span>
+          <span className="card-label">{t('Transactions')}</span>
           <span className="card-value">{summary.transactionCount}</span>
         </div>
         <div className="card">
-          <span className="card-label">Period</span>
+          <span className="card-label">{t('Period')}</span>
           <span className="card-value small-value">
             {summary.firstDate ? `${formatDate(summary.firstDate)} – ${formatDate(summary.lastDate ?? summary.firstDate)}` : '–'}
           </span>
         </div>
         <div className="card">
-          <span className="card-label">Products / open positions</span>
+          <span className="card-label">{t('Products / open positions')}</span>
           <span className="card-value">
             {summary.productCount} / {summary.openPositions.length}
           </span>
@@ -51,7 +52,7 @@ export function ImportPreview({ result, files }: { result: ImportResult; files: 
 
       {missing.length > 0 && (
         <div className="callout info">
-          <strong>Not in this export</strong>
+          <strong>{t('Not in this export')}</strong>
           <ul>
             {missing.map((k) => (
               <li key={k}>
@@ -59,19 +60,19 @@ export function ImportPreview({ result, files }: { result: ImportResult; files: 
               </li>
             ))}
           </ul>
-          <span className="muted small">The related options will be disabled.</span>
+          <span className="muted small">{t('The related options will be disabled.')}</span>
         </div>
       )}
 
       {summary.openPositions.length > 0 && (
         <details open>
-          <summary>Open positions after the last transaction</summary>
+          <summary>{t('Open positions after the last transaction')}</summary>
           <table className="table">
             <thead>
               <tr>
-                <th>Product</th>
+                <th>{t('Product')}</th>
                 <th>ISIN</th>
-                <th className="num">Quantity</th>
+                <th className="num">{t('Quantity')}</th>
               </tr>
             </thead>
             <tbody>
@@ -93,10 +94,10 @@ export function ImportPreview({ result, files }: { result: ImportResult; files: 
           <table className="table">
             <thead>
               <tr>
-                <th>Type</th>
-                <th>File</th>
-                <th className="num">Row</th>
-                <th>Message</th>
+                <th>{t('Type')}</th>
+                <th>{t('File')}</th>
+                <th className="num">{t('Row')}</th>
+                <th>{t('Message')}</th>
               </tr>
             </thead>
             <tbody>

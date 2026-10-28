@@ -1,6 +1,7 @@
 import type { Transaction } from '../../model/transaction.ts'
 import { Ledger, sortTransactions, type Holding, type Sale } from '../ledger.ts'
 import type { CostBasisMethod, EngineOptions } from '../options.ts'
+import { msg } from '../../i18n/i18n.ts'
 
 /**
  * The rules of a tax on realized capital gains, simple enough to fit most countries: a flat rate on
@@ -47,7 +48,7 @@ export interface TaxPreset {
 export const TAX_PRESETS: TaxPreset[] = [
   {
     id: 'BE',
-    label: 'Belgium',
+    label: msg('Belgium'),
     rules: {
       country: 'BE',
       rate: 0.1,
@@ -62,13 +63,13 @@ export const TAX_PRESETS: TaxPreset[] = [
       deductCharges: true,
     },
     notes: [
-      'Solidarity contribution on gains from 2026. What you held on 31 December 2025 counts at its value of that day, or at its purchase price when that is higher (allowed for sales until 2030).',
-      'The exemption is indexed every year. Higher rates apply to gains on a substantial shareholding.',
+      msg('Solidarity contribution on gains from 2026. What you held on 31 December 2025 counts at its value of that day, or at its purchase price when that is higher (allowed for sales until 2030).'),
+      msg('The exemption is indexed every year. Higher rates apply to gains on a substantial shareholding.'),
     ],
   },
   {
     id: 'DE',
-    label: 'Germany',
+    label: msg('Germany'),
     rules: {
       country: 'DE',
       // 25% Abgeltungsteuer plus 5.5% solidarity surcharge on it, without church tax.
@@ -84,13 +85,13 @@ export const TAX_PRESETS: TaxPreset[] = [
       deductCharges: true,
     },
     notes: [
-      'The Sparer-Pauschbetrag (1,000 per person, 2,000 for a couple) also covers dividends and interest. Church tax is not included.',
-      'Shares bought before 2009 are exempt, equity funds get a partial exemption (Teilfreistellung), and losses on shares only offset gains on shares: not modelled.',
+      msg('The Sparer-Pauschbetrag (1,000 per person, 2,000 for a couple) also covers dividends and interest. Church tax is not included.'),
+      msg('Shares bought before 2009 are exempt, equity funds get a partial exemption (Teilfreistellung), and losses on shares only offset gains on shares: not modelled.'),
     ],
   },
   {
     id: 'FR',
-    label: 'France',
+    label: msg('France'),
     rules: {
       country: 'FR',
       // Prélèvement forfaitaire unique: 12.8% income tax and 17.2% social charges.
@@ -106,12 +107,12 @@ export const TAX_PRESETS: TaxPreset[] = [
       deductCharges: true,
     },
     notes: [
-      'Flat tax (PFU); check the current rate of the social charges. A PEA and the option for the progressive scale are not modelled.',
+      msg('Flat tax (PFU); check the current rate of the social charges. A PEA and the option for the progressive scale are not modelled.'),
     ],
   },
   {
     id: 'NL',
-    label: 'Netherlands',
+    label: msg('Netherlands'),
     rules: {
       country: 'NL',
       rate: 0,
@@ -125,11 +126,11 @@ export const TAX_PRESETS: TaxPreset[] = [
       stepUp: 'value',
       deductCharges: true,
     },
-    notes: ['Box 3 taxes an assumed return on your wealth, not realized gains, so there is no tax on the sales themselves.'],
+    notes: [msg('Box 3 taxes an assumed return on your wealth, not realized gains, so there is no tax on the sales themselves.')],
   },
   {
     id: 'custom',
-    label: 'Other country (own rules)',
+    label: msg('Other country (own rules)'),
     rules: {
       country: 'custom',
       rate: 0,
@@ -143,7 +144,7 @@ export const TAX_PRESETS: TaxPreset[] = [
       stepUp: 'value',
       deductCharges: true,
     },
-    notes: ['Fill in the rate, exemption and loss rules of your country.'],
+    notes: [msg('Fill in the rate, exemption and loss rules of your country.')],
   },
 ]
 

@@ -2,9 +2,11 @@ import { useMemo } from 'react'
 import { riskSummary } from '../../engine/analysis/risk.ts'
 import type { SeriesResult } from '../../engine/series.ts'
 import { formatDate, formatPercent, trendClass } from '../format.ts'
+import { locale, t } from '../../i18n/i18n.ts'
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const monthName = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+const shortMonth = new Intl.DateTimeFormat(locale(), { month: 'short', timeZone: 'UTC' })
+const MONTHS = Array.from({ length: 12 }, (_, i) => shortMonth.format(new Date(Date.UTC(2026, i, 1))))
+const monthName = new Intl.DateTimeFormat(locale(), { month: 'long', year: 'numeric', timeZone: 'UTC' })
 
 function month(period: string): string {
   return monthName.format(new Date(`${period}-01T00:00:00Z`))
@@ -25,54 +27,54 @@ export function RiskSection({ series }: { series: SeriesResult }) {
     <>
       <div className="cards">
         <div className="card">
-          <span className="card-label">Largest fall</span>
+          <span className="card-label">{t('Largest fall')}</span>
           <span className="card-value negative">{drawdown ? formatPercent(drawdown.depth) : '–'}</span>
           {drawdown && (
             <span className="muted small">
-              {formatDate(drawdown.peak)} to {formatDate(drawdown.trough)};{' '}
-              {drawdown.recovered ? `back on ${formatDate(drawdown.recovered)}` : 'not recovered yet'}
+              {t('{from} to {to}', { from: formatDate(drawdown.peak), to: formatDate(drawdown.trough) })};{' '}
+              {drawdown.recovered ? t('back on {date}', { date: formatDate(drawdown.recovered) }) : t('not recovered yet')}
             </span>
           )}
         </div>
         <div className="card">
-          <span className="card-label">Below the top now</span>
+          <span className="card-label">{t('Below the top now')}</span>
           <span className={`card-value ${trendClass(risk.currentDrawdown)}`}>{formatPercent(risk.currentDrawdown)}</span>
         </div>
         <div className="card">
-          <span className="card-label">Volatility</span>
+          <span className="card-label">{t('Volatility')}</span>
           <span className="card-value">{risk.volatility === undefined ? '–' : formatPercent(risk.volatility, false)}</span>
-          <span className="muted small">Per year, from the daily returns</span>
+          <span className="muted small">{t('Per year, from the daily returns')}</span>
         </div>
         <div className="card">
-          <span className="card-label">Best month</span>
+          <span className="card-label">{t('Best month')}</span>
           <span className="card-value positive">{risk.bestMonth ? formatPercent(risk.bestMonth.return) : '–'}</span>
           {risk.bestMonth && <span className="muted small">{month(risk.bestMonth.period)}</span>}
         </div>
         <div className="card">
-          <span className="card-label">Worst month</span>
+          <span className="card-label">{t('Worst month')}</span>
           <span className="card-value negative">{risk.worstMonth ? formatPercent(risk.worstMonth.return) : '–'}</span>
           {risk.worstMonth && <span className="muted small">{month(risk.worstMonth.period)}</span>}
         </div>
         <div className="card">
-          <span className="card-label">Months up</span>
+          <span className="card-label">{t('Months up')}</span>
           <span className="card-value">{formatPercent(risk.positiveMonths, false)}</span>
-          <span className="muted small">of {risk.months.length} months</span>
+          <span className="muted small">{t('of {count} months', { count: risk.months.length })}</span>
         </div>
       </div>
 
       <div className="panel">
-        <h3>Return per month</h3>
+        <h3>{t('Return per month')}</h3>
         <div className="table-scroll">
           <table className="table returns-table">
             <thead>
               <tr>
-                <th>Year</th>
+                <th>{t('Year')}</th>
                 {MONTHS.map((m) => (
                   <th key={m} className="num">
                     {m}
                   </th>
                 ))}
-                <th className="num">Year</th>
+                <th className="num">{t('Year')}</th>
               </tr>
             </thead>
             <tbody>
@@ -96,7 +98,7 @@ export function RiskSection({ series }: { series: SeriesResult }) {
           </table>
         </div>
         <p className="muted small">
-          Time-weighted, so deposits and withdrawals do not affect these numbers. The first and the current month are partial.
+          {t('Time-weighted, so deposits and withdrawals do not affect these numbers. The first and the current month are partial.')}
         </p>
       </div>
     </>

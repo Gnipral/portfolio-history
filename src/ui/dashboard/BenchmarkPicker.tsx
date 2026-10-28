@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { t } from '../../i18n/i18n.ts'
 import { BENCHMARKS } from '../../market/benchmarks.ts'
 import type { Settings } from '../../settings/settings.ts'
 import { chosenBenchmarkIds, toggleBenchmark, type BenchmarkLine } from './benchmarkLines.ts'
@@ -25,8 +26,8 @@ export function BenchmarkPicker({ settings, lines, onChange }: Props) {
   const mixLine = lines.find((line) => line.id === 'mix')
 
   return (
-    <div className="benchmark-picker" role="group" aria-label="Compare with">
-      <span className="label-caps">Compare with</span>
+    <div className="benchmark-picker" role="group" aria-label={t('Compare with')}>
+      <span className="label-caps">{t('Compare with')}</span>
       <div className="chips">
         {BENCHMARKS.map((b) => {
           const on = chosen.includes(b.id)
@@ -50,16 +51,16 @@ export function BenchmarkPicker({ settings, lines, onChange }: Props) {
             type="button"
             className="chip"
             aria-pressed={settings.benchmarkMixShown}
-            title={mixLine?.label ?? 'Own mix'}
+            title={mixLine?.label ?? t('Own mix')}
             onClick={() => onChange((current) => ({ benchmarkMixShown: !current.benchmarkMixShown }))}
           >
             <i className="chip-dot" style={mixLine ? { background: `var(${mixLine.color})` } : undefined} />
-            Mix
+            {t('Mix')}
           </button>
         )}
       </div>
       <Link to="/settings" className="small">
-        {mixComplete(settings.benchmarkMix) ? 'Edit mix' : 'Own mix'}
+        {mixComplete(settings.benchmarkMix) ? t('Edit mix') : t('Own mix')}
       </Link>
     </div>
   )

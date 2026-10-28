@@ -1,6 +1,8 @@
 import type { Position } from '../../engine/positions.ts'
+import { language } from '../../i18n/i18n.ts'
 import type { Transaction } from '../../model/transaction.ts'
 import { instrumentKey } from '../../market/instruments.ts'
+import { msg } from '../../i18n/i18n.ts'
 
 /** Categorical slots available for named slices; everything else folds into "Other". */
 export const SERIES_SLOTS = 7
@@ -42,17 +44,17 @@ export function allocationSlices(positions: Position[], slots: Map<string, numbe
     else other += p.value
   }
   slices.sort((a, b) => a.slot - b.slot)
-  if (other > 0) slices.push({ key: 'other', label: 'Other', value: other, share: other / total, slot: 0 })
+  if (other > 0) slices.push({ key: 'other', label: msg('Other'), value: other, share: other / total, slot: 0 })
   return slices
 }
 
 export type AllocationDimension = 'position' | 'assetClass' | 'currency' | 'country'
 
 export const DIMENSIONS: { key: AllocationDimension; label: string }[] = [
-  { key: 'position', label: 'Position' },
-  { key: 'assetClass', label: 'Type' },
-  { key: 'currency', label: 'Currency' },
-  { key: 'country', label: 'Country (ISIN)' },
+  { key: 'position', label: msg('Position') },
+  { key: 'assetClass', label: msg('Type') },
+  { key: 'currency', label: msg('Currency') },
+  { key: 'country', label: msg('Country (ISIN)') },
 ]
 
 /** What the allocation can be grouped by, per instrument, taken from its latest buy. */
@@ -63,23 +65,23 @@ export interface InstrumentFacts {
 }
 
 const ASSET_CLASSES: Record<string, string> = {
-  stock: 'Stocks',
-  etf: 'ETFs',
-  fund: 'Funds',
-  bond: 'Bonds',
-  crypto: 'Crypto',
-  cash: 'Cash',
-  unknown: 'Other',
+  stock: msg('Stocks'),
+  etf: msg('ETFs'),
+  fund: msg('Funds'),
+  bond: msg('Bonds'),
+  crypto: msg('Crypto'),
+  cash: msg('Cash'),
+  unknown: msg('Other'),
 }
 
-const COUNTRIES = new Intl.DisplayNames(['en'], { type: 'region' })
+const COUNTRIES = new Intl.DisplayNames([language()], { type: 'region' })
 
 /** Country of the ISIN prefix: where the security is registered, e.g. Ireland for most ETFs. */
 export function isinCountry(isin: string | undefined): string {
   const code = isin?.slice(0, 2).toUpperCase()
-  if (!code || !/^[A-Z]{2}$/.test(code)) return 'Unknown'
-  if (code === 'XS') return 'International (XS)'
-  if (code === 'EU') return 'European Union'
+  if (!code || !/^[A-Z]{2}$/.test(code)) return msg('Unknown')
+  if (code === 'XS') return msg('International (XS)')
+  if (code === 'EU') return msg('European Union')
   try {
     return COUNTRIES.of(code) ?? code
   } catch {
@@ -93,7 +95,7 @@ export function instrumentFacts(transactions: Transaction[]): Map<string, Instru
     if (t.type !== 'buy' && t.type !== 'transferIn' && t.type !== 'sell' && t.type !== 'split') continue
     // Pence are pounds for the allocation.
     const currency = t.currency === 'GBX' || t.currency === 'GBp' ? 'GBP' : t.currency
-    facts.set(instrumentKey(t), { assetClass: ASSET_CLASSES[t.assetClass] ?? 'Other', currency, country: t.assetClass === 'crypto' ? 'Crypto' : isinCountry(t.isin) })
+    facts.set(instrumentKey(t), { assetClass: ASSET_CLASSES[t.assetClass] ?? msg('Other'), currency, country: t.assetClass === 'crypto' ? msg('Crypto') : isinCountry(t.isin) })
   }
   return facts
 }
@@ -107,7 +109,7 @@ export function groupedSlices(
   const groups = new Map<string, number>()
   for (const p of positions) {
     if (p.value <= 0) continue
-    const label = facts.get(p.key)?.[dimension] ?? 'Unknown'
+    const label = facts.get(p.key)?.[dimension] ?? msg('Unknown')
     groups.set(label, (groups.get(label) ?? 0) + p.value)
   }
   const total = [...groups.values()].reduce((sum, v) => sum + v, 0)
@@ -115,6 +117,6 @@ export function groupedSlices(
   const ranked = [...groups].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
   const slices: Slice[] = ranked.slice(0, SERIES_SLOTS).map(([label, value], i) => ({ key: label, label, value, share: value / total, slot: i + 1 }))
   const other = ranked.slice(SERIES_SLOTS).reduce((sum, [, value]) => sum + value, 0)
-  if (other > 0) slices.push({ key: 'other', label: 'Other', value: other, share: other / total, slot: 0 })
+  if (other > 0) slices.push({ key: 'other', label: msg('Other'), value: other, share: other / total, slot: 0 })
   return slices
 }

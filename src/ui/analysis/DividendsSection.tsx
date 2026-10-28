@@ -6,6 +6,8 @@ import type { EngineOptions } from '../../engine/options.ts'
 import { positionsOn, type Position } from '../../engine/positions.ts'
 import { addDays, localToday } from '../../market/dates.ts'
 import { formatDate, formatEur, formatPercent } from '../format.ts'
+import { t } from '../../i18n/i18n.ts'
+import { Rich } from '../../i18n/Rich.tsx'
 
 // recharts is large; it is already split off for the allocation chart.
 const MonthlyIncomeChart = lazy(() => import('./MonthlyIncomeChart.tsx').then((m) => ({ default: m.MonthlyIncomeChart })))
@@ -15,7 +17,7 @@ interface Props {
   options: EngineOptions
 }
 
-const KIND_LABELS: Record<IncomeRow['kind'], string> = { dividend: 'Dividends', interest: 'Interest', bonus: 'Bonuses' }
+const KIND_LABELS: Record<IncomeRow['kind'], string> = { dividend: t('Dividends'), interest: t('Interest'), bonus: t('Bonuses') }
 
 /** Last `count` months up to `today`, oldest first, as `YYYY-MM`. */
 function lastMonths(today: string, count: number): string[] {
@@ -34,7 +36,7 @@ export function DividendsSection({ inputs, options }: Props) {
   const rows = useMemo(() => incomeRows(inputs.transactions), [inputs])
   const positions = useMemo(() => positionsOn(inputs.transactions, inputs.prices, options, today), [inputs, options, today])
   const forecast = useMemo(() => dividendForecast(inputs.transactions, today), [inputs, today])
-  if (rows.length === 0) return <p className="muted">The export contains no dividends or interest.</p>
+  if (rows.length === 0) return <p className="muted">{t('The export contains no dividends or interest.')}</p>
 
   const yearAgo = addDays(today, -365)
   const lastYear = rows.filter((r) => r.date > yearAgo)
@@ -52,26 +54,26 @@ export function DividendsSection({ inputs, options }: Props) {
     <>
       <div className="cards">
         <div className="card">
-          <span className="card-label">Net, last 12 months</span>
+          <span className="card-label">{t('Net, last 12 months')}</span>
           <span className="card-value positive">{formatEur(sum(lastYear, 'net'))}</span>
-          <span className="muted small">{formatEur(sum(lastYear, 'net') / 12)} a month on average</span>
+          <span className="muted small">{t('{amount} a month on average', { amount: formatEur(sum(lastYear, 'net') / 12) })}</span>
         </div>
         <div className="card">
-          <span className="card-label">Net, all time</span>
+          <span className="card-label">{t('Net, all time')}</span>
           <span className="card-value positive">{formatEur(sum(rows, 'net'))}</span>
-          <span className="muted small">Gross {formatEur(sum(rows, 'gross'))}</span>
+          <span className="muted small">{t('Gross {amount}', { amount: formatEur(sum(rows, 'gross')) })}</span>
         </div>
         <div className="card">
-          <span className="card-label">Withheld taxes, all time</span>
+          <span className="card-label">{t('Withheld taxes, all time')}</span>
           <span className="card-value">{formatEur(sum(rows, 'taxes'))}</span>
-          <span className="muted small">{sum(rows, 'gross') > 0 ? formatPercent(sum(rows, 'taxes') / sum(rows, 'gross'), false) : '–'} of gross</span>
+          <span className="muted small">{t('{share} of gross', { share: sum(rows, 'gross') > 0 ? formatPercent(sum(rows, 'taxes') / sum(rows, 'gross'), false) : '–' })}</span>
         </div>
       </div>
 
       <ForecastPanel forecast={forecast} positions={positions} today={today} />
 
       <div className="panel">
-        <h3>Net income per month</h3>
+        <h3>{t('Net income per month')}</h3>
         <Suspense fallback={<div className="income-chart" />}>
           <MonthlyIncomeChart data={monthly} />
         </Suspense>
@@ -79,16 +81,16 @@ export function DividendsSection({ inputs, options }: Props) {
 
       <div className="dashboard-grid">
         <div className="panel">
-          <h3>Per year</h3>
+          <h3>{t('Per year')}</h3>
           <table className="table">
             <thead>
               <tr>
-                <th>Year</th>
-                <th className="num">Payments</th>
-                <th className="num">Gross</th>
-                <th className="num">Taxes</th>
-                <th className="num">Costs</th>
-                <th className="num">Net</th>
+                <th>{t('Year')}</th>
+                <th className="num">{t('Payments')}</th>
+                <th className="num">{t('Gross')}</th>
+                <th className="num">{t('Taxes')}</th>
+                <th className="num">{t('Costs')}</th>
+                <th className="num">{t('Net')}</th>
               </tr>
             </thead>
             <tbody>
@@ -108,7 +110,7 @@ export function DividendsSection({ inputs, options }: Props) {
           </table>
         </div>
         <div className="panel">
-          <h3>Per kind</h3>
+          <h3>{t('Per kind')}</h3>
           <table className="table">
             <tbody>
               {perKind.map((k) => (
@@ -123,19 +125,19 @@ export function DividendsSection({ inputs, options }: Props) {
       </div>
 
       <div className="panel">
-        <h3>Per position</h3>
+        <h3>{t('Per position')}</h3>
         <table className="table">
           <thead>
             <tr>
-              <th>Product</th>
-              <th className="num">Payments</th>
-              <th className="num">Gross</th>
-              <th className="num">Net</th>
-              <th className="num">Net, last 12 months</th>
-              <th className="num" title="Net dividends of the last 12 months divided by the cost basis held today">
-                Yield on cost
+              <th>{t('Product')}</th>
+              <th className="num">{t('Payments')}</th>
+              <th className="num">{t('Gross')}</th>
+              <th className="num">{t('Net')}</th>
+              <th className="num">{t('Net, last 12 months')}</th>
+              <th className="num" title={t('Net dividends of the last 12 months divided by the cost basis held today')}>
+                {t('Yield on cost')}
               </th>
-              <th className="num">Last paid</th>
+              <th className="num">{t('Last paid')}</th>
             </tr>
           </thead>
           <tbody>
@@ -163,7 +165,7 @@ export function DividendsSection({ inputs, options }: Props) {
             })}
           </tbody>
         </table>
-        <p className="muted small">All payments as booked, whatever the dashboard toggles say. Yield on cost only for positions held today.</p>
+        <p className="muted small">{t('All payments as booked, whatever the dashboard toggles say. Yield on cost only for positions held today.')}</p>
       </div>
     </>
   )
@@ -174,47 +176,52 @@ function ForecastPanel({ forecast, positions, today }: { forecast: DividendForec
   const value = positions.reduce((sum, p) => sum + Math.max(p.value, 0), 0)
   return (
     <div className="panel stack forecast">
-      <h3>Expected in the next 12 months, based on last year</h3>
+      <h3>{t('Expected in the next 12 months, based on last year')}</h3>
       <p className="callout info">
-        Calculated from the dividends paid from <strong>{formatDate(addDays(today, -364))}</strong> to{' '}
-        <strong>{formatDate(today)}</strong>: each one again a year later, per share, on the shares you hold today.
+        <Rich
+          text={t('Calculated from the dividends paid from <b>{from}</b> to <b>{to}</b>: each one again a year later, per share, on the shares you hold today.', {
+            from: formatDate(addDays(today, -364)),
+            to: formatDate(today),
+          })}
+          tags={{ b: (s) => <strong>{s}</strong> }}
+        />
       </p>
       {forecast.payments.length === 0 ? (
         <p className="muted">
-          No dividends expected: none of the positions held today paid a dividend in the last 12 months.
+          {t('No dividends expected: none of the positions held today paid a dividend in the last 12 months.')}
         </p>
       ) : (
         <>
           <div className="cards">
             <div className="card">
-              <span className="card-label">Expected, net (from last year)</span>
+              <span className="card-label">{t('Expected, net (from last year)')}</span>
               <span className="card-value positive">{formatEur(forecast.net)}</span>
-              <span className="muted small">Gross {formatEur(forecast.gross)}</span>
+              <span className="muted small">{t('Gross {amount}', { amount: formatEur(forecast.gross) })}</span>
             </div>
             <div className="card">
-              <span className="card-label">A month on average</span>
+              <span className="card-label">{t('A month on average')}</span>
               <span className="card-value">{formatEur(forecast.net / 12)}</span>
-              <span className="muted small">Net, spread over the year</span>
+              <span className="muted small">{t('Net, spread over the year')}</span>
             </div>
             <div className="card">
-              <span className="card-label">Forward yield</span>
+              <span className="card-label">{t('Forward yield')}</span>
               <span className="card-value">{value > 0 ? formatPercent(forecast.gross / value, false) : '–'}</span>
-              <span className="muted small">Gross, on the value of the portfolio today</span>
+              <span className="muted small">{t('Gross, on the value of the portfolio today')}</span>
             </div>
           </div>
           <Suspense fallback={<div className="income-chart" />}>
-            <MonthlyIncomeChart data={forecast.months} label="Expected net dividends per month" />
+            <MonthlyIncomeChart data={forecast.months} label={t('Expected net dividends per month')} />
           </Suspense>
           <table className="table">
             <thead>
               <tr>
-                <th>Product</th>
-                <th className="num">Payments a year</th>
-                <th className="num">Next payment</th>
-                <th className="num">Expected gross</th>
-                <th className="num">Expected net</th>
-                <th className="num" title="Expected gross dividends divided by the value of the position today">
-                  Yield
+                <th>{t('Product')}</th>
+                <th className="num">{t('Payments a year')}</th>
+                <th className="num">{t('Next payment')}</th>
+                <th className="num">{t('Expected gross')}</th>
+                <th className="num">{t('Expected net')}</th>
+                <th className="num" title={t('Expected gross dividends divided by the value of the position today')}>
+                  {t('Yield')}
                 </th>
               </tr>
             </thead>
@@ -242,9 +249,7 @@ function ForecastPanel({ forecast, positions, today }: { forecast: DividendForec
         </>
       )}
       <p className="muted small">
-        An estimate: every dividend of the last 12 months, per share, paid again a year later on the shares held today, with
-        the same withholding tax. Dividends can be raised, cut or moved; accumulating funds and positions that paid nothing
-        last year count as zero.
+        {t('An estimate: every dividend of the last 12 months, per share, paid again a year later on the shares held today, with the same withholding tax. Dividends can be raised, cut or moved; accumulating funds and positions that paid nothing last year count as zero.')}
       </p>
     </div>
   )

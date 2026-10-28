@@ -1,5 +1,6 @@
 import { formatDate, formatPercent } from '../format.ts'
 import type { ShareCard } from './shareCard.ts'
+import { t } from '../../i18n/i18n.ts'
 
 export type ShareFormat = 'wide' | 'story'
 
@@ -126,7 +127,7 @@ function drawAllocation(ctx: CanvasRenderingContext2D, card: ShareCard, box: Box
   let labelX = box.x
   let labelY = box.y + 30
   for (const s of card.allocation) {
-    const text = `${s.label} ${s.percent}%`
+    const text = `${t(s.label)} ${s.percent}%`
     const width = ctx.measureText(text).width + 22 + 28
     if (labelX + width > box.x + box.width) {
       labelX = box.x
@@ -163,10 +164,10 @@ function drawPositions(ctx: CanvasRenderingContext2D, card: ShareCard, box: Box,
   ctx.font = `500 ${Math.round(fontSize * 0.7)}px ${MONO}`
   ctx.fillStyle = INK.muted
   let y = box.y + fontSize * 0.5
-  ctx.fillText('POSITION', box.x, y)
-  ctx.fillText('WEIGHT', barX, y)
+  ctx.fillText(t('POSITION'), box.x, y)
+  ctx.fillText(t('WEIGHT'), barX, y)
   ctx.textAlign = 'right'
-  ctx.fillText('RETURN', returnX, y)
+  ctx.fillText(t('RETURN'), returnX, y)
   ctx.textAlign = 'left'
   y += fontSize
 
@@ -179,7 +180,7 @@ function drawPositions(ctx: CanvasRenderingContext2D, card: ShareCard, box: Box,
     const other = position.others !== undefined
     ctx.font = `${other ? 500 : 700} ${fontSize}px ${DISPLAY}`
     ctx.fillStyle = other ? INK.muted : INK.text
-    let name = other ? `${position.others} others` : position.name
+    let name = other ? t('{count} others', { count: position.others ?? 0 }) : position.name
     while (name.length > 4 && ctx.measureText(name).width > nameEnd - box.x) name = `${name.slice(0, -2)}…`
     ctx.fillText(name, box.x, middle)
 
@@ -256,18 +257,18 @@ export function drawShareCard(canvas: HTMLCanvasElement, card: ShareCard, format
   y += big + (story ? 24 : 10)
   ctx.fillStyle = INK.muted
   ctx.font = `500 ${story ? 32 : 22}px ${MONO}`
-  ctx.fillText('TIME-WEIGHTED RETURN', pad, y)
+  ctx.fillText(t('TIME-WEIGHTED RETURN'), pad, y)
   y += story ? 72 : 44
 
   if (card.benchmark) {
     const difference = card.twr - card.benchmark.twr
     ctx.font = `600 ${story ? 40 : 28}px ${DISPLAY}`
     ctx.fillStyle = INK.benchmark
-    const vs = `vs ${card.benchmark.label} ${formatPercent(card.benchmark.twr)}`
+    const vs = t('vs {name} {return}', { name: card.benchmark.label, return: formatPercent(card.benchmark.twr) })
     ctx.fillText(vs, pad, y)
     const gap = ctx.measureText(vs).width + 24
     ctx.fillStyle = trend(difference)
-    const lead = `${difference >= 0 ? '+' : '−'}${Math.abs(difference * 100).toFixed(1)} pts`
+    const lead = `${difference >= 0 ? '+' : '−'}${Math.abs(difference * 100).toFixed(1)} ${t('pts')}`
     ctx.fillText(lead, pad + gap, y)
     y += story ? 90 : 56
   }
@@ -306,7 +307,7 @@ export function drawShareCard(canvas: HTMLCanvasElement, card: ShareCard, format
   ctx.fillText('gnipral.github.io/portfolio-history', pad, height - footer / 2)
   ctx.textAlign = 'right'
   ctx.fillStyle = INK.muted
-  ctx.fillText('free · no account', width - pad, height - footer / 2)
+  ctx.fillText(t('free · no account'), width - pad, height - footer / 2)
   ctx.textAlign = 'left'
 }
 

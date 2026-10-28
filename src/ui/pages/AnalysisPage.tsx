@@ -11,15 +11,17 @@ import { TaxesSection } from '../analysis/TaxesSection.tsx'
 import { engineOptions } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
 import { ErrorBoundary } from '../errors/ErrorBoundary.tsx'
+import { t } from '../../i18n/i18n.ts'
+import { Rich } from '../../i18n/Rich.tsx'
 import { DEFAULT_SETTINGS, saveSettings, useSettings } from '../../settings/settings.ts'
 
 const TABS = [
-  { key: 'taxes', label: 'Taxes' },
-  { key: 'dividends', label: 'Dividends' },
-  { key: 'realized', label: 'Realized' },
-  { key: 'costs', label: 'Costs' },
-  { key: 'risk', label: 'Risk' },
-  { key: 'planning', label: 'Planning' },
+  { key: 'taxes', label: t('Taxes') },
+  { key: 'dividends', label: t('Dividends') },
+  { key: 'realized', label: t('Realized') },
+  { key: 'costs', label: t('Costs') },
+  { key: 'risk', label: t('Risk') },
+  { key: 'planning', label: t('Planning') },
 ] as const
 
 type Tab = (typeof TABS)[number]['key']
@@ -36,9 +38,9 @@ export function AnalysisPage() {
   if (transactionCount === 0) {
     return (
       <section>
-        <h2>Analysis</h2>
+        <h2>{t('Analysis')}</h2>
         <p>
-          No portfolio loaded yet. <Link to="/import">Import a broker export</Link> first.
+          <Rich text={t('No portfolio loaded yet. <link>Import a broker export</link> first.')} tags={{ link: (s) => <Link to="/import">{s}</Link> }} />
         </p>
       </section>
     )
@@ -47,20 +49,20 @@ export function AnalysisPage() {
   return (
     <section className="stack">
       <div className="dashboard-header">
-        <h2>Analysis</h2>
-        <div className="segmented" role="tablist" aria-label="Analysis">
-          {TABS.map((t) => (
-            <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} aria-pressed={tab === t.key} onClick={() => setTab(t.key)}>
-              {t.label}
+        <h2>{t('Analysis')}</h2>
+        <div className="segmented" role="tablist" aria-label={t('Analysis')}>
+          {TABS.map((tab_) => (
+            <button key={tab_.key} type="button" role="tab" aria-selected={tab === tab_.key} aria-pressed={tab === tab_.key} onClick={() => setTab(tab_.key)}>
+              {t(tab_.label)}
             </button>
           ))}
         </div>
       </div>
       {!inputs || !series ? (
-        <p role="status">Calculating…</p>
+        <p role="status">{t('Calculating…')}</p>
       ) : (
         <div role="tabpanel" className="stack">
-          <ErrorBoundary label="This analysis" resetKey={tab}>
+          <ErrorBoundary label={t('This analysis')} resetKey={tab}>
             {tab === 'taxes' && (
               <TaxesSection inputs={inputs} rules={settings.taxRules} onRulesChange={(taxRules) => void saveSettings({ taxRules })} />
             )}

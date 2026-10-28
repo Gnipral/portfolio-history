@@ -1,6 +1,7 @@
 import type { EngineOptions, ToggleKey, Toggles } from '../../engine/options.ts'
 import type { Capabilities, CapabilityReasons } from '../../import/types.ts'
 import type { Settings } from '../../settings/settings.ts'
+import { msg } from '../../i18n/i18n.ts'
 
 export type ToggleGroup = 'Costs' | 'Income' | 'Cash'
 
@@ -18,38 +19,38 @@ export const TOGGLE_GROUPS: ToggleGroup[] = ['Costs', 'Income', 'Cash']
 export const TOGGLES: ToggleInfo[] = [
   {
     key: 'includeCosts',
-    label: 'Transaction costs',
+    label: msg('Transaction costs'),
     group: 'Costs',
-    description: 'Broker fees on buys and sells, and other fees.',
+    description: msg('Broker fees on buys and sells, and other fees.'),
     capability: 'transactionCosts',
   },
   {
     key: 'includeTaxes',
-    label: 'Taxes',
+    label: msg('Taxes'),
     group: 'Costs',
-    description: 'Stock exchange tax (TOB) and withholding tax on dividends.',
+    description: msg('Stock exchange tax (TOB) and withholding tax on dividends.'),
     capability: 'taxes',
   },
   {
     key: 'includeFxCosts',
-    label: 'Currency conversion costs',
+    label: msg('Currency conversion costs'),
     group: 'Costs',
-    description: 'Costs of converting to another currency, e.g. DEGIRO AutoFX.',
+    description: msg('Costs of converting to another currency, e.g. DEGIRO AutoFX.'),
     capability: 'fxCosts',
   },
   {
     key: 'includeDividends',
-    label: 'Dividends',
+    label: msg('Dividends'),
     group: 'Income',
-    description: 'Payouts count as profit.',
+    description: msg('Payouts count as profit.'),
     capability: 'dividends',
   },
   {
     key: 'includeDeposits',
-    label: 'Deposits and withdrawals',
+    label: msg('Deposits and withdrawals'),
     group: 'Cash',
     description:
-      'The value includes your cash, and only deposits and withdrawals count as money in or out. Off: securities only, every buy and sale is money in or out.',
+      msg('The value includes your cash, and only deposits and withdrawals count as money in or out. Off: securities only, every buy and sale is money in or out.'),
     capability: 'deposits',
   },
 ]
@@ -66,7 +67,7 @@ export function toggleStates(toggles: Toggles, capabilities: Capabilities | unde
     return {
       ...info,
       checked: available && toggles[info.key],
-      ...(available ? {} : { disabledReason: reasons[info.capability] ?? 'Not in this export.' }),
+      ...(available ? {} : { disabledReason: reasons[info.capability] ?? msg('Not in this export.') }),
     }
   })
 }

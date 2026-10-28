@@ -10,6 +10,7 @@ import { formatDate, formatPercent, trendClass } from '../format.ts'
 import { annualized, compareLink, comparePath, curvePoints, linkData, MAX_COMPARED, splitCompare, type ComparePoint } from '../share/compare.ts'
 import { shareCard, type ShareCard } from '../share/shareCard.ts'
 import { readShareLink } from '../share/shareLink.ts'
+import { t, tn } from '../../i18n/i18n.ts'
 
 interface Line {
   label: string
@@ -40,14 +41,14 @@ export function ComparePage() {
     }
   }, [datas])
 
-  const valid = (cards ?? []).flatMap((card, i) => (card ? [{ label: `Portfolio ${i + 1}`, card }] : []))
-  const lines: Line[] = [...valid, ...(withOwn && own ? [{ label: 'Yours', card: own, own: true }] : [])]
+  const valid = (cards ?? []).flatMap((card, i) => (card ? [{ label: t('Portfolio {number}', { number: i + 1 }), card }] : []))
+  const lines: Line[] = [...valid, ...(withOwn && own ? [{ label: t('Yours'), card: own, own: true }] : [])]
   const invalid = (cards ?? []).filter((c) => c === null).length
 
   function add(event: FormEvent) {
     event.preventDefault()
     const more = linkData(pasted)
-    if (more.length === 0) return setPasteError('That is not a Portfolio History share link.')
+    if (more.length === 0) return setPasteError(t('That is not a Portfolio History share link.'))
     setPasteError('')
     setPasted('')
     void navigate(comparePath([...datas, ...more]))
@@ -58,17 +59,17 @@ export function ComparePage() {
     setCopied(true)
   }
 
-  if (cards === undefined) return <p role="status">Opening the shared portfolios…</p>
+  if (cards === undefined) return <p role="status">{t('Opening the shared portfolios…')}</p>
   const from = valid[0]?.card.from
 
   return (
     <section className="stack">
-      <h2>Compare portfolios</h2>
+      <h2>{t('Compare portfolios')}</h2>
       <p className="muted">
-        Time-weighted returns of shared portfolios side by side. Only percentages are in the links, never amounts.
-        {valid.some((l) => l.card.from !== from) && ' The periods differ: every line starts at 0% on its own first day.'}
+        {t('Time-weighted returns of shared portfolios side by side. Only percentages are in the links, never amounts.')}
+        {valid.some((l) => l.card.from !== from) && ` ${t('The periods differ: every line starts at 0% on its own first day.')}`}
       </p>
-      {invalid > 0 && <p className="callout warning small">{invalid === 1 ? 'One link is' : `${invalid} links are`} not valid and left out.</p>}
+      {invalid > 0 && <p className="callout warning small">{tn(invalid, 'One link is not valid and left out.', '{count} links are not valid and left out.')}</p>}
 
       {lines.length > 0 && <CompareChart lines={lines} />}
 
@@ -77,11 +78,11 @@ export function ComparePage() {
           <table className="table">
             <thead>
               <tr>
-                <th>Portfolio</th>
-                <th>Period</th>
-                <th className="num">Return</th>
-                <th className="num">Per year</th>
-                <th>Benchmark in the card</th>
+                <th>{t('Portfolio')}</th>
+                <th>{t('Period')}</th>
+                <th className="num">{t('Return')}</th>
+                <th className="num">{t('Per year')}</th>
+                <th>{t('Benchmark in the card')}</th>
               </tr>
             </thead>
             <tbody>
@@ -109,28 +110,28 @@ export function ComparePage() {
       <div className="actions">
         {hasOwn && from && (
           <button type="button" aria-pressed={withOwn} onClick={() => setWithOwn(!withOwn)}>
-            {withOwn ? 'Hide my portfolio' : 'Compare with my portfolio'}
+            {withOwn ? t('Hide my portfolio') : t('Compare with my portfolio')}
           </button>
         )}
         {datas.length > 1 && (
           <button type="button" onClick={() => void copy()}>
-            {copied ? 'Link copied' : 'Copy this comparison'}
+            {copied ? t('Link copied') : t('Copy this comparison')}
           </button>
         )}
       </div>
       {withOwn && from && <OwnCard from={from} to={valid[0]?.card.to ?? from} onCard={setOwn} />}
-      {withOwn && <p className="muted small">Your portfolio is only shown here; nothing of it goes into a link.</p>}
+      {withOwn && <p className="muted small">{t('Your portfolio is only shown here; nothing of it goes into a link.')}</p>}
 
       {datas.length < MAX_COMPARED && (
         <form className="actions" onSubmit={add}>
           <input
             className="compare-input"
-            aria-label="Share link to add"
-            placeholder="Paste another share link"
+            aria-label={t('Share link to add')}
+            placeholder={t('Paste another share link')}
             value={pasted}
             onChange={(e) => setPasted(e.target.value)}
           />
-          <button type="submit">Add</button>
+          <button type="submit">{t('Add')}</button>
           {pasteError && (
             <span className="negative small" role="alert">
               {pasteError}
@@ -142,7 +143,8 @@ export function ComparePage() {
       {!hasOwn && (
         <div className="callout info">
           <p>
-            <strong>Add your own portfolio to the comparison.</strong> Free, no account needed, and your data stays on your device.
+            <strong>{t('Add your own portfolio to the comparison.')}</strong>{' '}
+            {t('Free, no account needed, and your data stays on your device.')}
           </p>
           <div className="actions">
             <DemoButton className="primary" />
@@ -168,7 +170,7 @@ function OwnCard({ from, to, onCard }: { from: string; to: string; onCard: (card
     onCard(start >= 0 && end > start ? shareCard(points, start, end, undefined, []) : null)
   }, [series, from, to, onCard])
 
-  if (!series) return <p role="status">Calculating your portfolio…</p>
+  if (!series) return <p role="status">{t('Calculating your portfolio…')}</p>
   const covers = series.points.some((p) => p.date <= from)
   return covers ? null : <p className="muted small">Your history starts after {formatDate(from)}: your line starts later.</p>
 }

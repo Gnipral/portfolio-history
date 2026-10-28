@@ -3,6 +3,7 @@ import type { DailyPoint } from '../../engine/series.ts'
 import type { BenchmarkLine } from '../dashboard/benchmarkLines.ts'
 import type { Slice } from '../dashboard/allocation.ts'
 import { formatDate, formatPercent } from '../format.ts'
+import { t } from '../../i18n/i18n.ts'
 
 /** Where people who see a shared card can try the app. */
 export const PUBLIC_URL = 'https://gnipral.github.io/portfolio-history/'
@@ -126,7 +127,7 @@ export function shareCard(
 export function shareText(card: ShareCard): string {
   const vs = card.benchmark ? ` (${card.benchmark.label}: ${formatPercent(card.benchmark.twr)})` : ''
   return (
-    `My portfolio from ${formatDate(card.from)} to ${formatDate(card.to)}: ${formatPercent(card.twr)} time-weighted${vs}.\n` +
-    `Made with Portfolio History: free, no account needed, and your data stays on your device. ${PUBLIC_URL}`
+    `${t('My portfolio from {from} to {to}: {return} time-weighted', { from: formatDate(card.from), to: formatDate(card.to), return: formatPercent(card.twr) })}${vs}.\n` +
+    `${t('Made with Portfolio History: free, no account needed, and your data stays on your device.')} ${PUBLIC_URL}`
   )
 }

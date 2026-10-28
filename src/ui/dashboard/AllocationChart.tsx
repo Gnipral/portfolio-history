@@ -1,4 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { t } from '../../i18n/i18n.ts'
 import { formatEur, formatPercent } from '../format.ts'
 import type { Slice } from './allocation.ts'
 
@@ -9,7 +10,7 @@ function SliceTooltip({ active, payload }: { active?: boolean; payload?: { paylo
   if (!active || !slice) return null
   return (
     <div className="chart-tooltip">
-      <strong>{slice.label}</strong>
+      <strong>{t(slice.label)}</strong>
       <span>
         {formatEur(slice.value)} · {formatPercent(slice.share, false)}
       </span>
@@ -22,7 +23,7 @@ export function AllocationChart({ slices }: { slices: Slice[] }) {
   if (slices.length === 0) return null
   return (
     <div className="allocation">
-      <div className="allocation-chart" role="img" aria-label="Allocation of the portfolio by position">
+      <div className="allocation-chart" role="img" aria-label={t('Allocation of the portfolio by position')}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -49,7 +50,7 @@ export function AllocationChart({ slices }: { slices: Slice[] }) {
         {slices.map((slice) => (
           <li key={slice.key}>
             <i className="legend-dot" style={{ background: color(slice.slot) }} />
-            <span className="legend-label">{slice.label}</span>
+            <span className="legend-label">{t(slice.label)}</span>
             <span className="legend-value">{formatPercent(slice.share, false)}</span>
           </li>
         ))}
