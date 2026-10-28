@@ -3,8 +3,8 @@ import type { Position } from '../../engine/positions.ts'
 import type { DailyPoint } from '../../engine/series.ts'
 import type { Slice } from '../dashboard/allocation.ts'
 import type { BenchmarkLine } from '../dashboard/benchmarkLines.ts'
-import { cardFile, drawShareCard, loadCardFonts, type ShareFormat } from './drawShareCard.ts'
-import { shareCard, shareText } from './shareCard.ts'
+import { cardFile, drawShareCard, loadCardFonts, POSITION_ROWS, type ShareFormat } from './drawShareCard.ts'
+import { shareCard, shareText, type PositionOrder } from './shareCard.ts'
 
 interface Props {
   points: DailyPoint[]
@@ -34,13 +34,19 @@ export function ShareDialog({ points, from, to, benchmarks, slices, positions, o
   const [compare, setCompare] = useState(true)
   const [showAllocation, setShowAllocation] = useState(true)
   // Off at first: names say more about someone than percentages.
-  const [showPositions, setShowPositions] = useState(false)
+  const [positionOrder, setPositionOrder] = useState<PositionOrder | 'off'>('off')
+  const showPositions = positionOrder !== 'off'
+  const limit = POSITION_ROWS[format]
   const [fontsReady, setFontsReady] = useState(false)
   const [status, setStatus] = useState('')
   const benchmark = compare ? benchmarks[0] : undefined
   const card = useMemo(
-    () => shareCard(points, from, to, benchmark, slices, showPositions ? positions : []),
-    [points, from, to, benchmark, slices, positions, showPositions],
+    () =>
+      shareCard(points, from, to, benchmark, slices, showPositions ? positions : [], {
+        order: positionOrder === 'return' ? 'return' : 'weight',
+        limit,
+      }),
+    [points, from, to, benchmark, slices, positions, showPositions, positionOrder, limit],
   )
   const text = shareText(card)
 
@@ -125,13 +131,30 @@ export function ShareDialog({ points, from, to, benchmarks, slices, positions, o
               <input type="checkbox" checked={showAllocation} onChange={(e) => setShowAllocation(e.target.checked)} /> Show the mix by type
             </label>
           )}
-          {positions.length > 0 && (
-            <label>
-              <input type="checkbox" checked={showPositions} onChange={(e) => setShowPositions(e.target.checked)} /> Show my positions
-              (weight and return)
-            </label>
-          )}
         </div>
+        {positions.length > 0 && (
+          <div className="share-positions">
+            <span>My positions</span>
+            <div className="segmented" role="group" aria-label="My positions">
+              <button type="button" aria-pressed={positionOrder === 'off'} onClick={() => setPositionOrder('off')}>
+                Hide
+              </button>
+              <button type="button" aria-pressed={positionOrder === 'weight'} onClick={() => setPositionOrder('weight')}>
+                Largest
+              </button>
+              <button type="button" aria-pressed={positionOrder === 'return'} onClick={() => setPositionOrder('return')}>
+                Best return
+              </button>
+            </div>
+            <span className="muted small">
+              {!showPositions
+                ? 'Show each position with its weight and its return, never the amounts.'
+                : positions.length > limit
+                  ? `You have ${positions.length} positions: the card shows ${limit - 1} and the other ${positions.length - limit + 1} together in one row${format === 'wide' ? '. A story has room for more.' : '.'}`
+                  : 'Each position with its weight and its return, never the amounts.'}
+            </span>
+          </div>
+        )}
         <textarea className="share-text" readOnly value={text} rows={3} aria-label="Text to go with it" />
         <div className="share-actions">
           <button type="button" className="primary" onClick={() => void share()}>
