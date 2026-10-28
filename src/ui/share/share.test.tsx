@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Position } from '../../engine/positions.ts'
 import type { DailyPoint } from '../../engine/series.ts'
 import type { Slice } from '../dashboard/allocation.ts'
 import type { BenchmarkLine } from '../dashboard/benchmarkLines.ts'
@@ -37,6 +38,16 @@ const slices: Slice[] = [
   { key: 'Stocks', label: 'Stocks', value: 34_000, share: 0.276, slot: 2 },
 ]
 
+function position(product: string, value: number, cost: number, symbol?: string): Position {
+  return { key: product, product, ...(symbol ? { symbol } : {}), quantity: 4321, averageCost: cost / 4321, costBasis: cost, stale: false, value, pnl: value - cost, pnlPercent: (value - cost) / cost }
+}
+
+const positions = [
+  position('APPLE INC', 3_125.5, 2_500, 'AAPL'),
+  position('VANGUARD FTSE ALL-WORLD UCITS ETF USD ACC', 9_375.25, 7_000, 'VWCE.DE'),
+  position('DEMO BANK NV', 1_000, 1_250, 'demo:bank'),
+]
+
 describe('shareCard', () => {
   it('measures the return from the first day of the period', () => {
     const card = shareCard(points, 100, 399, benchmark, slices)
@@ -54,9 +65,18 @@ describe('shareCard', () => {
     expect(card.curve.at(-1)).toBe(39.9)
   })
 
-  it('never contains amounts, only percentages and dates', () => {
-    const json = JSON.stringify(shareCard(points, 0, 399, benchmark, slices))
-    for (const amount of ['123456', '98765', '24691', '99999', '1234', '90000', '34000']) expect(json).not.toContain(amount)
+  it('lists the positions by weight with their return, under a short name', () => {
+    expect(shareCard(points, 0, 399, undefined, []).positions).toEqual([])
+    expect(shareCard(points, 0, 399, undefined, [], positions).positions).toEqual([
+      { name: 'VWCE', weight: 69, return: 0.339 },
+      { name: 'AAPL', weight: 23, return: 0.25 },
+      { name: 'DEMO BANK NV', weight: 7, return: -0.2 },
+    ])
+  })
+
+  it('never contains amounts or quantities, only percentages and dates', () => {
+    const json = JSON.stringify(shareCard(points, 0, 399, benchmark, slices, positions))
+    for (const amount of ['123456', '98765', '24691', '99999', '1234', '90000', '34000', '3125', '9375', '2500', '7000', '1250', '4321']) expect(json).not.toContain(amount)
     expect(json).toContain('"percent":72')
   })
 
@@ -82,7 +102,7 @@ describe('ShareDialog', () => {
   })
 
   it('copies the text and drops the comparison when switched off', async () => {
-    render(<ShareDialog points={points} from={0} to={399} benchmarks={[benchmark]} slices={slices} onClose={() => undefined} />)
+    render(<ShareDialog points={points} from={0} to={399} benchmarks={[benchmark]} slices={slices} positions={positions} onClose={() => undefined} />)
     expect(screen.getByLabelText('Text to go with it')).toHaveProperty('value', expect.stringContaining('VWCE'))
 
     fireEvent.click(screen.getByLabelText('Compare with VWCE'))
@@ -93,12 +113,20 @@ describe('ShareDialog', () => {
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('+39.90%'))
   })
 
+  it('shows the positions only when asked', () => {
+    render(<ShareDialog points={points} from={0} to={399} benchmarks={[]} slices={[]} positions={positions} onClose={() => undefined} />)
+    expect(screen.getByText(/no amounts, quantities or product names/)).toBeTruthy()
+    fireEvent.click(screen.getByLabelText(/Show my positions/))
+    expect(screen.getByText(/the names of your positions: no amounts or quantities/)).toBeTruthy()
+  })
+
   it('closes with Escape and the close button', () => {
     const onClose = vi.fn()
-    render(<ShareDialog points={points} from={0} to={399} benchmarks={[]} slices={[]} onClose={onClose} />)
+    render(<ShareDialog points={points} from={0} to={399} benchmarks={[]} slices={[]} positions={[]} onClose={onClose} />)
     fireEvent.keyDown(window, { key: 'Escape' })
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     expect(onClose).toHaveBeenCalledTimes(2)
     expect(screen.queryByLabelText(/Compare with/)).toBeNull()
+    expect(screen.queryByLabelText(/Show my positions/)).toBeNull()
   })
 })
