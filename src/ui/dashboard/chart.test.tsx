@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DailyPoint } from '../../engine/series.ts'
 import { chartData } from './chartData.ts'
 import { storePalette } from '../../theme/theme.ts'
-import { PortfolioChart } from './PortfolioChart.tsx'
+import { PortfolioChart, spreadLabels } from './PortfolioChart.tsx'
 
 function point(date: string, value: number, extra: Partial<DailyPoint> = {}): DailyPoint {
   return {
@@ -73,6 +73,7 @@ const chartMock = vi.hoisted(() => {
     setData: (d: unknown[]) => state.data.push(d),
     applyOptions: () => {},
     createPriceLine: () => ({ applyOptions: () => {} }),
+    priceToCoordinate: (price: number) => 300 - price,
     removePriceLine: () => {},
     priceScale: () => ({ applyOptions: () => {}, width: () => 60 }),
   })
@@ -84,7 +85,7 @@ const chartMock = vi.hoisted(() => {
       { setHeight: () => {}, getHeight: () => 300 },
       { setHeight: () => {}, getHeight: () => 120 },
     ],
-    timeScale: () => ({ fitContent: () => {}, subscribeVisibleLogicalRangeChange: () => {}, unsubscribeVisibleLogicalRangeChange: () => {} }),
+    timeScale: () => ({ fitContent: () => {}, timeToCoordinate: () => 100, subscribeVisibleLogicalRangeChange: () => {}, unsubscribeVisibleLogicalRangeChange: () => {} }),
     subscribeCrosshairMove: (handler: Move) => {
       state.move = handler
     },
@@ -173,5 +174,19 @@ describe('PortfolioChart', () => {
       <PortfolioChart points={points} from={0} to={2} selected={2} mode="percent" onHover={() => {}} chartStyle={style} onStyleChange={onStyleChange} />,
     )
     expect((screen.getByRole('button', { name: 'Logarithmic scale' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+})
+
+describe('spreadLabels', () => {
+  const label = (key: string, y: number, pane: 0 | 1 = 0) => ({ key, y, pane, color: '#000', text: key })
+
+  it('pushes labels apart that would cover each other, per pane and in their order', () => {
+    const spread = spreadLabels([label('IWDA', 105), label('Value', 100), label('Invested', 200), label('Profit', 102, 1)])
+    expect(spread.map((l) => [l.key, l.y])).toEqual([
+      ['Value', 100],
+      ['IWDA', 120],
+      ['Invested', 200],
+      ['Profit', 102],
+    ])
   })
 })
