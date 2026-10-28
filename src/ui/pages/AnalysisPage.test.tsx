@@ -47,7 +47,8 @@ describe('AnalysisPage', () => {
     expect(await screen.findByText('Per position')).toBeTruthy()
     expect(screen.getAllByText('€21.00').length).toBeGreaterThan(0)
     // Expected: 3 euros a share gross on the 5 shares left, with the same 30 % tax.
-    expect(screen.getByText('Expected in the next 12 months')).toBeTruthy()
+    expect(screen.getByText('Expected in the next 12 months, based on last year')).toBeTruthy()
+    expect(screen.getByText(/Calculated from the dividends paid from/)).toBeTruthy()
     expect(screen.getAllByText('€10.50').length).toBeGreaterThan(0)
     expect(screen.getAllByText('€15.00').length).toBeGreaterThan(0)
 
