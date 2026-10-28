@@ -68,7 +68,7 @@ export function DividendsSection({ inputs, options }: Props) {
         </div>
       </div>
 
-      <ForecastPanel forecast={forecast} positions={positions} />
+      <ForecastPanel forecast={forecast} positions={positions} today={today} />
 
       <div className="panel">
         <h3>Net income per month</h3>
@@ -170,11 +170,15 @@ export function DividendsSection({ inputs, options }: Props) {
 }
 
 /** What the next 12 months will probably pay: last year's dividends per share on the shares held today. */
-function ForecastPanel({ forecast, positions }: { forecast: DividendForecast; positions: Position[] }) {
+function ForecastPanel({ forecast, positions, today }: { forecast: DividendForecast; positions: Position[]; today: string }) {
   const value = positions.reduce((sum, p) => sum + Math.max(p.value, 0), 0)
   return (
     <div className="panel stack forecast">
-      <h3>Expected in the next 12 months</h3>
+      <h3>Expected in the next 12 months, based on last year</h3>
+      <p className="callout info">
+        Calculated from the dividends paid from <strong>{formatDate(addDays(today, -364))}</strong> to{' '}
+        <strong>{formatDate(today)}</strong>: each one again a year later, per share, on the shares you hold today.
+      </p>
       {forecast.payments.length === 0 ? (
         <p className="muted">
           No dividends expected: none of the positions held today paid a dividend in the last 12 months.
@@ -183,7 +187,7 @@ function ForecastPanel({ forecast, positions }: { forecast: DividendForecast; po
         <>
           <div className="cards">
             <div className="card">
-              <span className="card-label">Expected, net</span>
+              <span className="card-label">Expected, net (from last year)</span>
               <span className="card-value positive">{formatEur(forecast.net)}</span>
               <span className="muted small">Gross {formatEur(forecast.gross)}</span>
             </div>
