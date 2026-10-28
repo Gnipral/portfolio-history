@@ -26,6 +26,22 @@ export interface NamedPeriod {
   to: string | null
 }
 
+/** The inputs of Analysis > Planning. Percentages are stored as numbers such as 6 for 6%. */
+export interface PlanningSettings {
+  /** Wanted share in percent per instrument key. */
+  targets: Record<string, number>
+  /** Money to spread over the positions now. */
+  deposit: number
+  monthly: number
+  yearlyReturn: number
+  years: number
+  inflation: number
+  /** Spending per year to live from the portfolio; 0: no FIRE target. */
+  yearlySpending: number
+}
+
+export const DEFAULT_PLANNING: PlanningSettings = { targets: {}, deposit: 500, monthly: 500, yearlyReturn: 6, years: 20, inflation: 2, yearlySpending: 0 }
+
 export const DEFAULT_CHART_STYLE: ChartStyle = { fill: true, invested: true, profitPane: true, log: false }
 
 /** Stored only in this browser's IndexedDB. */
@@ -50,6 +66,7 @@ export interface Settings {
   chartStyle: ChartStyle
   /** Saved periods, oldest saved first. */
   periods: NamedPeriod[]
+  planning: PlanningSettings
 }
 
 /** Settings edited as text in the settings form. */
@@ -73,6 +90,7 @@ export const DEFAULT_SETTINGS: Settings = {
   taxRules: DEFAULT_TAX_RULES,
   chartStyle: DEFAULT_CHART_STYLE,
   periods: [],
+  planning: DEFAULT_PLANNING,
 }
 
 const SETTINGS_KEY = 'settings'
@@ -88,6 +106,7 @@ export async function loadSettings(database: PortfolioDatabase = db): Promise<Se
       toggles: { ...DEFAULT_SETTINGS.toggles, ...parsed.toggles },
       taxRules: { ...DEFAULT_SETTINGS.taxRules, ...parsed.taxRules },
       chartStyle: { ...DEFAULT_CHART_STYLE, ...parsed.chartStyle },
+      planning: { ...DEFAULT_PLANNING, ...parsed.planning },
     }
   } catch {
     return DEFAULT_SETTINGS
