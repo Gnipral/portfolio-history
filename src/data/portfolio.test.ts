@@ -4,7 +4,8 @@ import { degiroAdapter } from '../import/adapters/degiro/index.ts'
 import { SAMPLE_ROWS, table } from '../import/adapters/degiro/fixtures.ts'
 import { PortfolioDatabase } from './db.ts'
 import type { Transaction } from '../model/transaction.ts'
-import { addToPortfolio, hasPortfolio, newTransactions, replacePortfolio } from './portfolio.ts'
+import { buildTransaction, toInput } from './manual.ts'
+import { addToPortfolio, hasPortfolio, newTransactions, replacePortfolio, signature } from './portfolio.ts'
 
 const database = new PortfolioDatabase('test-portfolio')
 
@@ -72,5 +73,20 @@ describe('newTransactions', () => {
     const stored = [buy, { ...buy, id: 'b' }]
     const incoming = [{ ...buy, id: 'x' }, { ...buy, id: 'y' }, { ...buy, id: 'z' }]
     expect(newTransactions(stored, incoming).map((t) => t.id)).toEqual(['z'])
+  })
+
+  it('adds a newer export with the same file name, whose rows reuse stored ids', () => {
+    const [buy] = degiroAdapter.parse([table(SAMPLE_ROWS)]).transactions.filter((t) => t.type === 'buy') as [Transaction]
+    const june = { ...buy, id: 'degiro:Transactions.csv:2', date: '2026-06-01' }
+    const december = { ...buy, id: 'degiro:Transactions.csv:2', date: '2026-12-01' }
+    const added = newTransactions([june], [december, { ...june, id: 'degiro:Transactions.csv:3' }])
+    expect(added.map((t) => [t.date, t.id])).toEqual([['2026-12-01', 'degiro:Transactions.csv:2#2']])
+  })
+
+  it('skips a row that was corrected by hand, wherever it is in the newer export', () => {
+    const [buy] = degiroAdapter.parse([table(SAMPLE_ROWS)]).transactions.filter((t) => t.type === 'buy') as [Transaction]
+    const corrected = buildTransaction({ ...toInput(buy), quantity: buy.quantity + 1 }, { toEur: (amount: number) => amount }, buy)
+    expect(corrected.edited).toBe(signature(buy))
+    expect(newTransactions([corrected], [buy, { ...buy, id: 'moved' }]).map((t) => t.id)).toEqual(['moved'])
   })
 })

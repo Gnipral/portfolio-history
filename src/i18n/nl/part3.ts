@@ -152,6 +152,7 @@ export const part3: Record<string, string> = {
   'Wrong password.': 'Verkeerd wachtwoord.',
   'XIRR, per year': 'XIRR, per jaar',
   YTD: 'YTD',
+  'Yes, delete': 'Ja, verwijderen',
   'Yahoo Finance prices and ISIN lookup. See workers/price-proxy in the repository.': 'Koersen van Yahoo Finance en ISIN-opzoeking. Zie workers/price-proxy in de repository.',
   Year: 'Jaar',
   'Year to date': 'Sinds begin dit jaar',
