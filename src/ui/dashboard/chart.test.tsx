@@ -152,8 +152,14 @@ describe('PortfolioChart', () => {
     const { rerender } = render(
       <PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} chartStyle={style} onStyleChange={onStyleChange} />,
     )
-    fireEvent.click(screen.getByLabelText(/Logarithmic scale/))
+    fireEvent.click(screen.getByRole('button', { name: 'Chart style' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Logarithmic scale' }))
     expect(onStyleChange).toHaveBeenCalledWith({ log: true })
+    // The colors are there too, and stored like in Settings.
+    fireEvent.click(screen.getByRole('radio', { name: /Colour-blind friendly/ }))
+    expect(document.documentElement.getAttribute('data-palette')).toBe('colorblind')
+    localStorage.clear()
+    document.documentElement.removeAttribute('data-palette')
 
     rerender(
       <PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} chartStyle={{ ...style, invested: false, profitPane: false }} onStyleChange={onStyleChange} />,
@@ -165,6 +171,6 @@ describe('PortfolioChart', () => {
     rerender(
       <PortfolioChart points={points} from={0} to={2} selected={2} mode="percent" onHover={() => {}} chartStyle={style} onStyleChange={onStyleChange} />,
     )
-    expect((screen.getByLabelText(/Logarithmic scale/) as HTMLInputElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Logarithmic scale' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })

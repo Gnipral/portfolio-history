@@ -18,6 +18,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { BenchmarkLine } from './benchmarkLines.ts'
 import type { DailyPoint } from '../../engine/series.ts'
 import { DEFAULT_CHART_STYLE, type ChartStyle } from '../../settings/settings.ts'
+import { PALETTES, readPalette, storePalette, type Palette } from '../../theme/theme.ts'
 import { formatDate, formatEur, formatPercent } from '../format.ts'
 import { chartData, type ChartMode } from './chartData.ts'
 import { useThemeColors } from './useThemeColors.ts'
@@ -114,6 +115,11 @@ export function PortfolioChart({
   const [divider, setDivider] = useState<{ top: number; left: number; width: number } | null>(null)
   const wrapper = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
+  const [styleOpen, setStyleOpen] = useState(false)
+  // The bar above the chart moves it down: the divider over the panes moves along.
+  useEffect(() => {
+    requestAnimationFrame(measurePanes)
+  }, [styleOpen])
 
   function measurePanes() {
     const r = refs.current
@@ -337,7 +343,23 @@ export function PortfolioChart({
             )}
           </div>
         )}
-        {onStyleChange && <StyleMenu chartStyle={chartStyle} percent={mode === 'percent'} onChange={onStyleChange} />}
+        {onStyleChange && (
+          <button
+            type="button"
+            className="chart-expand chart-style-button"
+            aria-expanded={styleOpen}
+            aria-label="Chart style"
+            title="Chart style and colors"
+            onClick={() => setStyleOpen((open) => !open)}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
+              <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
+              <circle cx="16" cy="6" r="2" />
+              <circle cx="10" cy="12" r="2" />
+              <circle cx="18" cy="18" r="2" />
+            </svg>
+          </button>
+        )}
         <button
           type="button"
           className="chart-expand"
@@ -351,6 +373,9 @@ export function PortfolioChart({
           </svg>
         </button>
       </div>
+      {onStyleChange && styleOpen && (
+        <StylePanel chartStyle={chartStyle} percent={mode === 'percent'} onChange={onStyleChange} onClose={() => setStyleOpen(false)} />
+      )}
       {mode === 'eur' && divider !== null && (
         <div className="pane-divider" style={{ top: divider.top, left: divider.left, width: divider.width }}>
           <span className="pane-label">Profit / loss</span>
@@ -361,48 +386,75 @@ export function PortfolioChart({
   )
 }
 
-/** A small menu next to the full screen button with the ways to draw the chart. */
-function StyleMenu({ chartStyle, percent, onChange }: { chartStyle: ChartStyle; percent: boolean; onChange: (change: Partial<ChartStyle>) => void }) {
-  const option = (key: keyof ChartStyle, label: string, hint: string, eurOnly = false) => (
-    <label className="radio">
-      <input type="checkbox" checked={chartStyle[key]} disabled={eurOnly && percent} onChange={(e) => onChange({ [key]: e.target.checked })} />
-      <span>
-        {label}
-        <span className="muted small"> {eurOnly && percent ? 'Only in EUR.' : hint}</span>
-      </span>
-    </label>
+/**
+ * The ways to draw the chart, in a bar between the legend and the chart: it covers nothing, so every
+ * change shows at once. The colors are the app's palette, the same as in Settings.
+ */
+function StylePanel({
+  chartStyle,
+  percent,
+  onChange,
+  onClose,
+}: {
+  chartStyle: ChartStyle
+  percent: boolean
+  onChange: (change: Partial<ChartStyle>) => void
+  onClose: () => void
+}) {
+  const [palette, setPalette] = useState<Palette>(readPalette)
+  const option = (key: keyof ChartStyle, label: string, eurOnly = false) => (
+    <button
+      type="button"
+      className="chip"
+      aria-pressed={chartStyle[key]}
+      disabled={eurOnly && percent}
+      title={eurOnly && percent ? 'Only in EUR' : undefined}
+      onClick={() => onChange({ [key]: !chartStyle[key] })}
+    >
+      {label}
+    </button>
   )
-  // Closes like a menu: a click or tap anywhere else, or Esc.
-  const menu = useRef<HTMLDetailsElement>(null)
-  useEffect(() => {
-    const close = (e: Event) => {
-      const element = menu.current
-      if (!element?.open) return
-      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !element.contains(e.target as Node)) element.open = false
-    }
-    document.addEventListener('pointerdown', close)
-    document.addEventListener('keydown', close)
-    return () => {
-      document.removeEventListener('pointerdown', close)
-      document.removeEventListener('keydown', close)
-    }
-  }, [])
   return (
-    <details ref={menu} className="chart-style">
-      <summary className="chart-expand" aria-label="Chart style" title="Chart style">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
-          <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
-          <circle cx="16" cy="6" r="2" />
-          <circle cx="10" cy="12" r="2" />
-          <circle cx="18" cy="18" r="2" />
-        </svg>
-      </summary>
-      <div className="chart-style-menu" role="group" aria-label="Chart style">
-        {option('fill', 'Fill under the value', 'A soft area, or the line alone.')}
-        {option('invested', 'Invested capital', percent ? 'The simple return line.' : 'The dashed line.')}
-        {option('profitPane', 'Profit / loss pane', 'The pane under the value.', true)}
-        {option('log', 'Logarithmic scale', 'Equal steps are equal percentages.', true)}
+    <div className="chart-style-panel" role="group" aria-label="Chart style">
+      <div className="chart-style-row">
+        <span className="label-caps">Show</span>
+        <div className="chips">
+          {option('fill', 'Fill under the value')}
+          {option('invested', percent ? 'Simple return' : 'Invested capital')}
+          {option('profitPane', 'Profit / loss pane', true)}
+          {option('log', 'Logarithmic scale', true)}
+        </div>
       </div>
-    </details>
+      <div className="chart-style-row">
+        <span className="label-caps">Colors</span>
+        <div className="chips" role="radiogroup" aria-label="Colors">
+          {PALETTES.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              role="radio"
+              className="chip"
+              aria-checked={palette === p.id}
+              aria-pressed={palette === p.id}
+              title={p.description}
+              onClick={() => {
+                storePalette(p.id)
+                setPalette(p.id)
+              }}
+            >
+              <span className="palette-swatches" aria-hidden="true">
+                {p.swatches.slice(0, 3).map((color) => (
+                  <i key={color} style={{ background: color }} />
+                ))}
+              </span>
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <button type="button" className="chart-style-close" onClick={onClose}>
+        Done
+      </button>
+    </div>
   )
 }

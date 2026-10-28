@@ -16,7 +16,7 @@ Live app: https://gnipral.github.io/portfolio-history/
 1. **Import** a broker export (CSV, XLSX, XML or PDF). The file is read in the browser and stored in IndexedDB.
 2. **Prices** are fetched once per day for every product you ever held, together with splits and EUR exchange rates, and cached in the browser.
 3. The **dashboard** rebuilds the portfolio for every calendar day since the first transaction:
-   - a chart of value, invested capital and profit, in euros or percent, with a crosshair, a slider and a date picker that stay in sync, and quick ranges (1M, 3M, YTD, 1Y, ALL). Its style menu turns the fill under the value, the invested capital line, the profit pane and a logarithmic scale on or off;
+   - a chart of value, invested capital and profit, in euros or percent, with a crosshair, a slider and a date picker that stay in sync, and quick ranges (1M, 3M, YTD, 1Y, ALL). Its style bar (between the legend and the chart, so nothing is covered) turns the fill under the value, the invested capital line, the profit pane and a logarithmic scale on or off, and picks the color palette;
    - a filter on the type of asset (ETFs, stocks, crypto, …): the chart, the numbers, the positions and the benchmark then follow only those, as securities without cash;
    - the profit of the selected day, its month, its year and since the start, in euros and percent, with the best and the worst position and how much more or less the same money made in the benchmark;
    - cards for value, invested capital, profit/loss, simple return, time-weighted return (TWR) and money-weighted return (XIRR) on the selected day;
