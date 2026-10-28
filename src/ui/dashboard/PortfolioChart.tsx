@@ -362,11 +362,6 @@ export function PortfolioChart({
                     <i className="swatch" style={{ color: `var(${b.color})`, background: b.pattern }} /> {b.label} {b.text}
                   </span>
                 ))}
-                {from === 0 && chartStyle.invested && (
-                  <span>
-                    <i className="swatch secondary" /> {t('Simple')} {formatPercent(point.simpleReturn)}
-                  </span>
-                )}
               </>
             )}
           </div>
@@ -448,7 +443,7 @@ function StylePanel({
         <span className="label-caps">{t('Show')}</span>
         <div className="chips">
           {option('fill', t('Fill under the value'))}
-          {option('invested', percent ? t('Simple return') : t('Invested capital'))}
+          {option('invested', t('Invested capital'), true)}
           {option('profitPane', t('Profit / loss pane'), true)}
           {option('log', t('Logarithmic scale'), true)}
         </div>

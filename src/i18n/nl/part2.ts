@@ -5,8 +5,6 @@ export const part2: Record<string, string> = {
   Invested: 'Geïnvesteerd',
   'Invested capital': 'Geïnvesteerd kapitaal',
   'It is a debt, such as a mortgage': 'Het is een schuld, zoals een hypotheek',
-  'Keys and URLs are stored only in this browser. Prices are fetched from the first source that has them: the price proxy, then Twelve Data, then Alpha Vantage. Crypto prices come from CoinGecko without a key.':
-    'Sleutels en URL’s worden alleen in deze browser bewaard. Koersen komen van de eerste bron die ze heeft: de prijsproxy, dan Twelve Data, dan Alpha Vantage. Cryptokoersen komen zonder sleutel van CoinGecko.',
   Kind: 'Soort',
   Language: 'Taal',
   Largest: 'Grootste',
@@ -96,7 +94,6 @@ export const part2: Record<string, string> = {
   'Nothing saved yet.': 'Nog niets bewaard.',
   Now: 'Nu',
   OK: 'OK',
-  Ocean: 'Oceaan',
   Offline: 'Offline',
   'One link is not valid and left out.': 'Eén link is ongeldig en weggelaten.',
   'One year of sales, dividends, interest, costs and taxes, to fill in your tax return or hand to an accountant.':
@@ -121,7 +118,6 @@ export const part2: Record<string, string> = {
   'Password of the backup': 'Wachtwoord van de back-up',
   'Paste another share link': 'Plak een andere deellink',
   'Paste another share link (optional)': 'Plak een andere deellink (optioneel)',
-  'Pastel colors on a calm background: easy on the eyes.': 'Pastelkleuren op een rustige achtergrond: zacht voor de ogen.',
   Payments: 'Uitbetalingen',
   'Payments a year': 'Uitbetalingen per jaar',
   'Payouts count as profit.': 'Uitkeringen tellen als winst.',
@@ -230,12 +226,10 @@ export const part2: Record<string, string> = {
   'Sign out': 'Afmelden',
   'Signed in.': 'Aangemeld.',
   'Signed out.': 'Afgemeld.',
-  Simple: 'Eenvoudig',
   'Simple return': 'Eenvoudig rendement',
   'Since the first transaction': 'Sinds de eerste transactie',
   'Since the start': 'Sinds het begin',
   'Skipped {count} that were already stored.': '{count} overgeslagen die al bewaard waren.',
-  Soft: 'Zacht',
   'Solidarity contribution on gains from 2026. What you held on 31 December 2025 counts at its value of that day, or at its purchase price when that is higher (allowed for sales until 2030).':
     'Solidariteitsbijdrage op meerwaarden vanaf 2026. Wat je op 31 december 2025 had, telt aan de waarde van die dag, of aan de aankoopprijs als die hoger is (toegestaan voor verkopen tot 2030).',
   'Something went wrong on this page.': 'Er ging iets mis op deze pagina.',

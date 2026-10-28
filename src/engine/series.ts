@@ -115,7 +115,10 @@ export function computeDailySeries(
     })
   }
 
-  const twr = twrIndex(points)
+  // The time-weighted return is that of the securities alone: cash that waits to be invested earns
+  // nothing, so with it a deposit would pull the percentage down without a single price moving.
+  const securities = cashMode ? computeDailySeries(transactions, prices, { ...options, includeDeposits: false }, today).points : undefined
+  const twr = securities ? securities.map((p) => p.twr + 1) : twrIndex(points)
   const irr = irrSeries(points)
   points.forEach((point, i) => {
     point.twr = (twr[i] as number) - 1

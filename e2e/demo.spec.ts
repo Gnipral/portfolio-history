@@ -13,6 +13,8 @@ function watchErrors(page: Page): string[] {
 // The tests do not depend on the live price proxy, which only answers the app's own site: it answers here
 // as Yahoo does for a symbol without data.
 test.beforeEach(async ({ page }) => {
+  // The app starts in Dutch; most tests read the English texts.
+  await page.addInitScript(() => localStorage.setItem('portfolio-history:language', 'en'))
   await page.route('https://portfolio-history-price-proxy.tibo-dhave.workers.dev/**', (route) =>
     route.fulfill({
       status: 200,
@@ -67,9 +69,13 @@ test('the share card is drawn', async ({ page }) => {
 })
 
 test.describe('in Dutch', () => {
-  test.use({ locale: 'nl-BE' })
+  // No language chosen yet, in an English browser.
+  test.use({ locale: 'en-US' })
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.removeItem('portfolio-history:language'))
+  })
 
-  test('a Dutch browser gets the app in Dutch', async ({ page }) => {
+  test('the app starts in Dutch', async ({ page }) => {
     const errors = watchErrors(page)
     await page.goto('./')
     await page.getByRole('button', { name: 'Probeer de demo' }).first().click()
