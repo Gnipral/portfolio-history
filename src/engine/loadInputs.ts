@@ -4,14 +4,16 @@ import { FxRates } from '../market/fx.ts'
 import { PriceSeries } from '../market/priceCache.ts'
 import type { PricePoint } from '../market/types.ts'
 import type { Transaction } from '../model/transaction.ts'
+import { BaseFxRates, BaseRate, rebaseSeries, rebaseTransaction } from './baseCurrency.ts'
 import { PriceBook, type SplitAdjustment } from './priceBook.ts'
 
 export interface LoadedBenchmark {
   info: Benchmark
-  /** Closes in EUR. */
+  /** Closes in the base currency. */
   series: PriceSeries
 }
 
+/** Everything the engine needs, with all amounts in the base currency (the EUR field names stay). */
 export interface EngineInputs {
   transactions: Transaction[]
   prices: PriceBook
@@ -19,15 +21,19 @@ export interface EngineInputs {
   benchmarks: LoadedBenchmark[]
 }
 
-/** Reads everything the engine needs from IndexedDB in one go. */
-export async function loadEngineInputs(database: PortfolioDatabase, benchmarks: Benchmark[] = []): Promise<EngineInputs> {
-  const [transactions, symbolRecords, coverage, fxDays, splitRows] = await Promise.all([
+/** Reads everything the engine needs from IndexedDB in one go, converted to `base` (EUR by default). */
+export async function loadEngineInputs(database: PortfolioDatabase, benchmarks: Benchmark[] = [], base = 'EUR'): Promise<EngineInputs> {
+  const [stored, symbolRecords, coverage, fxDays, splitRows] = await Promise.all([
     database.transactions.toArray(),
     database.symbols.toArray(),
     database.coverage.toArray(),
     database.fxDays.toArray(),
     database.splits.toArray(),
   ])
+
+  const fx = new FxRates(fxDays)
+  const rate = new BaseRate(fx, fxDays, base)
+  const transactions = base === 'EUR' ? stored : stored.map((t) => rebaseTransaction(t, rate))
 
   const symbols = new Map(symbolRecords.flatMap((r) => (r.symbol ? [[r.key, r.symbol] as const] : [])))
   const wanted = [...new Set([...symbols.values(), ...benchmarks.map((b) => b.symbol)])]
@@ -48,7 +54,7 @@ export async function loadEngineInputs(database: PortfolioDatabase, benchmarks: 
       series: new Map([...bySymbol].map(([symbol, list]) => [symbol, PriceSeries.fromPoints(symbol, list)])),
       currencies: new Map(coverage.map((c) => [c.symbol, c.currency])),
       splits,
-      fx: new FxRates(fxDays),
+      fx: base === 'EUR' ? fx : new BaseFxRates(fxDays, rate),
     },
     transactions,
   )
@@ -57,7 +63,7 @@ export async function loadEngineInputs(database: PortfolioDatabase, benchmarks: 
     prices,
     benchmarks: benchmarks.flatMap((info) => {
       const list = bySymbol.get(info.symbol)
-      return list?.length ? [{ info, series: PriceSeries.fromPoints(info.symbol, list) }] : []
+      return list?.length ? [{ info, series: rebaseSeries(PriceSeries.fromPoints(info.symbol, list), rate) }] : []
     }),
   }
 }

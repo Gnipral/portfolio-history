@@ -5,11 +5,25 @@ export function formatDate(isoDate: string): string {
   return dateFormat.format(new Date(`${isoDate}T00:00:00Z`))
 }
 
-const eur = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 })
-const eurCompact = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+let currency = 'EUR'
+let eur = new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 2 })
+let eurCompact = new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 0 })
+
+/** The currency amounts are shown in: the base currency of the settings. */
+export function displayCurrency(): string {
+  return currency
+}
+
+/** Switches every formatted amount to another currency; called by the app when the base currency changes. */
+export function setDisplayCurrency(code: string): void {
+  if (code === currency) return
+  currency = code
+  eur = new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 2 })
+  eurCompact = new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 0 })
+}
 const percent = new Intl.NumberFormat('en-GB', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-/** `€1,234.56`; whole euros with `compact`. */
+/** `€1,234.56` in the display currency; whole units with `compact`. */
 export function formatEur(value: number, compact = false): string {
   return (compact ? eurCompact : eur).format(value)
 }

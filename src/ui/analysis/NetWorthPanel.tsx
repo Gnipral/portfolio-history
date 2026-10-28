@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { assetValueOn, OTHER_ASSET_KINDS, otherAssetsOn, withValue, type OtherAsset, type OtherAssetKind } from '../../engine/otherAssets.ts'
 import { localToday } from '../../market/dates.ts'
 import { updateSettings } from '../../settings/settings.ts'
-import { formatDate, formatEur } from '../format.ts'
+import { displayCurrency, formatDate, formatEur } from '../format.ts'
 
 function save(change: (assets: OtherAsset[]) => OtherAsset[]) {
   return updateSettings((current) => ({ otherAssets: change(current.otherAssets) }))
@@ -147,7 +147,7 @@ function AddAsset({ today, onDone }: { today: string; onDone: () => void }) {
           </select>
         </label>
         <label>
-          Value today (EUR)
+          Value today ({displayCurrency()})
           <input type="number" min={0} step="any" inputMode="decimal" value={value || ''} onChange={(e) => setValue(Number(e.target.value) || 0)} />
         </label>
         <label className="radio">

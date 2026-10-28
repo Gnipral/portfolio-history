@@ -3,7 +3,7 @@ import type { CapitalGainsResult, CapitalGainsYear } from './capitalGains.ts'
 import type { ChargesYear } from './charges.ts'
 import type { IncomeRow } from './income.ts'
 
-/** Everything about one calendar year that a tax return asks for, in EUR. */
+/** Everything about one calendar year that a tax return asks for, in the base currency. */
 export interface TaxReport {
   year: string
   /** The capital gains estimate of the year, when anything was sold under the rules. */
@@ -61,8 +61,8 @@ function csvCell(value: string | number): string {
  * The report as CSV with `;` between cells, which Excel in Belgium, the Netherlands and Germany opens in
  * columns. Amounts use a decimal point so every spreadsheet reads them as numbers when imported.
  */
-export function taxReportCsv(report: TaxReport): string {
-  const rows: (string | number)[][] = [[`Tax report ${report.year}`], ['All amounts in EUR'], []]
+export function taxReportCsv(report: TaxReport, currency = 'EUR'): string {
+  const rows: (string | number)[][] = [[`Tax report ${report.year}`], [`All amounts in ${currency}`], []]
   if (report.gains) {
     const g = report.gains
     rows.push(['Capital gains (estimate)'], ['Gains', 'Losses', 'Net', 'Earlier losses used', 'Exemption', 'Taxable', 'Estimated tax'])
