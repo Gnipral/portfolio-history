@@ -38,7 +38,9 @@ export interface PortfolioState {
 /** `assetClasses`: the types of asset to show, e.g. ETFs; empty shows everything. */
 export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly string[] = []): PortfolioState {
   const transactionCount = useLiveQuery(() => db.transactions.count())
-  const benchmarkId = useSettings()?.benchmarkId
+  const settings = useSettings()
+  const benchmarkId = settings?.benchmarkId
+  const baseCurrency = settings?.baseCurrency ?? 'EUR'
   const [inputs, setInputs] = useState<EngineInputs | null>(null)
   const [sync, setSync] = useState<SyncProgress | null>(null)
   const [syncProblems, setSyncProblems] = useState(0)
@@ -59,7 +61,7 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
     let cancelled = false
     let retry: ReturnType<typeof setTimeout> | undefined
     void (async () => {
-      const loaded = await loadEngineInputs(db, benchmarks)
+      const loaded = await loadEngineInputs(db, benchmarks, baseCurrency)
       if (cancelled) return
       setInputs(loaded)
       const today = localToday()
@@ -87,13 +89,13 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
         lastSyncKey = null
         retry = setTimeout(() => setAttempt((n) => n + 1), RETRY_MS)
       }
-      setInputs(await loadEngineInputs(db, benchmarks))
+      setInputs(await loadEngineInputs(db, benchmarks, baseCurrency))
     })()
     return () => {
       cancelled = true
       clearTimeout(retry)
     }
-  }, [transactionCount, benchmarkId, online, attempt])
+  }, [transactionCount, benchmarkId, baseCurrency, online, attempt])
 
   const filterKey = assetClasses.join('|')
   const filtered = filterKey !== ''
