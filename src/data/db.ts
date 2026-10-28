@@ -15,6 +15,13 @@ export interface ImportRecord {
   issues: ImportIssue[]
 }
 
+/** A key that must not leave the browser, such as the encryption key of the account. */
+export interface Secret {
+  id: string
+  key: CryptoKey
+  salt: Uint8Array<ArrayBuffer>
+}
+
 /** Small key/value records such as the time of the last FX check. */
 export interface KeyValue {
   key: string
@@ -30,6 +37,7 @@ export class PortfolioDatabase extends Dexie {
   splits!: EntityTable<SplitEvent, 'id'>
   kv!: EntityTable<KeyValue, 'key'>
   symbols!: EntityTable<SymbolRecord, 'key'>
+  secrets!: EntityTable<Secret, 'id'>
 
   constructor(name = 'portfolio-history') {
     super(name)
@@ -53,6 +61,9 @@ export class PortfolioDatabase extends Dexie {
     this.version(4)
       .stores({})
       .upgrade((tx) => tx.table('coverage').clear())
+    this.version(5).stores({
+      secrets: 'id',
+    })
   }
 }
 

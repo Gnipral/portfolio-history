@@ -10,6 +10,19 @@ function watchErrors(page: Page): string[] {
   return errors
 }
 
+// The tests do not depend on the live price proxy, which only answers the app's own site: it answers here
+// as Yahoo does for a symbol without data.
+test.beforeEach(async ({ page }) => {
+  await page.route('https://portfolio-history-price-proxy.tibo-dhave.workers.dev/**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ chart: { result: null, error: { code: 'Not Found', description: 'No data found' } } }),
+    }),
+  )
+})
+
 async function openDemo(page: Page) {
   await page.goto('./')
   await page.getByRole('button', { name: 'Try the demo' }).first().click()
