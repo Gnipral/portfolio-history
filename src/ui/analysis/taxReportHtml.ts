@@ -1,5 +1,5 @@
 import { incomeSummary, type TaxReport } from '../../engine/analysis/taxReport.ts'
-import { formatDate, formatEur } from '../format.ts'
+import { displayCurrency, formatDate, formatEur } from '../format.ts'
 
 const KIND_LABELS = { dividend: 'Dividends', interest: 'Interest', bonus: 'Bonuses and rewards' } as const
 
@@ -16,7 +16,7 @@ function table(headers: string[], rows: string[][], numericFrom: number): string
 
 /** A standalone page with the report, to print or save as PDF from the browser. */
 export function taxReportHtml(report: TaxReport, rulesLabel: string, generatedOn: string): string {
-  const parts: string[] = [`<h1>Tax report ${escape(report.year)}</h1>`, `<p class="muted">Portfolio History · made on ${escape(formatDate(generatedOn))} · all amounts in EUR</p>`]
+  const parts: string[] = [`<h1>Tax report ${escape(report.year)}</h1>`, `<p class="muted">Portfolio History · made on ${escape(formatDate(generatedOn))} · all amounts in ${escape(displayCurrency())}</p>`]
   const g = report.gains
   if (g) {
     parts.push(

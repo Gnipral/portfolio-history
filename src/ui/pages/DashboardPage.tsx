@@ -25,7 +25,7 @@ import { ToggleBar } from '../dashboard/ToggleBar.tsx'
 import { engineOptions, toggleStates } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
 import { DEFAULT_SETTINGS, saveSettings, updateSettings, useSettings } from '../../settings/settings.ts'
-import { formatPercent, formatSignedEur, trendClass } from '../format.ts'
+import { displayCurrency, formatPercent, formatSignedEur, trendClass } from '../format.ts'
 
 // The chart libraries are large; load them only when the dashboard shows data.
 const PortfolioChart = lazy(() => import('../dashboard/PortfolioChart.tsx').then((m) => ({ default: m.PortfolioChart })))
@@ -127,7 +127,7 @@ export function DashboardPage() {
         )}
         <div className="segmented" role="group" aria-label="Chart unit">
           <button type="button" aria-pressed={mode === 'eur'} onClick={() => setMode('eur')}>
-            EUR
+            {displayCurrency()}
           </button>
           <button type="button" aria-pressed={mode === 'percent'} onClick={() => setMode('percent')}>
             %

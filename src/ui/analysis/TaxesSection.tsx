@@ -4,7 +4,7 @@ import { chargesByYear } from '../../engine/analysis/charges.ts'
 import { incomeRows } from '../../engine/analysis/income.ts'
 import type { EngineInputs } from '../../engine/loadInputs.ts'
 import { localToday } from '../../market/dates.ts'
-import { formatDate, formatEur, formatPercent, formatSignedEur, trendClass } from '../format.ts'
+import { displayCurrency, formatDate, formatEur, formatPercent, formatSignedEur, trendClass } from '../format.ts'
 import { SalesTable } from './SalesTable.tsx'
 import { TaxReportPanel } from './TaxReportPanel.tsx'
 import { TaxRulesForm } from './TaxRulesForm.tsx'
@@ -95,6 +95,12 @@ export function TaxesSection({ inputs, rules, onRulesChange }: Props) {
 
       <div className="panel">
         <h3>Tax on capital gains (estimate)</h3>
+        {displayCurrency() !== 'EUR' && (
+          <p className="callout warning small">
+            Amounts are in {displayCurrency()}. The tax rules below count in EUR: switch the currency back to EUR in Settings for
+            a tax estimate.
+          </p>
+        )}
         <TaxRulesForm rules={rules} onChange={onRulesChange} />
         <p className="muted small">{describe(rules)}</p>
         {gains.years.length === 0 ? (

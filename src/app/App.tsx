@@ -1,9 +1,11 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router'
+import { useSettings } from '../settings/settings.ts'
 import { DemoBanner } from '../ui/components/DemoBanner.tsx'
 import { NavIcon } from '../ui/components/NavIcon.tsx'
 import { OfflineBadge } from '../ui/components/OfflineBadge.tsx'
 import { ThemeToggle } from '../ui/components/ThemeToggle.tsx'
 import { UpdateBanner } from '../ui/components/UpdateBanner.tsx'
+import { setDisplayCurrency } from '../ui/format.ts'
 import { AnalysisPage } from '../ui/pages/AnalysisPage.tsx'
 import { DashboardPage } from '../ui/pages/DashboardPage.tsx'
 import { ImportPage } from '../ui/pages/ImportPage.tsx'
@@ -13,6 +15,8 @@ import { SharedCardPage } from '../ui/pages/SharedCardPage.tsx'
 import { TransactionsPage } from '../ui/pages/TransactionsPage.tsx'
 
 export function App() {
+  // Set while rendering, before any page below formats an amount.
+  setDisplayCurrency(useSettings()?.baseCurrency ?? 'EUR')
   return (
     <>
       <UpdateBanner />
