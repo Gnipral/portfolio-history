@@ -23,9 +23,20 @@ export interface ThemeColors {
   }
 }
 
+/**
+ * A color as six-digit hex where it was a short one. The production build shortens #000000 to #000,
+ * and the charts add transparency by appending two digits (#00000040): on #000 that is no color.
+ */
+export function fullHex(color: string): string {
+  const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])?$/i.exec(color)
+  if (!short) return color
+  const [, r, g, b, a] = short
+  return `#${r}${r}${g}${g}${b}${b}${a ? a + a : ''}`
+}
+
 function read(element?: Element | null): ThemeColors {
   const style = getComputedStyle(element ?? document.documentElement)
-  const v = (name: string) => style.getPropertyValue(name).trim()
+  const v = (name: string) => fullHex(style.getPropertyValue(name).trim())
   return {
     bg: v('--bg'),
     surface: v('--surface'),
