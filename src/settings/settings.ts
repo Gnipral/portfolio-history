@@ -16,6 +16,16 @@ export interface ChartStyle {
   log: boolean
 }
 
+/** A period of the history saved under a name, to open again later. */
+export interface NamedPeriod {
+  id: string
+  name: string
+  /** First day, `YYYY-MM-DD`. */
+  from: string
+  /** Last day; null: up to today, so the period grows along. */
+  to: string | null
+}
+
 export const DEFAULT_CHART_STYLE: ChartStyle = { fill: true, invested: true, profitPane: true, log: false }
 
 /** Stored only in this browser's IndexedDB. */
@@ -38,6 +48,8 @@ export interface Settings {
   /** Rules of the capital gains tax estimate: a country's preset, possibly adjusted. */
   taxRules: CapitalGainsRules
   chartStyle: ChartStyle
+  /** Saved periods, oldest saved first. */
+  periods: NamedPeriod[]
 }
 
 /** Settings edited as text in the settings form. */
@@ -60,6 +72,7 @@ export const DEFAULT_SETTINGS: Settings = {
   toggles: defaultToggles,
   taxRules: DEFAULT_TAX_RULES,
   chartStyle: DEFAULT_CHART_STYLE,
+  periods: [],
 }
 
 const SETTINGS_KEY = 'settings'

@@ -2,7 +2,8 @@ import { RANGES, type RangeKey, type VisibleRange } from './timeRange.ts'
 
 interface Props {
   dates: string[]
-  range: RangeKey
+  /** Null while a saved period is open: then no quick range is pressed. */
+  range: RangeKey | null
   visible: VisibleRange
   selected: number
   onRange: (range: RangeKey) => void

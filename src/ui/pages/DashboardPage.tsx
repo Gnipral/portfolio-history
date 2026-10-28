@@ -19,7 +19,8 @@ import { profitPeriods } from '../dashboard/profit.ts'
 import { ProfitOverview } from '../dashboard/ProfitOverview.tsx'
 import { SummaryCards } from '../dashboard/SummaryCards.tsx'
 import { TimeControls } from '../dashboard/TimeControls.tsx'
-import { clampIndex, rangeChange, visibleRange, type RangeKey } from '../dashboard/timeRange.ts'
+import { PeriodBar } from '../dashboard/PeriodBar.tsx'
+import { clampIndex, periodRange, rangeChange, visibleRange, type RangeKey } from '../dashboard/timeRange.ts'
 import { ToggleBar } from '../dashboard/ToggleBar.tsx'
 import { engineOptions, toggleStates } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
@@ -54,7 +55,9 @@ export function DashboardPage() {
 
   const points = useMemo(() => series?.points ?? [], [series])
   const dates = useMemo(() => points.map((p) => p.date), [points])
-  const visible = useMemo(() => visibleRange(points, range), [points, range])
+  const [periodId, setPeriodId] = useState<string | null>(null)
+  const period = settings.periods.find((p) => p.id === periodId) ?? null
+  const visible = useMemo(() => (period ? periodRange(points, period) : visibleRange(points, range)), [points, range, period])
   const selected = clampIndex(selectedIndex, visible)
   const point = points[selected]
   const change = rangeChange(points, visible.from, visible.to)
@@ -149,14 +152,35 @@ export function DashboardPage() {
         <>
           <TimeControls
             dates={dates}
-            range={range}
+            range={period ? null : range}
             visible={visible}
             selected={selected}
             onRange={(next) => {
               setRange(next)
+              setPeriodId(null)
               setSelectedIndex(null)
             }}
             onSelect={setSelectedIndex}
+          />
+          <PeriodBar
+            periods={settings.periods}
+            openId={periodId}
+            // The shown range up to the selected day; up to today stays open-ended.
+            current={{ from: dates[visible.from] ?? point.date, to: selected === dates.length - 1 ? null : point.date }}
+            onOpen={(id) => {
+              setPeriodId(id)
+              setSelectedIndex(null)
+            }}
+            onSave={(saved) => {
+              const id = crypto.randomUUID()
+              void updateSettings((current) => ({ periods: [...current.periods, { id, ...saved }] }))
+              setPeriodId(id)
+              setSelectedIndex(null)
+            }}
+            onRemove={(id) => {
+              void updateSettings((current) => ({ periods: current.periods.filter((p) => p.id !== id) }))
+              if (id === periodId) setPeriodId(null)
+            }}
           />
           <ToggleBar
             states={toggles}
@@ -187,7 +211,7 @@ export function DashboardPage() {
               }}
             />
             <p className="muted small">
-              {range === 'ALL' ? 'Since the first transaction' : `Last ${range === 'YTD' ? 'year to date' : range}`}:{' '}
+              {period ? period.name : range === 'ALL' ? 'Since the first transaction' : `Last ${range === 'YTD' ? 'year to date' : range}`}:{' '}
               <span className={trendClass(change.pnl)}>{formatSignedEur(change.pnl)}</span>, time-weighted{' '}
               <span className={trendClass(change.twr)}>{formatPercent(change.twr)}</span>
               {benchmarks.map((line) => {
