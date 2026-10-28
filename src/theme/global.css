@@ -2117,3 +2117,14 @@ progress {
 .legend-dot.series-7 {
   color: var(--series-7);
 }
+
+.inline-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inline-form input {
+  width: 8rem;
+  text-align: right;
+}
