@@ -40,6 +40,38 @@ interface Props {
   onStyleChange?: (change: Partial<ChartStyle>) => void
 }
 
+/** A name and value next to a line, at the selected day. */
+interface PointLabel {
+  key: string
+  /** Pixels from the top of the chart. */
+  y: number
+  pane: 0 | 1
+  color: string
+  text: string
+  x?: number
+  left?: number
+  top?: number
+  /** Near the right edge: the label goes left of the point. */
+  flip?: boolean
+}
+
+/** Height a label needs, so two lines close together get labels that do not cover each other. */
+const LABEL_HEIGHT = 20
+
+/** Pushes labels of the same pane apart, from the top down, keeping their order. */
+export function spreadLabels(labels: PointLabel[]): PointLabel[] {
+  const out: PointLabel[] = []
+  for (const pane of [0, 1] as const) {
+    let below = -Infinity
+    for (const label of labels.filter((l) => l.pane === pane).sort((a, b) => a.y - b.y)) {
+      const y = Math.max(label.y, below)
+      out.push({ ...label, y })
+      below = y + LABEL_HEIGHT
+    }
+  }
+  return out
+}
+
 interface ChartRefs {
   chart: IChartApi
   main: ISeriesApi<'Area'>
@@ -49,8 +81,6 @@ interface ChartRefs {
   pnl: ISeriesApi<'Baseline'> | null
   /** The 0 line: on the profit in EUR, on the return in percent; none in EUR without the profit pane. */
   zero: { line: IPriceLine; on: ISeriesApi<'Area'> | ISeriesApi<'Baseline'> } | null
-  /** The labels on the price axis: the value of each line on the day under the pointer, not on the last day. */
-  labels: { line: IPriceLine; on: ISeriesApi<'Area'> | ISeriesApi<'Line'> | ISeriesApi<'Baseline'> }[]
 }
 
 function pnlColors({ chart }: ReturnType<typeof useThemeColors>) {
@@ -206,12 +236,12 @@ export function PortfolioChart({
       timeScale: { borderVisible: false, ...ZOOM_TIME_SCALE },
       ...ZOOM_OPTIONS,
     })
-    // No labels of the last value: the labels effect below puts those of the selected day on the axis.
+    // No labels of the last value on the axis: the point labels next to the lines show the selected day.
     const main = chart.addSeries(AreaSeries, { lineWidth: 3, priceLineVisible: false, lastValueVisible: false })
     // Room under the value for the divider label.
     main.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.12 } })
     const secondary = chart.addSeries(LineSeries, { lineWidth: 2, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
-    refs.current = { chart, main, secondary, benchmarks: [], pnl: null, zero: null, labels: [] }
+    refs.current = { chart, main, secondary, benchmarks: [], pnl: null, zero: null }
     // A new size (full screen, rotation): refit the days to the width and grow the profit pane along.
     const resize =
       typeof ResizeObserver === 'undefined'
@@ -221,6 +251,7 @@ export function PortfolioChart({
             if (r?.pnl) r.chart.panes()[1]?.setHeight(profitHeight(container.current?.clientHeight ?? 0))
             chart.timeScale().fitContent()
             requestAnimationFrame(measurePanes)
+            requestAnimationFrame(() => placeLabels.current())
           })
     resize?.observe(container.current)
 
@@ -233,6 +264,7 @@ export function PortfolioChart({
     const handleRange = (range: LogicalRange | null) => {
       const days = refs.current?.main.data().length ?? 0
       setZoomed(range !== null && days > 1 && (range.from > 0.5 || range.to < days - 1.5))
+      requestAnimationFrame(() => placeLabels.current())
     }
     chart.timeScale().subscribeVisibleLogicalRangeChange(handleRange)
     return () => {
@@ -329,35 +361,47 @@ export function PortfolioChart({
     if (r && point) r.chart.setCrosshairPosition(point.value, point.time, r.main)
   }, [data, selected, from])
 
-  // The labels on the price axis show the day under the pointer (the last day when there is none), with the
-  // name of each line next to its value: every figure on the chart follows the same day.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the lines are redrawn with the data, mode and style, which this follows
-  useEffect(() => {
+  // Next to each line, at the day under the pointer (the last day without one): its name and value, so the
+  // figures move along with the point. Placed from the chart's own coordinates, again whenever they change.
+  const [pointLabels, setPointLabels] = useState<PointLabel[]>([])
+  const placeLabels = useRef<() => void>(() => {})
+  placeLabels.current = () => {
     const r = refs.current
-    if (!r) return
-    for (const { line, on } of r.labels) {
-      try {
-        on.removePriceLine(line)
-      } catch {
-        // Its line was removed with the data (a benchmark switched off, or the profit pane): the label went too.
-      }
+    const element = container.current
+    const time = data.main[selected - from]?.time
+    const x = r && element && time !== undefined ? r.chart.timeScale().timeToCoordinate(time) : null
+    if (!r || !element || x === null) {
+      setPointLabels([])
+      return
     }
-    r.labels = []
     const i = selected - from
-    const label = (on: ISeriesApi<'Area'> | ISeriesApi<'Line'> | ISeriesApi<'Baseline'>, value: number | undefined, color: string, title: string) => {
+    const format = mode === 'percent' ? (v: number) => `${v.toFixed(1)}%` : (v: number) => formatEur(v, true)
+    // The profit pane sits under the value pane and the 1px separator between them.
+    const profitTop = (r.chart.panes()[0]?.getHeight() ?? 0) + 1
+    const labels: PointLabel[] = []
+    const add = (series: ISeriesApi<'Area'> | ISeriesApi<'Line'> | ISeriesApi<'Baseline'>, value: number | undefined, color: string, name: string, pane: 0 | 1) => {
       if (value === undefined) return
-      r.labels.push({ on, line: on.createPriceLine({ price: value, color, lineVisible: false, axisLabelVisible: true, title }) })
+      const y = series.priceToCoordinate(value)
+      if (y === null) return
+      labels.push({ key: `${pane}:${name}`, y: (pane === 1 ? profitTop : 0) + y, pane, color, text: `${name} ${format(value)}` })
     }
-    label(r.main, data.main[i]?.value, colors.chart.value, t('Value'))
-    if (chartStyle.invested && mode === 'eur') label(r.secondary, data.secondary[i]?.value, colors.chart.invested, t('Invested'))
+    add(r.main, data.main[i]?.value, colors.chart.value, t('Value'), 0)
+    if (chartStyle.invested && mode === 'eur') add(r.secondary, data.secondary[i]?.value, colors.chart.invested, t('Invested'), 0)
     r.benchmarks.forEach((line, k) => {
-      label(line, data.benchmarks[k]?.[i]?.value, cssColor(benchmarksRef.current[k]?.color, wrapper.current), benchmarksRef.current[k]?.label ?? '')
+      add(line, data.benchmarks[k]?.[i]?.value, cssColor(benchmarksRef.current[k]?.color, wrapper.current), benchmarksRef.current[k]?.label ?? '', 0)
     })
     if (r.pnl) {
       const profit = data.pnl[i]?.value
-      label(r.pnl, profit, (profit ?? 0) < 0 ? colors.chart.negative : colors.chart.positive, t('Profit'))
+      add(r.pnl, profit, (profit ?? 0) < 0 ? colors.chart.negative : colors.chart.positive, t('Profit'), 1)
     }
-  }, [data, selected, from, mode, colors, chartStyle.invested, chartStyle.profitPane])
+    setPointLabels(spreadLabels(labels).map((l) => ({ ...l, x, left: element.offsetLeft, top: element.offsetTop, flip: x > element.clientWidth * 0.62 })))
+  }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: placed again when anything that moves the lines changes
+  useEffect(() => {
+    // After the chart has drawn the new data: its coordinates are ready on the next frame.
+    const frame = requestAnimationFrame(() => placeLabels.current())
+    return () => cancelAnimationFrame(frame)
+  }, [data, selected, from, mode, colors, chartStyle.invested, chartStyle.profitPane, chartStyle.log, expanded])
 
   const point = points[selected]
   const benchmarkLegend = benchmarks.map((b, i) => ({
@@ -451,6 +495,16 @@ export function PortfolioChart({
         </div>
       )}
       <div ref={container} className="chart" data-testid="portfolio-chart" />
+      {pointLabels.map((label) => (
+        <span
+          key={label.key}
+          className={`point-label${label.flip ? ' flip' : ''}`}
+          style={{ left: (label.left ?? 0) + (label.x ?? 0), top: (label.top ?? 0) + label.y, background: label.color }}
+          aria-hidden="true"
+        >
+          {label.text}
+        </span>
+      ))}
     </div>
   )
 }
