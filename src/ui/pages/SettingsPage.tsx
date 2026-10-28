@@ -21,6 +21,7 @@ import {
 } from '../../theme/theme.ts'
 import { resetSyncSession } from '../dashboard/usePortfolio.ts'
 import { LANGUAGES, language, setLanguage, t, type Language } from '../../i18n/i18n.ts'
+import { Rich } from '../../i18n/Rich.tsx'
 
 const COST_BASIS: { value: CostBasisMethod; label: string; hint: string }[] = [
   { value: 'average', label: t('Average cost'), hint: t('Every unit costs the average purchase price (as most brokers show it).') },
@@ -358,6 +359,12 @@ export function SettingsPage() {
           )}
         </fieldset>
       </div>
+      <p className="muted small credits">
+        <Rich
+          text={t('Charts made with <link>TradingView Lightweight Charts</link>.')}
+          tags={{ link: (s) => <a href="https://www.tradingview.com/" target="_blank" rel="noreferrer">{s}</a> }}
+        />
+      </p>
     </section>
   )
 }
