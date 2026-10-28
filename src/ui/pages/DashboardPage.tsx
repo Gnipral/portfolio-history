@@ -6,6 +6,8 @@ import { positionSeries } from '../../engine/analysis/positionSeries.ts'
 import { db } from '../../data/db.ts'
 import { positionsOn } from '../../engine/positions.ts'
 import { allocationSlices, colorSlots, DIMENSIONS, groupedSlices, instrumentFacts, type AllocationDimension } from '../dashboard/allocation.ts'
+import { AssetFilter } from '../dashboard/AssetFilter.tsx'
+import { assetClassesOf } from '../dashboard/assetClasses.ts'
 import { BenchmarkPicker } from '../dashboard/BenchmarkPicker.tsx'
 import { ConnectionNotice } from '../dashboard/ConnectionNotice.tsx'
 import { benchmarkLines } from '../dashboard/benchmarkLines.ts'
@@ -33,9 +35,14 @@ export function DashboardPage() {
   const settings = useSettings() ?? DEFAULT_SETTINGS
   const importRecord = useLiveQuery(() => db.imports.get('current'))
   const capabilities = importRecord?.capabilities
-  const options = useMemo(() => engineOptions(settings, capabilities), [settings, capabilities])
+  const baseOptions = useMemo(() => engineOptions(settings, capabilities), [settings, capabilities])
   const toggles = toggleStates(settings.toggles, capabilities, importRecord?.missingReasons)
-  const { transactionCount, inputs, series, sync, syncProblems, slowConnection, online } = usePortfolio(options)
+  const [assetClasses, setAssetClasses] = useState<string[]>([])
+  const { transactionCount, allInputs, inputs, options, series, sync, syncProblems, slowConnection, online } = usePortfolio(
+    baseOptions,
+    assetClasses,
+  )
+  const classes = useMemo(() => assetClassesOf(allInputs?.transactions ?? []), [allInputs])
   const [range, setRange] = useState<RangeKey>('ALL')
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [mode, setMode] = useState<ChartMode>('eur')
@@ -59,7 +66,8 @@ export function DashboardPage() {
     () => benchmarkLines(points, inputs?.benchmarks ?? [], { benchmarkId, extraBenchmarkIds, benchmarkMix, benchmarkMixShown }),
     [inputs, points, benchmarkId, extraBenchmarkIds, benchmarkMix, benchmarkMixShown],
   )
-  const slots = useMemo(() => colorSlots(inputs?.transactions ?? []), [inputs])
+  // Colors from everything ever held, so a position keeps its color with a filter on.
+  const slots = useMemo(() => colorSlots(allInputs?.transactions ?? []), [allInputs])
   const facts = useMemo(() => instrumentFacts(inputs?.transactions ?? []), [inputs])
   const slices = useMemo(
     () => (dimension === 'position' ? allocationSlices(positions, slots) : groupedSlices(positions, dimension, facts)),
@@ -166,6 +174,14 @@ export function DashboardPage() {
             />
           </Suspense>
           <BenchmarkPicker settings={settings} lines={benchmarks} onChange={(change) => void updateSettings(change)} />
+          <AssetFilter
+            classes={classes}
+            chosen={assetClasses}
+            onChange={(next) => {
+              setAssetClasses(next)
+              setPositionKey(null)
+            }}
+          />
           <p className="muted small">
             {range === 'ALL' ? 'Since the first transaction' : `Last ${range === 'YTD' ? 'year to date' : range}`}:{' '}
             <span className={trendClass(change.pnl)}>{formatSignedEur(change.pnl)}</span>, time-weighted{' '}

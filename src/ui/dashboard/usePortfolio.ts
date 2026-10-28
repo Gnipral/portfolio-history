@@ -9,6 +9,7 @@ import { syncMarketData, type SyncProgress } from '../../market/sync.ts'
 import { BENCHMARKS, DEFAULT_BENCHMARK_ID } from '../../market/benchmarks.ts'
 import { loadSettings, useSettings } from '../../settings/settings.ts'
 import { useOnline } from '../useOnline.ts'
+import { filterByAssetClass } from './assetClasses.ts'
 
 /** Prices are brought up to date once per day, import and benchmark per session, not on every visit of the page. */
 let lastSyncKey: string | null = null
@@ -19,7 +20,12 @@ export const RETRY_MS = 60_000
 export interface PortfolioState {
   /** undefined while loading, 0 when nothing is imported. */
   transactionCount: number | undefined
+  /** Everything loaded, whatever the filter: for what must not change with it, such as colors. */
+  allInputs: EngineInputs | null
+  /** What the dashboard shows: only the chosen types of asset when filtered. */
   inputs: EngineInputs | null
+  /** The engine options for `inputs`: securities only when filtered. */
+  options: EngineOptions
   series: SeriesResult | null
   sync: SyncProgress | null
   /** Instruments with a problem of their own; not those that only failed on the connection. */
@@ -29,7 +35,8 @@ export interface PortfolioState {
   online: boolean
 }
 
-export function usePortfolio(options: EngineOptions): PortfolioState {
+/** `assetClasses`: the types of asset to show, e.g. ETFs; empty shows everything. */
+export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly string[] = []): PortfolioState {
   const transactionCount = useLiveQuery(() => db.transactions.count())
   const benchmarkId = useSettings()?.benchmarkId
   const [inputs, setInputs] = useState<EngineInputs | null>(null)
@@ -88,12 +95,20 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
     }
   }, [transactionCount, benchmarkId, online, attempt])
 
+  const filterKey = assetClasses.join('|')
+  const filtered = filterKey !== ''
+  // Cash belongs to no type of asset: a filtered view is securities only.
+  const options = useMemo(() => (filtered ? { ...baseOptions, includeDeposits: false } : baseOptions), [baseOptions, filtered])
+  const view = useMemo(
+    () => (inputs && filtered ? { ...inputs, transactions: filterByAssetClass(inputs.transactions, filterKey.split('|')) } : inputs),
+    [inputs, filtered, filterKey],
+  )
   const series = useMemo(
-    () => (inputs ? computeDailySeries(inputs.transactions, inputs.prices, options, localToday()) : null),
-    [inputs, options],
+    () => (view && view.transactions.length > 0 ? computeDailySeries(view.transactions, view.prices, options, localToday()) : null),
+    [view, options],
   )
 
-  return { transactionCount, inputs, series, sync, syncProblems, slowConnection, online }
+  return { transactionCount, allInputs: inputs, inputs: view, options, series, sync, syncProblems, slowConnection, online }
 }
 
 /** Lets tests start from a clean state. */
