@@ -1,0 +1,18 @@
+# Weekly updates, grouped so they come as one pull request per ecosystem. The actions are pinned to a
+# commit; Dependabot moves the pin and its version comment together.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+  - package-ecosystem: npm
+    directories: ['/', '/workers/account']
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]

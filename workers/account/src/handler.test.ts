@@ -160,3 +160,18 @@ describe('simpleWebAuthn', () => {
     expect(await simpleWebAuthn.verifyRegistration({ response: { id: 'x' }, challenge: 'c', origin: ORIGIN, rpID: 'gnipral.github.io' })).toBeNull()
   })
 })
+
+describe('rate limit', () => {
+  it('refuses passkey requests beyond the limit of an address, and leaves the rest alone', async () => {
+    let left = 2
+    const handle = createHandler({ store: new MemoryStore(), passkeys: fakePasskeys, allow: async () => left-- > 0 })
+    const post = (path: string) =>
+      handle(new Request(`https://account.example${path}`, { method: 'POST', headers: { Origin: ORIGIN, 'CF-Connecting-IP': '203.0.113.7' }, body: '{}' }), ALLOWED)
+    expect((await post('/login/options')).status).toBe(200)
+    expect((await post('/login/options')).status).toBe(200)
+    const refused = await post('/register/options')
+    expect(refused.status).toBe(429)
+    expect(await refused.json()).toEqual({ error: 'Too many attempts: wait a minute' })
+    expect((await post('/me')).status).toBe(404)
+  })
+})
