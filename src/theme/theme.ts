@@ -50,8 +50,8 @@ export const PALETTES: { id: Palette; label: string; description: string; swatch
   {
     id: 'colorblind',
     label: 'Colour-blind friendly',
-    description: 'Blue for gains, orange for losses, purple for the value: apart with red-green colour blindness.',
-    swatches: ['#10131a', '#d896ff', '#4fb3ff', '#ff9f1c', '#2bd9a6'],
+    description: 'Blue for gains, orange for losses, and every line clearly apart with red-green and blue-yellow colour blindness.',
+    swatches: ['#10131a', '#eedd88', '#4fb3ff', '#ff9f1c', '#66ccee'],
   },
   {
     id: 'high-contrast',
