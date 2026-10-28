@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { deleteAllData } from '../../data/portfolio.ts'
 import { isDemo } from '../../demo/demoMode.ts'
 import { AccountSection } from '../components/AccountSection.tsx'
+import { BackupSection } from '../components/BackupSection.tsx'
 import { DemoButton } from '../components/DemoBanner.tsx'
 import { BASE_CURRENCIES, type BaseCurrency } from '../../engine/baseCurrency.ts'
 import type { CostBasisMethod } from '../../engine/options.ts'
@@ -252,6 +253,8 @@ export function SettingsPage() {
             ))}
           </div>
         </fieldset>
+
+        {!isDemo() && <BackupSection />}
 
         <AccountSection />
 
