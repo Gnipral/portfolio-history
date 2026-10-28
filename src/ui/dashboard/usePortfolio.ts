@@ -6,7 +6,7 @@ import type { EngineOptions } from '../../engine/options.ts'
 import { computeDailySeries, type SeriesResult } from '../../engine/series.ts'
 import { localToday } from '../../market/dates.ts'
 import { syncMarketData, type SyncProgress } from '../../market/sync.ts'
-import { BENCHMARKS, DEFAULT_BENCHMARK_ID } from '../../market/benchmarks.ts'
+import { benchmarkCatalog, DEFAULT_BENCHMARK_ID, type Benchmark } from '../../market/benchmarks.ts'
 import { loadSettings, useSettings } from '../../settings/settings.ts'
 import { setDisplayCurrency } from '../format.ts'
 import { useOnline } from '../useOnline.ts'
@@ -45,6 +45,8 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
   const settings = useSettings()
   const benchmarkId = settings?.benchmarkId
   const baseCurrency = settings?.baseCurrency ?? 'EUR'
+  // Stocks added to compare with: a new one is loaded and its prices fetched right away.
+  const customKey = JSON.stringify(settings?.customBenchmarks ?? [])
   const [loaded, setInputs] = useState<EngineInputs | null>(null)
   const [sync, setSync] = useState<SyncProgress | null>(null)
   const [syncProblems, setSyncProblems] = useState(0)
@@ -61,8 +63,9 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
       return
     }
     // Every benchmark is loaded: they are small, and the dashboard can show several or a mix.
-    const main = BENCHMARKS.find((b) => b.id === benchmarkId) ?? BENCHMARKS.find((b) => b.id === DEFAULT_BENCHMARK_ID)
-    const benchmarks = [...(main ? [main] : []), ...BENCHMARKS.filter((b) => b !== main)]
+    const catalog = benchmarkCatalog(JSON.parse(customKey) as Benchmark[])
+    const main = catalog.find((b) => b.id === benchmarkId) ?? catalog.find((b) => b.id === DEFAULT_BENCHMARK_ID)
+    const benchmarks = [...(main ? [main] : []), ...catalog.filter((b) => b !== main)]
     let cancelled = false
     let retry: ReturnType<typeof setTimeout> | undefined
     void (async () => {
@@ -70,7 +73,7 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
       if (cancelled) return
       setInputs(loaded)
       const today = localToday()
-      const syncKey = `${today}:${transactionCount}:${benchmarkId}`
+      const syncKey = `${today}:${transactionCount}:${benchmarkId}:${customKey}`
       // Offline: show what is stored and sync as soon as the connection is back.
       if (!online || lastSyncKey === syncKey) return
       lastSyncKey = syncKey
@@ -80,7 +83,7 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
         settings: await loadSettings(),
         today,
         now: new Date(),
-        benchmarkIds: benchmarks.map((b) => b.id),
+        benchmarks,
         onProgress: (progress) => {
           if (!cancelled) setSync(progress)
         },
@@ -100,7 +103,7 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
       cancelled = true
       clearTimeout(retry)
     }
-  }, [transactionCount, benchmarkId, baseCurrency, online, attempt])
+  }, [transactionCount, benchmarkId, customKey, baseCurrency, online, attempt])
 
   // Products switched off on the Prices page count nowhere: not in the figures, the chart or the analysis.
   const excludedKey = (settings?.excludedInstruments ?? []).join('|')

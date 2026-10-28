@@ -9,11 +9,12 @@ import { positionsOn } from '../../engine/positions.ts'
 import { allocationSlices, colorSlots, DIMENSIONS, groupedSlices, instrumentFacts, type AllocationDimension } from '../dashboard/allocation.ts'
 import { AssetFilter } from '../dashboard/AssetFilter.tsx'
 import { assetClassesOf } from '../dashboard/assetClasses.ts'
-import { BenchmarkPicker } from '../dashboard/BenchmarkPicker.tsx'
+import { BenchmarkPicker, type BenchmarkChoice } from '../dashboard/BenchmarkPicker.tsx'
+import { benchmarkCatalog } from '../../market/benchmarks.ts'
 import { ConnectionNotice } from '../dashboard/ConnectionNotice.tsx'
 import { CurrencyNotice } from '../dashboard/CurrencyNotice.tsx'
 import { MissingHistoryNotice } from '../dashboard/MissingHistoryNotice.tsx'
-import { benchmarkLines } from '../dashboard/benchmarkLines.ts'
+import { benchmarkLines, toggleBenchmark } from '../dashboard/benchmarkLines.ts'
 import { localToday } from '../../market/dates.ts'
 import type { ChartMode } from '../dashboard/chartData.ts'
 import { PositionsTable } from '../dashboard/PositionsTable.tsx'
@@ -72,7 +73,11 @@ export function DashboardPage() {
     () => (inputs && selectedDate ? positionsOn(inputs.transactions, inputs.prices, options, selectedDate) : []),
     [inputs, options, selectedDate],
   )
-  const { benchmarkId, extraBenchmarkIds, benchmarkMix, benchmarkMixShown } = settings
+  // The chart compares with the default of the settings, or for now with another choice made under it.
+  const [chartChoice, setChartChoice] = useState<BenchmarkChoice | null>(null)
+  const choice: BenchmarkChoice = chartChoice ?? settings
+  const { benchmarkId, extraBenchmarkIds, benchmarkMix, benchmarkMixShown } = choice
+  const catalog = useMemo(() => benchmarkCatalog(settings.customBenchmarks), [settings.customBenchmarks])
   const benchmarks = useMemo(
     () => benchmarkLines(points, inputs?.benchmarks ?? [], { benchmarkId, extraBenchmarkIds, benchmarkMix, benchmarkMixShown }),
     [inputs, points, benchmarkId, extraBenchmarkIds, benchmarkMix, benchmarkMixShown],
@@ -213,7 +218,22 @@ export function DashboardPage() {
                 />
               </Suspense>
             </ErrorBoundary>
-            <BenchmarkPicker settings={settings} lines={benchmarks} onChange={(change) => void updateSettings(change)} />
+            <BenchmarkPicker
+              settings={choice}
+              catalog={catalog}
+              lines={benchmarks}
+              onChange={(change) => setChartChoice((current) => ({ ...(current ?? settings), ...change(current ?? settings) }))}
+              onAdd={(benchmark) => {
+                // Kept in the list to choose from; switched on in the chart for now.
+                if (!catalog.some((b) => b.symbol === benchmark.symbol)) {
+                  void updateSettings((current) => ({ customBenchmarks: [...current.customBenchmarks, benchmark] }))
+                }
+                const id = catalog.find((b) => b.symbol === benchmark.symbol)?.id ?? benchmark.id
+                setChartChoice((current) => ({ ...(current ?? settings), ...toggleBenchmark(current ?? settings, id, true) }))
+              }}
+              temporary={chartChoice !== null}
+              onReset={() => setChartChoice(null)}
+            />
             <AssetFilter
               classes={classes}
               chosen={assetClasses}

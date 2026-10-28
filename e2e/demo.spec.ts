@@ -168,3 +168,25 @@ test('the profit of the shown period follows the day under the pointer', async (
   await expect(summary).toContainText('up to')
   expect(await summary.textContent()).not.toBe(atEnd)
 })
+
+test('finds a stock and compares with it for now', async ({ page }) => {
+  const errors = watchErrors(page)
+  await page.route('https://portfolio-history-price-proxy.tibo-dhave.workers.dev/yahoo/search**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ results: [{ symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ', type: 'EQUITY' }] }),
+    }),
+  )
+  await openDemo(page)
+  await page.getByRole('button', { name: '+ Other stock' }).click()
+  await page.getByRole('searchbox', { name: 'Search a stock, fund or index' }).fill('apple')
+  await page.getByRole('button', { name: /AAPL Apple Inc\./ }).click()
+  await expect(page.getByRole('button', { name: 'AAPL', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Back to the default' })).toBeVisible()
+  // In the list to choose a default from, in Settings.
+  await page.getByRole('link', { name: 'Settings' }).click()
+  await expect(page.getByRole('option', { name: /Apple Inc\. \(AAPL\)/ })).toHaveCount(1)
+  expect(errors).toEqual([])
+})
