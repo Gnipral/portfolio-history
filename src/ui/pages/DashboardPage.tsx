@@ -12,6 +12,7 @@ import { assetClassesOf } from '../dashboard/assetClasses.ts'
 import { BenchmarkPicker } from '../dashboard/BenchmarkPicker.tsx'
 import { ConnectionNotice } from '../dashboard/ConnectionNotice.tsx'
 import { CurrencyNotice } from '../dashboard/CurrencyNotice.tsx'
+import { MissingHistoryNotice } from '../dashboard/MissingHistoryNotice.tsx'
 import { benchmarkLines } from '../dashboard/benchmarkLines.ts'
 import { localToday } from '../../market/dates.ts'
 import type { ChartMode } from '../dashboard/chartData.ts'
@@ -152,6 +153,7 @@ export function DashboardPage() {
       </div>
       <ConnectionNotice offline={!online} weak={slowConnection} pricesFrom={pricesFrom} />
       <CurrencyNotice currency={currencyFallback} />
+      <MissingHistoryNotice issues={series?.issues ?? []} />
 
       {!point ? (
         <p role="status">{t('Calculating…')}</p>
