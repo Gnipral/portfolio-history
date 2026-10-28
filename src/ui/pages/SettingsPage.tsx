@@ -205,8 +205,8 @@ export function SettingsPage() {
               <option value="dark">Dark</option>
             </select>
           </label>
-          <div className="palette-picker" role="radiogroup" aria-label="Colors">
-            <span>Colors</span>
+          <div className="palette-picker" role="radiogroup" aria-label="Chart colors">
+            <span>Chart colors</span>
             {PALETTES.map((p) => (
               <label key={p.id} className="palette-option">
                 <input
