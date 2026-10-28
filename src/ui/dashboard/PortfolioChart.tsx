@@ -11,6 +11,7 @@ import {
   type IChartApi,
   type IPriceLine,
   type ISeriesApi,
+  type LogicalRange,
   type MouseEventParams,
   type Time,
 } from 'lightweight-charts'
@@ -23,6 +24,7 @@ import { usePalette } from '../usePalette.ts'
 import { locale, t } from '../../i18n/i18n.ts'
 import { displayCurrency, formatDate, formatEur, formatPercent } from '../format.ts'
 import { chartData, type ChartMode } from './chartData.ts'
+import { ZOOM_OPTIONS, ZOOM_TIME_SCALE } from './chartZoom.ts'
 import { fullHex, useThemeColors } from './useThemeColors.ts'
 
 interface Props {
@@ -137,6 +139,7 @@ export function PortfolioChart({
   const [divider, setDivider] = useState<{ top: number; left: number; width: number } | null>(null)
   const [expanded, setExpanded] = useState(false)
   const [styleOpen, setStyleOpen] = useState(false)
+  const [zoomed, setZoomed] = useState(false)
   // The bar above the chart moves it down: the divider over the panes moves along.
   // biome-ignore lint/correctness/useExhaustiveDependencies: opening the style bar moves the panes, so they are measured again; measurePanes only reads refs
   useEffect(() => {
@@ -198,9 +201,8 @@ export function PortfolioChart({
       crosshair: { mode: CrosshairMode.Magnet },
       layout: { fontSize: 13, panes: { enableResize: false } },
       rightPriceScale: { borderVisible: false },
-      timeScale: { borderVisible: false },
-      handleScroll: false,
-      handleScale: false,
+      timeScale: { borderVisible: false, ...ZOOM_TIME_SCALE },
+      ...ZOOM_OPTIONS,
     })
     const main = chart.addSeries(AreaSeries, { lineWidth: 3, priceLineVisible: false, title: t('Value') })
     // Room under the value for the divider label.
@@ -224,8 +226,15 @@ export function PortfolioChart({
       hoverRef.current(fromRef.current + Math.round(param.logical))
     }
     chart.subscribeCrosshairMove(handleMove)
+    // Zoomed in when fewer days show than there are: then a button brings everything back.
+    const handleRange = (range: LogicalRange | null) => {
+      const days = refs.current?.main.data().length ?? 0
+      setZoomed(range !== null && days > 1 && (range.from > 0.5 || range.to < days - 1.5))
+    }
+    chart.timeScale().subscribeVisibleLogicalRangeChange(handleRange)
     return () => {
       resize?.disconnect()
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleRange)
       chart.unsubscribeCrosshairMove(handleMove)
       chart.remove()
       refs.current = null
@@ -365,6 +374,11 @@ export function PortfolioChart({
               </>
             )}
           </div>
+        )}
+        {zoomed && (
+          <button type="button" className="chart-zoom-reset" onClick={() => refs.current?.chart.timeScale().fitContent()}>
+            {t('Show everything')}
+          </button>
         )}
         {onStyleChange && (
           <button

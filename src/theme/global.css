@@ -2017,3 +2017,24 @@ progress {
 .danger-text {
   color: var(--negative);
 }
+
+/* Shown while the chart is zoomed in; it takes the place where the chart buttons start. */
+.chart-zoom-reset {
+  flex: none;
+  margin-left: auto;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.chart-zoom-reset + .chart-expand {
+  margin-left: 0;
+}
+
+/* A product switched off on the Prices page. */
+.table tr.excluded td {
+  opacity: 0.55;
+}
+
+.table tr.excluded td:first-child {
+  opacity: 1;
+}
