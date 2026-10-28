@@ -7,9 +7,19 @@
 
 # Portfolio History
 
-A Progressive Web App that reconstructs the value and profit of an investment portfolio over time from a broker export. Everything runs in the browser; portfolio data never leaves the device.
+A Progressive Web App that reconstructs the value and profit of an investment portfolio over time from a broker export. Everything runs in the browser; portfolio data never leaves the device, unless you save it to the optional account.
 
 Live app: https://gnipral.github.io/portfolio-history/
+
+No broker export at hand? Open the app and press **Try the demo**: a made-up portfolio that needs no connection, no account and no file. Feedback and ideas are welcome in the [issues](https://github.com/Gnipral/portfolio-history/issues).
+
+![The dashboard of the demo portfolio: value, invested capital and profit since 2021, compared with the same money in IWDA](docs/screenshots/dashboard.png)
+
+| Share your return, never your amounts | What the next 12 months will pay |
+|---|---|
+| ![A share card with the time-weighted return, the comparison with IWDA, the mix by type and the positions in percent](docs/screenshots/share-card.png) | ![The dividend forecast: expected net and gross, per month and per position](docs/screenshots/dividend-forecast.png) |
+
+The screenshots show the demo portfolio; all names and numbers in it are made up.
 
 ## What it does
 
