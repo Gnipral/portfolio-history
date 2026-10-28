@@ -121,3 +121,21 @@ test('a PDF is read under the Content-Security-Policy', async ({ page }) => {
   await expect(page.getByText('Not a broker statement')).toBeVisible({ timeout: 20_000 })
   expect(errors).toEqual([])
 })
+
+test('the allocation never covers the positions, at any width', async ({ page }) => {
+  await openDemo(page)
+  for (const width of [390, 1000, 1210, 1450, 1920]) {
+    await page.setViewportSize({ width, height: 1000 })
+    const [positions, allocation] = await page.locator('.dashboard-grid > *').evaluateAll((panels) =>
+      panels.map((panel) => {
+        const box = panel.getBoundingClientRect()
+        return { left: box.left, right: box.right, top: box.top, bottom: box.bottom }
+      }),
+    )
+    if (!positions || !allocation) throw new Error('Both panels should be shown')
+    const apart = allocation.left >= positions.right - 0.5 || allocation.top >= positions.bottom - 0.5
+    expect(apart, `overlap at ${width}px`).toBe(true)
+    // Nothing sticks out of the page sideways either.
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `page wider than the screen at ${width}px`).toBe(true)
+  }
+})
