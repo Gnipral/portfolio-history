@@ -5,6 +5,7 @@ import { OfflineBadge } from '../ui/components/OfflineBadge.tsx'
 import { ThemeToggle } from '../ui/components/ThemeToggle.tsx'
 import { UpdateBanner } from '../ui/components/UpdateBanner.tsx'
 import { AnalysisPage } from '../ui/pages/AnalysisPage.tsx'
+import { ComparePage } from '../ui/pages/ComparePage.tsx'
 import { DashboardPage } from '../ui/pages/DashboardPage.tsx'
 import { ImportPage } from '../ui/pages/ImportPage.tsx'
 import { PricesPage } from '../ui/pages/PricesPage.tsx'
@@ -56,6 +57,7 @@ export function App() {
           <Route path="/prices" element={<PricesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/s/:data" element={<SharedCardPage />} />
+          <Route path="/c/:data" element={<ComparePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
