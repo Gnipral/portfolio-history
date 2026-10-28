@@ -6,6 +6,7 @@ import { db } from '../../data/db.ts'
 import { tx } from '../../engine/testing.ts'
 import { localToday, addDays } from '../../market/dates.ts'
 import { syncMarketData } from '../../market/sync.ts'
+import { saveSettings } from '../../settings/settings.ts'
 import { resetSyncSession } from '../dashboard/usePortfolio.ts'
 import { DashboardPage } from './DashboardPage.tsx'
 
@@ -84,6 +85,18 @@ describe('DashboardPage', () => {
     renderPage()
     const table = (await screen.findByRole('columnheader', { name: /Quantity/ })).closest('table') as HTMLElement
     expect(within(table).getByText(A)).toBeTruthy()
+    expect(within(table).getByText('100.00%')).toBeTruthy()
+  })
+
+  it('leaves out a product switched off on the Prices page', async () => {
+    await seed()
+    const B = 'XB0000000002'
+    await db.transactions.add(tx('buy', start, { isin: B, quantity: 1, amount: 500 }))
+    await saveSettings({ excludedInstruments: [B] })
+    renderPage()
+    const table = (await screen.findByRole('columnheader', { name: /Quantity/ })).closest('table') as HTMLElement
+    expect(within(table).getByText(A)).toBeTruthy()
+    expect(within(table).queryByText(B)).toBeNull()
     expect(within(table).getByText('100.00%')).toBeTruthy()
   })
 

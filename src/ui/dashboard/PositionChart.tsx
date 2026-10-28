@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import type { PositionPoint, PositionTrade } from '../../engine/analysis/positionSeries.ts'
 import { locale, t } from '../../i18n/i18n.ts'
 import { formatEur } from '../format.ts'
+import { ZOOM_OPTIONS, ZOOM_TIME_SCALE } from './chartZoom.ts'
 import { useThemeColors } from './useThemeColors.ts'
 
 const MARKERS: Partial<Record<PositionTrade['type'], { shape: SeriesMarker<Time>['shape']; position: 'belowBar' | 'aboveBar'; text: string }>> = {
@@ -28,9 +29,8 @@ export function PositionChart({ points, trades }: { points: PositionPoint[]; tra
       layout: { background: { type: ColorType.Solid, color: colors.surface }, textColor: colors.textMuted },
       grid: { vertLines: { color: colors.border }, horzLines: { color: colors.border } },
       rightPriceScale: { borderVisible: false },
-      timeScale: { borderVisible: false },
-      handleScroll: false,
-      handleScale: false,
+      timeScale: { borderVisible: false, ...ZOOM_TIME_SCALE },
+      ...ZOOM_OPTIONS,
     })
     const value = chart.addSeries(AreaSeries, {
       lineWidth: 2,

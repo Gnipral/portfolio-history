@@ -254,6 +254,12 @@ export const part3: Record<string, string> = {
   'Your export does not go back far enough.': 'Je export gaat niet ver genoeg terug.',
   'It contains sales or splits of {products}, but not when you bought them. Those shares count from that day at their value of that moment, without the profit or loss before it.': 'Er staan verkopen of splits in van {products}, maar niet wanneer je ze kocht. Die aandelen tellen vanaf die dag mee aan hun waarde op dat moment, zonder de winst of het verlies van daarvoor.',
   'For the right figures, export your transactions again from the day you opened your account, and import that file with Replace data.': 'Voor de juiste cijfers: exporteer je transacties opnieuw vanaf de dag dat je rekening geopend werd, en importeer dat bestand met Gegevens vervangen.',
+  'Switch a product off under Counts to leave it out of every figure, the chart and the analysis, as if you never traded it.': 'Zet een product uit onder Telt mee om het weg te laten uit elk cijfer, de grafiek en de analyse, alsof je het nooit verhandelde.',
+  Counts: 'Telt mee',
+  'Count {name}': '{name} laten meetellen',
+  'not counted': 'telt niet mee',
+  'Show everything': 'Toon alles',
+  'up to {date}': 'tot {date}',
   // Quick ranges and toggle groups, translated with t(key).
   '1M': '1M',
   '3M': '3M',
