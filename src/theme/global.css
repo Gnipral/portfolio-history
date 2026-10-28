@@ -1642,3 +1642,57 @@ progress {
   height: 22px;
   border-radius: 3px;
 }
+
+/* The chart style menu: a button like full screen, with a small panel under it. */
+.chart-style {
+  position: relative;
+  flex: none;
+  margin-left: auto;
+}
+
+.chart-style + .chart-expand {
+  margin-left: 0;
+}
+
+.chart-style summary {
+  list-style: none;
+  margin-left: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chart-style summary::-webkit-details-marker {
+  display: none;
+}
+
+.chart-style summary:hover,
+.chart-style[open] summary {
+  border-color: var(--accent);
+}
+
+.chart-style-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 20;
+  display: grid;
+  gap: 0.6rem;
+  width: min(300px, 80vw);
+  padding: 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+}
+
+.chart-style-menu .radio {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.chart-style-menu input:disabled + span {
+  opacity: 0.55;
+}
