@@ -13,6 +13,9 @@ import { useOnline } from '../useOnline.ts'
 /** Prices are brought up to date once per day, import and benchmark per session, not on every visit of the page. */
 let lastSyncKey: string | null = null
 
+/** After a failure of the connection, the prices are tried again this often while the dashboard is open. */
+export const RETRY_MS = 60_000
+
 export interface PortfolioState {
   /** undefined while loading, 0 when nothing is imported. */
   transactionCount: number | undefined
@@ -23,6 +26,7 @@ export interface PortfolioState {
   syncProblems: number
   /** The last update could not reach a price source: the stored prices are shown. */
   slowConnection: boolean
+  online: boolean
 }
 
 export function usePortfolio(options: EngineOptions): PortfolioState {
@@ -32,6 +36,8 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
   const [sync, setSync] = useState<SyncProgress | null>(null)
   const [syncProblems, setSyncProblems] = useState(0)
   const [slowConnection, setSlowConnection] = useState(false)
+  // Raised to try the prices again after a failure of the connection.
+  const [attempt, setAttempt] = useState(0)
   const online = useOnline()
 
   useEffect(() => {
@@ -44,6 +50,7 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
     const main = BENCHMARKS.find((b) => b.id === benchmarkId) ?? BENCHMARKS.find((b) => b.id === DEFAULT_BENCHMARK_ID)
     const benchmarks = [...(main ? [main] : []), ...BENCHMARKS.filter((b) => b !== main)]
     let cancelled = false
+    let retry: ReturnType<typeof setTimeout> | undefined
     void (async () => {
       const loaded = await loadEngineInputs(db, benchmarks)
       if (cancelled) return
@@ -68,21 +75,25 @@ export function usePortfolio(options: EngineOptions): PortfolioState {
       const connection = new Set(report.connection)
       setSyncProblems(Object.keys(report.problems).filter((key) => !connection.has(key)).length)
       setSlowConnection(connection.size > 0)
-      // Try again on the next visit of the dashboard instead of tomorrow.
-      if (connection.size > 0) lastSyncKey = null
+      // Try again in a while, and on the next visit of the dashboard, instead of tomorrow.
+      if (connection.size > 0) {
+        lastSyncKey = null
+        retry = setTimeout(() => setAttempt((n) => n + 1), RETRY_MS)
+      }
       setInputs(await loadEngineInputs(db, benchmarks))
     })()
     return () => {
       cancelled = true
+      clearTimeout(retry)
     }
-  }, [transactionCount, benchmarkId, online])
+  }, [transactionCount, benchmarkId, online, attempt])
 
   const series = useMemo(
     () => (inputs ? computeDailySeries(inputs.transactions, inputs.prices, options, localToday()) : null),
     [inputs, options],
   )
 
-  return { transactionCount, inputs, series, sync, syncProblems, slowConnection }
+  return { transactionCount, inputs, series, sync, syncProblems, slowConnection, online }
 }
 
 /** Lets tests start from a clean state. */

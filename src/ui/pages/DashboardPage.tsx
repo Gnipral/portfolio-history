@@ -7,6 +7,7 @@ import { db } from '../../data/db.ts'
 import { positionsOn } from '../../engine/positions.ts'
 import { allocationSlices, colorSlots, DIMENSIONS, groupedSlices, instrumentFacts, type AllocationDimension } from '../dashboard/allocation.ts'
 import { BenchmarkPicker } from '../dashboard/BenchmarkPicker.tsx'
+import { ConnectionNotice } from '../dashboard/ConnectionNotice.tsx'
 import { benchmarkLines } from '../dashboard/benchmarkLines.ts'
 import { localToday } from '../../market/dates.ts'
 import type { ChartMode } from '../dashboard/chartData.ts'
@@ -18,7 +19,7 @@ import { ToggleBar } from '../dashboard/ToggleBar.tsx'
 import { engineOptions, toggleStates } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
 import { DEFAULT_SETTINGS, saveSettings, updateSettings, useSettings } from '../../settings/settings.ts'
-import { formatDate, formatPercent, formatSignedEur, trendClass } from '../format.ts'
+import { formatPercent, formatSignedEur, trendClass } from '../format.ts'
 
 // The chart libraries are large; load them only when the dashboard shows data.
 const PortfolioChart = lazy(() => import('../dashboard/PortfolioChart.tsx').then((m) => ({ default: m.PortfolioChart })))
@@ -32,7 +33,7 @@ export function DashboardPage() {
   const capabilities = importRecord?.capabilities
   const options = useMemo(() => engineOptions(settings, capabilities), [settings, capabilities])
   const toggles = toggleStates(settings.toggles, capabilities, importRecord?.missingReasons)
-  const { transactionCount, inputs, series, sync, syncProblems, slowConnection } = usePortfolio(options)
+  const { transactionCount, inputs, series, sync, syncProblems, slowConnection, online } = usePortfolio(options)
   const [range, setRange] = useState<RangeKey>('ALL')
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [mode, setMode] = useState<ChartMode>('eur')
@@ -69,10 +70,16 @@ export function DashboardPage() {
     [inputs, options, positionKey],
   )
 
-  // The oldest market price among the positions shown: how up to date the stored prices are.
-  const pricesUpTo = positions
-    .flatMap((p) => (p.priceSource === 'market' && p.priceDate ? [p.priceDate] : []))
-    .sort()[0]
+  const lastDate = dates.at(-1)
+  const noConnection = !online || slowConnection
+  // The most recent market price of the positions held now: how up to date the stored prices are.
+  const pricesFrom = useMemo(() => {
+    if (!noConnection || !inputs || !lastDate) return undefined
+    return positionsOn(inputs.transactions, inputs.prices, options, lastDate)
+      .flatMap((p) => (p.priceSource === 'market' && p.priceDate ? [p.priceDate] : []))
+      .sort()
+      .at(-1)
+  }, [noConnection, inputs, options, lastDate])
 
   if (transactionCount === undefined) return null
   if (transactionCount === 0) {
@@ -113,21 +120,13 @@ export function DashboardPage() {
             {syncProblems} {syncProblems === 1 ? 'product has' : 'products have'} no price yet
           </Link>
         )}
-        {!syncing && slowConnection && (
-          <span
-            className="offline-badge"
-            role="status"
-            title="The price sources were too slow or could not be reached. The app goes on with the stored prices and tries again on your next visit."
-          >
-            Stored prices{pricesUpTo ? ` up to ${formatDate(pricesUpTo)}` : ''}
-          </span>
-        )}
         {point && (
           <button type="button" className="share-button" onClick={() => setSharing(true)}>
             Share
           </button>
         )}
       </div>
+      <ConnectionNotice offline={!online} weak={slowConnection} pricesFrom={pricesFrom} />
 
       {!point ? (
         <p role="status">Calculating…</p>
