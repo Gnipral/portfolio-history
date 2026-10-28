@@ -269,6 +269,8 @@ export const part3: Record<string, string> = {
   'Default and mix': 'Standaard en mix',
   'This is the default; under the chart you can compare with something else for a moment.': 'Dit is de standaard; onder de grafiek kun je even met iets anders vergelijken.',
   'Own stocks to compare with': 'Eigen aandelen om mee te vergelijken',
+  'everything counts': 'alles telt mee',
+  '{count} switched off': '{count} uitgeschakeld',
   // Quick ranges and toggle groups, translated with t(key).
   '1M': '1M',
   '3M': '3M',
