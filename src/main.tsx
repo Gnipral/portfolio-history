@@ -6,10 +6,12 @@ import { db } from './data/db.ts'
 import { isDemo } from './demo/demoMode.ts'
 import { seedDemo } from './demo/demoPortfolio.ts'
 import { localToday } from './market/dates.ts'
+import { language } from './i18n/i18n.ts'
 import { applyStoredTheme } from './theme/theme.ts'
 import './theme/global.css'
 
 applyStoredTheme()
+document.documentElement.lang = language()
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Root element #root not found')

@@ -1,4 +1,6 @@
-const dateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+import { locale } from '../i18n/i18n.ts'
+
+const dateFormat = new Intl.DateTimeFormat(locale(), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 
 /** Formats an ISO `YYYY-MM-DD` date, e.g. `5 Jan 2026`. */
 export function formatDate(isoDate: string): string {
@@ -6,8 +8,8 @@ export function formatDate(isoDate: string): string {
 }
 
 let currency = 'EUR'
-let eur = new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 2 })
-let eurCompact = new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 0 })
+let eur = new Intl.NumberFormat(locale(), { style: 'currency', currency, maximumFractionDigits: 2 })
+let eurCompact = new Intl.NumberFormat(locale(), { style: 'currency', currency, maximumFractionDigits: 0 })
 
 /** The currency amounts are shown in: the base currency of the settings. */
 export function displayCurrency(): string {
@@ -18,10 +20,10 @@ export function displayCurrency(): string {
 export function setDisplayCurrency(code: string): void {
   if (code === currency) return
   currency = code
-  eur = new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 2 })
-  eurCompact = new Intl.NumberFormat('en-GB', { style: 'currency', currency, maximumFractionDigits: 0 })
+  eur = new Intl.NumberFormat(locale(), { style: 'currency', currency, maximumFractionDigits: 2 })
+  eurCompact = new Intl.NumberFormat(locale(), { style: 'currency', currency, maximumFractionDigits: 0 })
 }
-const percent = new Intl.NumberFormat('en-GB', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const percent = new Intl.NumberFormat(locale(), { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 /** `€1,234.56` in the display currency; whole units with `compact`. */
 export function formatEur(value: number, compact = false): string {

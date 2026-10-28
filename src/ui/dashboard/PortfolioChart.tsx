@@ -20,6 +20,7 @@ import type { DailyPoint } from '../../engine/series.ts'
 import { DEFAULT_CHART_STYLE, type ChartStyle } from '../../settings/settings.ts'
 import { PALETTES, storePalette } from '../../theme/theme.ts'
 import { usePalette } from '../usePalette.ts'
+import { locale, t } from '../../i18n/i18n.ts'
 import { displayCurrency, formatDate, formatEur, formatPercent } from '../format.ts'
 import { chartData, type ChartMode } from './chartData.ts'
 import { fullHex, useThemeColors } from './useThemeColors.ts'
@@ -193,7 +194,7 @@ export function PortfolioChart({
     const chart = createChart(container.current, {
       autoSize: true,
       // The app is in English, whatever the browser language.
-      localization: { locale: 'en-GB' },
+      localization: { locale: locale() },
       crosshair: { mode: CrosshairMode.Magnet },
       layout: { fontSize: 13, panes: { enableResize: false } },
       rightPriceScale: { borderVisible: false },
@@ -201,7 +202,7 @@ export function PortfolioChart({
       handleScroll: false,
       handleScale: false,
     })
-    const main = chart.addSeries(AreaSeries, { lineWidth: 3, priceLineVisible: false, title: 'Value' })
+    const main = chart.addSeries(AreaSeries, { lineWidth: 3, priceLineVisible: false, title: t('Value') })
     // Room under the value for the divider label.
     main.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.12 } })
     const secondary = chart.addSeries(LineSeries, { lineWidth: 2, lineStyle: LineStyle.Dashed, priceLineVisible: false })
@@ -263,7 +264,7 @@ export function PortfolioChart({
     if (!r) return
     const percent = mode === 'percent'
     const format = percent ? (v: number) => `${v.toFixed(1)}%` : (v: number) => formatEur(v, true)
-    r.chart.applyOptions({ localization: { locale: 'en-GB', priceFormatter: format } })
+    r.chart.applyOptions({ localization: { locale: locale(), priceFormatter: format } })
     r.main.setData(data.main)
     r.secondary.setData(data.secondary)
     r.secondary.applyOptions({ visible: chartStyle.invested })
@@ -291,7 +292,7 @@ export function PortfolioChart({
       if (!r.pnl) {
         const options = {
           baseValue: { type: 'price' as const, price: 0 },
-          title: 'Profit',
+          title: t('Profit'),
           lineWidth: 3 as const,
           priceLineVisible: false,
           autoscaleInfoProvider: withZero,
@@ -333,11 +334,11 @@ export function PortfolioChart({
             {mode === 'eur' ? (
               <>
                 <span>
-                  <i className="swatch main" /> Value {formatEur(point.value)}
+                  <i className="swatch main" /> {t('Value')} {formatEur(point.value)}
                 </span>
                 {chartStyle.invested && (
                   <span>
-                    <i className="swatch secondary" /> Invested {formatEur(point.invested)}
+                    <i className="swatch secondary" /> {t('Invested')} {formatEur(point.invested)}
                   </span>
                 )}
                 {benchmarkLegend.map((b) => (
@@ -347,14 +348,14 @@ export function PortfolioChart({
                 ))}
                 {chartStyle.profitPane && (
                   <span>
-                    <i className="swatch pnl" /> Profit {formatEur(point.pnl)}
+                    <i className="swatch pnl" /> {t('Profit')} {formatEur(point.pnl)}
                   </span>
                 )}
               </>
             ) : (
               <>
                 <span>
-                  <i className="swatch main" /> Time-weighted {formatPercent((data.main[selected - from]?.value ?? 0) / 100)}
+                  <i className="swatch main" /> {t('Time-weighted')} {formatPercent((data.main[selected - from]?.value ?? 0) / 100)}
                 </span>
                 {benchmarkLegend.map((b) => (
                   <span key={b.label}>
@@ -363,7 +364,7 @@ export function PortfolioChart({
                 ))}
                 {from === 0 && chartStyle.invested && (
                   <span>
-                    <i className="swatch secondary" /> Simple {formatPercent(point.simpleReturn)}
+                    <i className="swatch secondary" /> {t('Simple')} {formatPercent(point.simpleReturn)}
                   </span>
                 )}
               </>
@@ -375,8 +376,8 @@ export function PortfolioChart({
             type="button"
             className="chart-expand chart-style-button"
             aria-expanded={styleOpen}
-            aria-label="Chart style"
-            title="Chart style and colors"
+            aria-label={t('Chart style')}
+            title={t('Chart style and colors')}
             onClick={() => setStyleOpen((open) => !open)}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
@@ -392,8 +393,8 @@ export function PortfolioChart({
           className="chart-expand"
           onClick={toggleExpanded}
           aria-pressed={expanded}
-          aria-label={expanded ? 'Exit full screen' : 'Full screen'}
-          title={expanded ? 'Exit full screen (F)' : 'Full screen (F)'}
+          aria-label={expanded ? t('Exit full screen') : t('Full screen')}
+          title={expanded ? t('Exit full screen (F)') : t('Full screen (F)')}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d={expanded ? 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5' : 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5'} />
@@ -405,7 +406,7 @@ export function PortfolioChart({
       )}
       {mode === 'eur' && divider !== null && (
         <div className="pane-divider" style={{ top: divider.top, left: divider.left, width: divider.width }}>
-          <span className="pane-label">Profit / loss</span>
+          <span className="pane-label">{t('Profit / loss')}</span>
         </div>
       )}
       <div ref={container} className="chart" data-testid="portfolio-chart" />
@@ -435,26 +436,26 @@ function StylePanel({
       className="chip"
       aria-pressed={chartStyle[key]}
       disabled={eurOnly && percent}
-      title={eurOnly && percent ? `Only in ${displayCurrency()}` : undefined}
+      title={eurOnly && percent ? t('Only in {currency}', { currency: displayCurrency() }) : undefined}
       onClick={() => onChange({ [key]: !chartStyle[key] })}
     >
       {label}
     </button>
   )
   return (
-    <div className="chart-style-panel" role="group" aria-label="Chart style">
+    <div className="chart-style-panel" role="group" aria-label={t('Chart style')}>
       <div className="chart-style-row">
-        <span className="label-caps">Show</span>
+        <span className="label-caps">{t('Show')}</span>
         <div className="chips">
-          {option('fill', 'Fill under the value')}
-          {option('invested', percent ? 'Simple return' : 'Invested capital')}
-          {option('profitPane', 'Profit / loss pane', true)}
-          {option('log', 'Logarithmic scale', true)}
+          {option('fill', t('Fill under the value'))}
+          {option('invested', percent ? t('Simple return') : t('Invested capital'))}
+          {option('profitPane', t('Profit / loss pane'), true)}
+          {option('log', t('Logarithmic scale'), true)}
         </div>
       </div>
       <div className="chart-style-row">
-        <span className="label-caps">Colors</span>
-        <div className="chips" role="radiogroup" aria-label="Colors">
+        <span className="label-caps">{t('Colors')}</span>
+        <div className="chips" role="radiogroup" aria-label={t('Colors')}>
           {PALETTES.map((p) => (
             <button
               key={p.id}
@@ -463,7 +464,7 @@ function StylePanel({
               className="chip"
               aria-checked={palette === p.id}
               aria-pressed={palette === p.id}
-              title={p.description}
+              title={t(p.description)}
               onClick={() => {
                 storePalette(p.id)
               }}
@@ -473,13 +474,13 @@ function StylePanel({
                   <i key={color} style={{ background: color }} />
                 ))}
               </span>
-              {p.label}
+              {t(p.label)}
             </button>
           ))}
         </div>
       </div>
       <button type="button" className="chart-style-close" onClick={onClose}>
-        Done
+        {t('Done')}
       </button>
     </div>
   )

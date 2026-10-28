@@ -1,6 +1,7 @@
 import type { ImportContext } from '../import/types.ts'
 import type { AssetClass, Transaction, TransactionType } from '../model/transaction.ts'
 import { db, type ImportRecord, type PortfolioDatabase } from './db.ts'
+import { msg, t } from '../i18n/i18n.ts'
 
 export const MANUAL_BROKER = 'Manual'
 
@@ -60,14 +61,14 @@ export function toInput(t: Transaction): ManualInput {
 
 /** Why the input cannot be saved, or undefined when it can. */
 export function validate(input: ManualInput): string | undefined {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return 'Enter a date.'
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return t('Enter a date.')
   const trade = TRADE_TYPES.includes(input.type)
-  if ((trade || input.type === 'dividend') && !input.product.trim() && !input.isin.trim()) return 'Enter a product name or ISIN.'
-  if (input.isin.trim() && !/^[A-Z]{2}[A-Z0-9]{9}\d$/i.test(input.isin.trim())) return 'The ISIN is not valid (12 characters, e.g. IE00B4L5Y983).'
-  if (trade && !(input.quantity > 0)) return 'Enter a quantity above 0.'
-  if (trade && !(input.price >= 0)) return 'Enter a price.'
-  if (!trade && !(input.amount > 0)) return 'Enter an amount above 0.'
-  if (input.costsEur < 0 || input.taxesEur < 0) return 'Costs and taxes cannot be negative.'
+  if ((trade || input.type === 'dividend') && !input.product.trim() && !input.isin.trim()) return t('Enter a product name or ISIN.')
+  if (input.isin.trim() && !/^[A-Z]{2}[A-Z0-9]{9}\d$/i.test(input.isin.trim())) return t('The ISIN is not valid (12 characters, e.g. IE00B4L5Y983).')
+  if (trade && !(input.quantity > 0)) return t('Enter a quantity above 0.')
+  if (trade && !(input.price >= 0)) return t('Enter a price.')
+  if (!trade && !(input.amount > 0)) return t('Enter an amount above 0.')
+  if (input.costsEur < 0 || input.taxesEur < 0) return t('Costs and taxes cannot be negative.')
   return undefined
 }
 
@@ -120,7 +121,7 @@ function manualRecord(current: ImportRecord | undefined, now: Date): ImportRecor
       files: [],
       importedAt: now.toISOString(),
       capabilities: { transactionCosts: true, fxCosts: false, taxes: true, dividends: true, deposits: true },
-      missingReasons: { fxCosts: 'Transactions entered by hand have no separate currency costs.' },
+      missingReasons: { fxCosts: msg('Transactions entered by hand have no separate currency costs.') },
       issues: [],
     }
   }

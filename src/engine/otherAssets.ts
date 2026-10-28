@@ -1,3 +1,4 @@
+import { msg } from '../i18n/i18n.ts'
 /** Something owned outside the broker accounts, valued by hand now and then. */
 export interface OtherAsset {
   id: string
@@ -12,10 +13,10 @@ export interface OtherAsset {
 export type OtherAssetKind = 'savings' | 'pension' | 'property' | 'other'
 
 export const OTHER_ASSET_KINDS: { key: OtherAssetKind; label: string }[] = [
-  { key: 'savings', label: 'Savings account' },
-  { key: 'pension', label: 'Pension savings' },
-  { key: 'property', label: 'Real estate' },
-  { key: 'other', label: 'Other' },
+  { key: 'savings', label: msg('Savings account') },
+  { key: 'pension', label: msg('Pension savings') },
+  { key: 'property', label: msg('Real estate') },
+  { key: 'other', label: msg('Other') },
 ]
 
 /** The last value entered on or before `date`; undefined before the first one. */

@@ -5,6 +5,7 @@ import type { EngineOptions } from '../../engine/options.ts'
 import { computeDailySeries, type SeriesResult } from '../../engine/series.ts'
 import { localToday } from '../../market/dates.ts'
 import { formatEur, formatPercent } from '../format.ts'
+import { t } from '../../i18n/i18n.ts'
 
 interface Props {
   inputs: EngineInputs
@@ -37,43 +38,43 @@ export function CostsSection({ inputs, options, series }: Props) {
     <>
       <div className="cards">
         <div className="card">
-          <span className="card-label">Paid in total</span>
+          <span className="card-label">{t('Paid in total')}</span>
           <span className="card-value negative">{formatEur(total.total)}</span>
           <span className="muted small">
-            Costs {formatEur(total.transactionCosts, true)} · FX {formatEur(total.fxCosts, true)} · taxes {formatEur(total.taxes, true)}
+            {t('Costs {costs} · FX {fx} · taxes {taxes}', { costs: formatEur(total.transactionCosts, true), fx: formatEur(total.fxCosts, true), taxes: formatEur(total.taxes, true) })}
           </span>
         </div>
         {now && withoutCharges && counted && (
           <>
             <div className="card">
-              <span className="card-label">Profit without them</span>
+              <span className="card-label">{t('Profit without them')}</span>
               <span className="card-value">{formatEur(withoutCharges.pnl)}</span>
-              <span className="muted small">{formatEur(withoutCharges.pnl - now.pnl)} more than the {formatEur(now.pnl)} now</span>
+              <span className="muted small">{t('{difference} more than the {now} now', { difference: formatEur(withoutCharges.pnl - now.pnl), now: formatEur(now.pnl) })}</span>
             </div>
             <div className="card">
-              <span className="card-label">Time-weighted return lost</span>
+              <span className="card-label">{t('Time-weighted return lost')}</span>
               <span className="card-value negative">{formatPercent(now.twr - withoutCharges.twr)}</span>
               <span className="muted small">
-                {formatPercent(now.twr)} instead of {formatPercent(withoutCharges.twr)}
+                {t('{now} instead of {without}', { now: formatPercent(now.twr), without: formatPercent(withoutCharges.twr) })}
               </span>
             </div>
           </>
         )}
       </div>
-      {!counted && <p className="muted small">Costs, taxes and FX costs are all switched off on the dashboard, so they do not lower its figures.</p>}
+      {!counted && <p className="muted small">{t('Costs, taxes and FX costs are all switched off on the dashboard, so they do not lower its figures.')}</p>}
 
       <div className="panel">
-        <h3>Per year</h3>
+        <h3>{t('Per year')}</h3>
         <table className="table">
           <thead>
             <tr>
-              <th>Year</th>
-              <th className="num">Transaction costs</th>
-              <th className="num">FX costs</th>
-              <th className="num">Taxes on trades</th>
-              <th className="num">Taxes on income</th>
-              <th className="num">Other taxes</th>
-              <th className="num">Total</th>
+              <th>{t('Year')}</th>
+              <th className="num">{t('Transaction costs')}</th>
+              <th className="num">{t('FX costs')}</th>
+              <th className="num">{t('Taxes on trades')}</th>
+              <th className="num">{t('Taxes on income')}</th>
+              <th className="num">{t('Other taxes')}</th>
+              <th className="num">{t('Total')}</th>
             </tr>
           </thead>
           <tbody>
@@ -93,8 +94,7 @@ export function CostsSection({ inputs, options, series }: Props) {
           </tbody>
         </table>
         <p className="muted small">
-          Transaction costs include fees booked on their own, such as connection and custody fees. The comparison counts only the
-          charges that the dashboard toggles include.
+          {t('Transaction costs include fees booked on their own, such as connection and custody fees. The comparison counts only the charges that the dashboard toggles include.')}
         </p>
       </div>
     </>

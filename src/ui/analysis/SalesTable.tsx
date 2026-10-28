@@ -1,7 +1,8 @@
 import type { Sale } from '../../engine/ledger.ts'
+import { locale, t } from '../../i18n/i18n.ts'
 import { formatDate, formatEur, formatPercent, formatSignedEur, trendClass } from '../format.ts'
 
-const quantityFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 6 })
+const quantityFormat = new Intl.NumberFormat(locale(), { maximumFractionDigits: 6 })
 
 /** Sales, newest first, with their cost basis and result. */
 export function SalesTable({ sales }: { sales: Sale[] }) {
@@ -10,12 +11,12 @@ export function SalesTable({ sales }: { sales: Sale[] }) {
     <table className="table">
       <thead>
         <tr>
-          <th>Date</th>
-          <th>Product</th>
-          <th className="num">Quantity</th>
-          <th className="num">Proceeds</th>
-          <th className="num">Cost basis</th>
-          <th className="num">Result</th>
+          <th>{t('Date')}</th>
+          <th>{t('Product')}</th>
+          <th className="num">{t('Quantity')}</th>
+          <th className="num">{t('Proceeds')}</th>
+          <th className="num">{t('Cost basis')}</th>
+          <th className="num">{t('Result')}</th>
           <th className="num">%</th>
         </tr>
       </thead>

@@ -9,6 +9,8 @@ import type { ImportResult } from '../../import/types.ts'
 import { isDemo } from '../../demo/demoMode.ts'
 import { DemoButton } from '../components/DemoBanner.tsx'
 import { ImportPreview } from '../components/ImportPreview.tsx'
+import { t } from '../../i18n/i18n.ts'
+import { Rich } from '../../i18n/Rich.tsx'
 
 type State =
   | { phase: 'idle' }
@@ -22,21 +24,21 @@ const ACCEPT = '.csv,.xlsx,.xls'
 
 /** Which file to export at each supported broker. */
 const BROKERS: [string, string][] = [
-  ['DEGIRO', 'Transactions and Account statement (Inbox → Transactions / Account), CSV or XLSX; one or both'],
-  ['Bolero', 'Transaction history (Excel)'],
-  ['Keytrade Bank', 'Transactions (CSV or Excel)'],
-  ['Saxo', 'Transactions (Excel)'],
-  ['Interactive Brokers / Lynx', 'Flex Queries: Trades, Cash Transactions and Corporate Actions (CSV)'],
-  ['Trade Republic', 'Transaction export (CSV)'],
-  ['Trading 212', 'History → Export (CSV)'],
-  ['Revolut', 'Trading account statement (CSV)'],
-  ['eToro', 'Account statement (Excel)'],
-  ['XTB', 'Account history, Cash Operations (CSV or Excel)'],
-  ['Bitvavo', 'Transaction history (CSV)'],
-  ['Coinbase', 'Transaction history report (CSV)'],
-  ['Binance', 'Transaction history statement (CSV or Excel)'],
-  ['Kraken', 'Ledgers (CSV)'],
-  ['Bitpanda', 'Transaction history (CSV)'],
+  ['DEGIRO', t('Transactions and Account statement (Inbox → Transactions / Account), CSV or XLSX; one or both')],
+  ['Bolero', t('Transaction history (Excel)')],
+  ['Keytrade Bank', t('Transactions (CSV or Excel)')],
+  ['Saxo', t('Transactions (Excel)')],
+  ['Interactive Brokers / Lynx', t('Flex Queries: Trades, Cash Transactions and Corporate Actions (CSV)')],
+  ['Trade Republic', t('Transaction export (CSV)')],
+  ['Trading 212', t('History → Export (CSV)')],
+  ['Revolut', t('Trading account statement (CSV)')],
+  ['eToro', t('Account statement (Excel)')],
+  ['XTB', t('Account history, Cash Operations (CSV or Excel)')],
+  ['Bitvavo', t('Transaction history (CSV)')],
+  ['Coinbase', t('Transaction history report (CSV)')],
+  ['Binance', t('Transaction history statement (CSV or Excel)')],
+  ['Kraken', t('Ledgers (CSV)')],
+  ['Bitpanda', t('Transaction history (CSV)')],
 ]
 
 export function ImportPage() {
@@ -53,7 +55,7 @@ export function ImportPage() {
       setState({ phase: 'preview', result, files: files.map((f) => f.name), confirmReplace: false })
     } catch (error) {
       if (error instanceof ImportError) setState({ phase: 'error', message: error.message, details: error.details })
-      else setState({ phase: 'error', message: 'The file could not be read.', details: [String(error)] })
+      else setState({ phase: 'error', message: t('The file could not be read.'), details: [String(error)] })
     }
   }
 
@@ -70,7 +72,7 @@ export function ImportPage() {
       void saveAfterImport()
       setState({ phase: 'done', count, skipped: result.transactions.length - count })
     } catch (error) {
-      setState({ phase: 'error', message: 'Saving the import failed. Your previous data is unchanged.', details: [String(error)] })
+      setState({ phase: 'error', message: t('Saving the import failed. Your previous data is unchanged.'), details: [String(error)] })
     }
   }
 
@@ -84,9 +86,9 @@ export function ImportPage() {
   if (isDemo()) {
     return (
       <section className="stack">
-        <h2>Import</h2>
+        <h2>{t('Import')}</h2>
         <div className="callout">
-          <p>You are in demo mode. Leave it to import the export of your own broker.</p>
+          <p>{t('You are in demo mode. Leave it to import the export of your own broker.')}</p>
           <div className="actions">
             <DemoButton />
           </div>
@@ -97,18 +99,18 @@ export function ImportPage() {
 
   return (
     <section className="stack">
-      <h2>Import</h2>
+      <h2>{t('Import')}</h2>
       <p className="muted">
-        Import the export of one broker; the broker is recognized from the file. Select several files at once when a
-        broker splits its history over more files, and import the next broker afterwards to combine them in one
-        portfolio. Your data is processed and stored only on this device.
+        {t('Import the export of one broker; the broker is recognized from the file. Select several files at once when a broker splits its history over more files, and import the next broker afterwards to combine them in one portfolio. Your data is processed and stored only on this device.')}
       </p>
       <p className="muted small demo-hint">
-        No export at hand? <DemoButton className="link-button" /> with a made-up portfolio, or{' '}
-        <Link to="/transactions">enter transactions by hand</Link>.
+        <Rich
+          text={t('No export at hand? <demo></demo> with a made-up portfolio, or <link>enter transactions by hand</link>.')}
+          tags={{ demo: () => <DemoButton className="link-button" />, link: (s) => <Link to="/transactions">{s}</Link> }}
+        />
       </p>
       <details className="supported-brokers">
-        <summary>Supported brokers and which file to export</summary>
+        <summary>{t('Supported brokers and which file to export')}</summary>
         <ul>
           {BROKERS.map(([broker, file]) => (
             <li key={broker}>
@@ -137,12 +139,12 @@ export function ImportPage() {
               e.target.value = ''
             }}
           />
-          <span>Drop a CSV, XLSX, XML or PDF file here, or click to choose</span>
+          <span>{t('Drop a CSV, XLSX, XML or PDF file here, or click to choose')}</span>
         </label>
       )}
 
-      {state.phase === 'reading' && <p role="status">Reading file…</p>}
-      {state.phase === 'saving' && <p role="status">Saving…</p>}
+      {state.phase === 'reading' && <p role="status">{t('Reading file…')}</p>}
+      {state.phase === 'saving' && <p role="status">{t('Saving…')}</p>}
 
       {state.phase === 'error' && (
         <div className="callout error" role="alert">
@@ -159,9 +161,12 @@ export function ImportPage() {
 
       {state.phase === 'done' && (
         <div className="callout success" role="status">
-          Imported {state.count} transactions.
-          {state.skipped > 0 && ` Skipped ${state.skipped} that were already stored.`} <Link to="/">Go to the dashboard</Link> or{' '}
-          <Link to="/transactions">check the transactions</Link>
+          {t('Imported {count} transactions.', { count: state.count })}
+          {state.skipped > 0 && ` ${t('Skipped {count} that were already stored.', { count: state.skipped })}`}{' '}
+          <Rich
+            text={t('<home>Go to the dashboard</home> or <list>check the transactions</list>')}
+            tags={{ home: (s) => <Link to="/">{s}</Link>, list: (s) => <Link to="/transactions">{s}</Link> }}
+          />
         </div>
       )}
 
@@ -169,20 +174,20 @@ export function ImportPage() {
         <>
           <ImportPreview result={state.result} files={state.files} />
           {state.confirmReplace ? (
-            <div className="callout warning" role="alertdialog" aria-label="Add to or replace existing data">
+            <div className="callout warning" role="alertdialog" aria-label={t('Add to or replace existing data')}>
               <p>
-                <strong>You already have a portfolio on this device.</strong> Add this import to it, for example a
-                second broker or a newer export (transactions that are already stored are skipped), or replace it.
+                <strong>{t('You already have a portfolio on this device.')}</strong>{' '}
+                {t('Add this import to it, for example a second broker or a newer export (transactions that are already stored are skipped), or replace it.')}
               </p>
               <div className="actions">
                 <button type="button" className="primary" onClick={() => void save(state.result, state.files, 'add')}>
-                  Add to portfolio
+                  {t('Add to portfolio')}
                 </button>
                 <button type="button" onClick={() => void save(state.result, state.files, 'replace')}>
-                  Replace data
+                  {t('Replace data')}
                 </button>
                 <button type="button" onClick={() => setState({ phase: 'idle' })}>
-                  Cancel
+                  {t('Cancel')}
                 </button>
               </div>
             </div>
@@ -197,7 +202,7 @@ export function ImportPage() {
                 Import {state.result.transactions.length} transactions
               </button>
               <button type="button" onClick={() => setState({ phase: 'idle' })}>
-                Cancel
+                {t('Cancel')}
               </button>
             </div>
           )}

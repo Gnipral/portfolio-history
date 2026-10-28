@@ -6,6 +6,7 @@ import type { BenchmarkLine } from '../dashboard/benchmarkLines.ts'
 import { cardFile, drawShareCard, loadCardFonts, POSITION_ROWS, type ShareFormat } from './drawShareCard.ts'
 import { shareCard, shareText, type PositionOrder } from './shareCard.ts'
 import { shareLink } from './shareLink.ts'
+import { t } from '../../i18n/i18n.ts'
 
 interface Props {
   points: DailyPoint[]
@@ -77,7 +78,7 @@ export function ShareDialog({ points, from, to, benchmarks, slices, positions, o
     if (image && navigator.canShare?.({ files: [image] })) {
       try {
         await navigator.share({ files: [image], text })
-        setStatus(copied ? 'Shared. The text is on your clipboard too.' : 'Shared.')
+        setStatus(copied ? t('Shared. The text is on your clipboard too.') : t('Shared.'))
       } catch {
         // Closed the share sheet: nothing to report.
       }
@@ -96,7 +97,7 @@ export function ShareDialog({ points, from, to, benchmarks, slices, positions, o
     link.click()
     URL.revokeObjectURL(url)
     const textCopied = copied ?? (await copy(text))
-    setStatus(textCopied ? 'Image saved. The text is on your clipboard: paste it with the image.' : 'Image saved.')
+    setStatus(textCopied ? t('Image saved. The text is on your clipboard: paste it with the image.') : t('Image saved.'))
   }
 
   return (
@@ -105,80 +106,81 @@ export function ShareDialog({ points, from, to, benchmarks, slices, positions, o
     <div className="share-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="share-dialog" role="dialog" aria-modal="true" aria-labelledby="share-title">
         <div className="panel-header">
-          <h3 id="share-title">Share your return</h3>
-          <button type="button" className="share-close" onClick={onClose} aria-label="Close">
+          <h3 id="share-title">{t('Share your return')}</h3>
+          <button type="button" className="share-close" onClick={onClose} aria-label={t('Close')}>
             ✕
           </button>
         </div>
         <p className="muted small">
           {showPositions
-            ? 'Percentages, dates and the names of your positions: no amounts or quantities.'
-            : 'Only percentages and dates: no amounts, quantities or product names.'}
+            ? t('Percentages, dates and the names of your positions: no amounts or quantities.')
+            : t('Only percentages and dates: no amounts, quantities or product names.')}
         </p>
         <canvas ref={canvas} className={`share-preview ${format}`} role="img" aria-label={text} />
         <div className="share-options">
-          <div className="segmented" role="group" aria-label="Format">
+          <div className="segmented" role="group" aria-label={t('Format')}>
             <button type="button" aria-pressed={format === 'wide'} onClick={() => setFormat('wide')}>
-              Post
+              {t('Post')}
             </button>
             <button type="button" aria-pressed={format === 'story'} onClick={() => setFormat('story')}>
-              Story
+              {t('Story')}
             </button>
           </div>
           {benchmarks[0] && (
             <label>
-              <input type="checkbox" checked={compare} onChange={(e) => setCompare(e.target.checked)} /> Compare with {benchmarks[0].label}
+              <input type="checkbox" checked={compare} onChange={(e) => setCompare(e.target.checked)} /> {t('Compare with {name}', { name: benchmarks[0].label })}
             </label>
           )}
           {slices.length > 0 && (
             <label>
-              <input type="checkbox" checked={showAllocation} onChange={(e) => setShowAllocation(e.target.checked)} /> Show the mix by type
+              <input type="checkbox" checked={showAllocation} onChange={(e) => setShowAllocation(e.target.checked)} /> {t('Show the mix by type')}
             </label>
           )}
         </div>
         {positions.length > 0 && (
           <div className="share-positions">
-            <span>My positions</span>
-            <div className="segmented" role="group" aria-label="My positions">
+            <span>{t('My positions')}</span>
+            <div className="segmented" role="group" aria-label={t('My positions')}>
               <button type="button" aria-pressed={positionOrder === 'off'} onClick={() => setPositionOrder('off')}>
-                Hide
+                {t('Hide')}
               </button>
               <button type="button" aria-pressed={positionOrder === 'weight'} onClick={() => setPositionOrder('weight')}>
-                Largest
+                {t('Largest')}
               </button>
               <button type="button" aria-pressed={positionOrder === 'return'} onClick={() => setPositionOrder('return')}>
-                Best return
+                {t('Best return')}
               </button>
             </div>
             <span className="muted small">
               {!showPositions
-                ? 'Show each position with its weight and its return, never the amounts.'
+                ? t('Show each position with its weight and its return, never the amounts.')
                 : positions.length > limit
-                  ? `You have ${positions.length} positions: the card shows ${limit - 1} and the other ${positions.length - limit + 1} together in one row${format === 'wide' ? '. A story has room for more.' : '.'}`
-                  : 'Each position with its weight and its return, never the amounts.'}
+                  ? t('You have {count} positions: the card shows {shown} and the other {rest} together in one row.', { count: positions.length, shown: limit - 1, rest: positions.length - limit + 1 }) +
+                    (format === 'wide' ? ` ${t('A story has room for more.')}` : '')
+                  : t('Each position with its weight and its return, never the amounts.')}
             </span>
           </div>
         )}
-        <textarea className="share-text" readOnly value={text} rows={3} aria-label="Text to go with it" />
+        <textarea className="share-text" readOnly value={text} rows={3} aria-label={t('Text to go with it')} />
         <div className="share-actions">
           <button type="button" className="primary" onClick={() => void share()}>
-            Share
+            {t('Share')}
           </button>
           <button type="button" onClick={() => void download()}>
-            Download image
+            {t('Download image')}
           </button>
-          <button type="button" onClick={() => void copy(text).then((ok) => setStatus(ok ? 'Text copied.' : 'Copying is not allowed here.'))}>
-            Copy text
+          <button type="button" onClick={() => void copy(text).then((ok) => setStatus(ok ? t('Text copied.') : t('Copying is not allowed here.')))}>
+            {t('Copy text')}
           </button>
           <button
             type="button"
             onClick={() =>
               void shareLink(card)
                 .then(copy)
-                .then((ok) => setStatus(ok ? 'Link copied: it opens this card, read-only. Everything is in the link itself.' : 'Copying is not allowed here.'))
+                .then((ok) => setStatus(ok ? t('Link copied: it opens this card, read-only. Everything is in the link itself.') : t('Copying is not allowed here.')))
             }
           >
-            Copy link
+            {t('Copy link')}
           </button>
         </div>
         <p className="small" role="status">

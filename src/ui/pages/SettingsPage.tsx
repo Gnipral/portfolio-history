@@ -19,10 +19,11 @@ import {
   type ThemePreference,
 } from '../../theme/theme.ts'
 import { resetSyncSession } from '../dashboard/usePortfolio.ts'
+import { LANGUAGES, language, setLanguage, t, type Language } from '../../i18n/i18n.ts'
 
 const COST_BASIS: { value: CostBasisMethod; label: string; hint: string }[] = [
-  { value: 'average', label: 'Average cost', hint: 'Every unit costs the average purchase price (as most brokers show it).' },
-  { value: 'fifo', label: 'FIFO', hint: 'Sales use the oldest units first.' },
+  { value: 'average', label: t('Average cost'), hint: t('Every unit costs the average purchase price (as most brokers show it).') },
+  { value: 'fifo', label: 'FIFO', hint: t('Sales use the oldest units first.') },
 ]
 
 function mixTotal(mix: Record<string, number>): number {
@@ -72,36 +73,35 @@ export function SettingsPage() {
 
   return (
     <section className="stack">
-      <h2>Settings</h2>
+      <h2>{t('Settings')}</h2>
       <form className="stack settings-form" onSubmit={(e) => void submit(e)}>
         <fieldset>
-          <legend>Price sources</legend>
+          <legend>{t('Price sources')}</legend>
           <p className="muted small">
-            Keys and URLs are stored only in this browser. Prices are fetched from the first source that has them: the
-            price proxy, then Twelve Data, then Alpha Vantage. Crypto prices come from CoinGecko without a key.
+            {t('Keys and URLs are stored only in this browser. Prices are fetched from the first source that has them: the price proxy, then Twelve Data, then Alpha Vantage. Crypto prices come from CoinGecko without a key.')}
           </p>
           <label>
-            Price proxy URL
+            {t('Price proxy URL')}
             <input type="url" placeholder="https://portfolio-history-price-proxy.example.workers.dev" {...field('proxyUrl')} />
-            <span className="muted small">Yahoo Finance prices and ISIN lookup. See workers/price-proxy in the repository.</span>
+            <span className="muted small">{t('Yahoo Finance prices and ISIN lookup. See workers/price-proxy in the repository.')}</span>
           </label>
           <label>
-            Twelve Data API key
+            {t('Twelve Data API key')}
             <input type="password" autoComplete="off" {...field('twelveDataKey')} />
-            <span className="muted small">Free plan: 800 requests per day, 8 per minute.</span>
+            <span className="muted small">{t('Free plan: 800 requests per day, 8 per minute.')}</span>
           </label>
           <label>
-            Alpha Vantage API key
+            {t('Alpha Vantage API key')}
             <input type="password" autoComplete="off" {...field('alphaVantageKey')} />
-            <span className="muted small">Free plan: 25 requests per day, last 100 trading days only.</span>
+            <span className="muted small">{t('Free plan: 25 requests per day, last 100 trading days only.')}</span>
           </label>
         </fieldset>
         <fieldset>
-          <legend>Benchmark</legend>
+          <legend>{t('Benchmark')}</legend>
           <label>
-            Compare the portfolio with
+            {t('Compare the portfolio with')}
             <select {...field('benchmarkId')}>
-              <option value="">Nothing</option>
+              <option value="">{t('Nothing')}</option>
               {BENCHMARKS.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name} ({b.symbol})
@@ -109,11 +109,11 @@ export function SettingsPage() {
               ))}
             </select>
             <span className="muted small">
-              The dashboard shows what the same deposits and withdrawals, on the same days, would have become in this fund.
+              {t('The dashboard shows what the same deposits and withdrawals, on the same days, would have become in this fund.')}
             </span>
           </label>
-          <div className="stack" role="group" aria-label="Also show">
-            <span>Also show</span>
+          <div className="stack" role="group" aria-label={t('Also show')}>
+            <span>{t('Also show')}</span>
             {BENCHMARKS.filter((b) => b.id !== form.benchmarkId).map((b) => (
               <label key={b.id} className="radio">
                 <input
@@ -129,8 +129,8 @@ export function SettingsPage() {
               </label>
             ))}
           </div>
-          <div className="stack" role="group" aria-label="Benchmark mix">
-            <span>Own mix in percent, shown as one more line when the parts add up to 100</span>
+          <div className="stack" role="group" aria-label={t('Benchmark mix')}>
+            <span>{t('Own mix in percent, shown as one more line when the parts add up to 100')}</span>
             <div className="mix-grid">
               {BENCHMARKS.map((b) => (
                 <label key={b.id}>
@@ -154,15 +154,15 @@ export function SettingsPage() {
             </div>
             {mixTotal(form.benchmarkMix) > 0 && mixTotal(form.benchmarkMix) !== 100 && (
               <span className="muted small" role="status">
-                The parts add up to {mixTotal(form.benchmarkMix)}%, not 100%: the mix is not shown.
+                {t('The parts add up to {total}%, not 100%: the mix is not shown.', { total: mixTotal(form.benchmarkMix) })}
               </span>
             )}
           </div>
         </fieldset>
         <fieldset>
-          <legend>Calculation</legend>
+          <legend>{t('Calculation')}</legend>
           <label>
-            Currency
+            {t('Currency')}
             <select
               value={form.baseCurrency}
               onChange={(e) => {
@@ -175,11 +175,10 @@ export function SettingsPage() {
               ))}
             </select>
             <span className="muted small">
-              Every amount and return is calculated in this currency, at the ECB rate of each day. Exchange rate changes
-              then count in your result.
+              {t('Every amount and return is calculated in this currency, at the ECB rate of each day. Exchange rate changes then count in your result.')}
             </span>
           </label>
-          <div className="radio-group" role="radiogroup" aria-label="Cost basis">
+          <div className="radio-group" role="radiogroup" aria-label={t('Cost basis')}>
             {COST_BASIS.map((option) => (
               <label key={option.value} className="radio">
                 <input
@@ -202,17 +201,27 @@ export function SettingsPage() {
         </fieldset>
         <div className="actions">
           <button type="submit" className="primary">
-            Save
+            {t('Save')}
           </button>
-          {saved && <span role="status">Saved.</span>}
+          {saved && <span role="status">{t('Saved.')}</span>}
         </div>
       </form>
 
       <div className="stack settings-form">
         <fieldset>
-          <legend>Appearance</legend>
+          <legend>{t('Appearance')}</legend>
           <label>
-            Theme
+            {t('Language')}
+            <select value={language()} onChange={(e) => setLanguage(e.target.value as Language)}>
+              {LANGUAGES.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t('Theme')}
             <select
               value={theme}
               onChange={(e) => {
@@ -221,13 +230,13 @@ export function SettingsPage() {
                 setTheme(next)
               }}
             >
-              <option value="system">Follow the system</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
+              <option value="system">{t('Follow the system')}</option>
+              <option value="light">{t('Light')}</option>
+              <option value="dark">{t('Dark')}</option>
             </select>
           </label>
-          <div className="palette-picker" role="radiogroup" aria-label="Chart colors">
-            <span>Chart colors</span>
+          <div className="palette-picker" role="radiogroup" aria-label={t('Chart colors')}>
+            <span>{t('Chart colors')}</span>
             {PALETTES.map((p) => (
               <label key={p.id} className="palette-option">
                 <input
@@ -246,8 +255,8 @@ export function SettingsPage() {
                   ))}
                 </span>
                 <span>
-                  <strong>{p.label}</strong>
-                  <span className="muted small"> {p.description}</span>
+                  <strong>{t(p.label)}</strong>
+                  <span className="muted small"> {t(p.description)}</span>
                 </span>
               </label>
             ))}
@@ -259,11 +268,11 @@ export function SettingsPage() {
         <AccountSection />
 
         <fieldset>
-          <legend>Demo</legend>
+          <legend>{t('Demo')}</legend>
           <p className="muted small">
             {isDemo()
-              ? 'You are looking at a made-up portfolio with its own settings. Leave the demo to get back to your own data.'
-              : 'Look around in a made-up portfolio with prices that need no connection. Your own data is kept apart and stays untouched.'}
+              ? t('You are looking at a made-up portfolio with its own settings. Leave the demo to get back to your own data.')
+              : t('Look around in a made-up portfolio with prices that need no connection. Your own data is kept apart and stays untouched.')}
           </p>
           <div className="actions">
             <DemoButton />
@@ -271,31 +280,30 @@ export function SettingsPage() {
         </fieldset>
 
         <fieldset>
-          <legend>Data</legend>
+          <legend>{t('Data')}</legend>
           <p className="muted small">
-            Everything is stored in this browser only: the imported transactions, cached prices and exchange rates, and these
-            settings, including API keys.
+            {t('Everything is stored in this browser only: the imported transactions, cached prices and exchange rates, and these settings, including API keys.')}
           </p>
-          {deleted && <p role="status">All data has been deleted from this browser.</p>}
+          {deleted && <p role="status">{t('All data has been deleted from this browser.')}</p>}
           {confirmDelete ? (
-            <div className="callout warning" role="alertdialog" aria-label="Delete all data">
+            <div className="callout warning" role="alertdialog" aria-label={t('Delete all data')}>
               <p>
-                <strong>Delete all data?</strong> This removes the portfolio, the price cache and the settings from this
-                browser. It cannot be undone; you can import the export again afterwards.
+                <strong>{t('Delete all data?')}</strong>{' '}
+                {t('This removes the portfolio, the price cache and the settings from this browser. It cannot be undone; you can import the export again afterwards.')}
               </p>
               <div className="actions">
                 <button type="button" className="danger" onClick={() => void removeEverything()}>
-                  Delete everything
+                  {t('Delete everything')}
                 </button>
                 <button type="button" onClick={() => setConfirmDelete(false)}>
-                  Cancel
+                  {t('Cancel')}
                 </button>
               </div>
             </div>
           ) : (
             <div className="actions">
               <button type="button" className="danger" onClick={() => setConfirmDelete(true)}>
-                Delete all data
+                {t('Delete all data')}
               </button>
             </div>
           )}

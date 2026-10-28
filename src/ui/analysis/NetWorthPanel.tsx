@@ -3,6 +3,7 @@ import { assetValueOn, OTHER_ASSET_KINDS, otherAssetsOn, withValue, type OtherAs
 import { localToday } from '../../market/dates.ts'
 import { updateSettings } from '../../settings/settings.ts'
 import { displayCurrency, formatDate, formatEur } from '../format.ts'
+import { t } from '../../i18n/i18n.ts'
 
 function save(change: (assets: OtherAsset[]) => OtherAsset[]) {
   return updateSettings((current) => ({ otherAssets: change(current.otherAssets) }))
@@ -18,23 +19,22 @@ export function NetWorthPanel({ portfolioValue, assets }: { portfolioValue: numb
 
   return (
     <div className="panel">
-      <h3>Net worth</h3>
+      <h3>{t('Net worth')}</h3>
       <p className="muted small">
-        Add savings, pension savings, real estate or a mortgage to see everything together. They do not change the returns of the
-        portfolio.
+        {t('Add savings, pension savings, real estate or a mortgage to see everything together. They do not change the returns of the portfolio.')}
       </p>
       <div className="cards">
         <div className="card hero">
-          <span className="card-label">Net worth</span>
+          <span className="card-label">{t('Net worth')}</span>
           <span className="card-value">{formatEur(portfolioValue + others.total, true)}</span>
         </div>
         <div className="card">
-          <span className="card-label">Portfolio</span>
+          <span className="card-label">{t('Portfolio')}</span>
           <span className="card-value">{formatEur(portfolioValue, true)}</span>
         </div>
         {assets.length > 0 && (
           <div className="card">
-            <span className="card-label">Other assets</span>
+            <span className="card-label">{t('Other assets')}</span>
             <span className="card-value">{formatEur(others.total, true)}</span>
           </div>
         )}
@@ -44,11 +44,11 @@ export function NetWorthPanel({ portfolioValue, assets }: { portfolioValue: numb
           <table className="table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Kind</th>
-                <th className="num">Value</th>
-                <th>Updated</th>
-                <th aria-label="Actions" />
+                <th>{t('Name')}</th>
+                <th>{t('Kind')}</th>
+                <th className="num">{t('Value')}</th>
+                <th>{t('Updated')}</th>
+                <th aria-label={t('Actions')} />
               </tr>
             </thead>
             <tbody>
@@ -64,7 +64,7 @@ export function NetWorthPanel({ portfolioValue, assets }: { portfolioValue: numb
       ) : (
         <div className="actions">
           <button type="button" onClick={() => setAdding(true)}>
-            Add savings or another asset
+            {t('Add savings or another asset')}
           </button>
         </div>
       )}
@@ -91,9 +91,9 @@ function AssetRow({ asset, today }: { asset: OtherAsset; today: string }) {
       <td className="num">
         {editing ? (
           <form onSubmit={update} className="inline-form">
-            <input type="number" min={0} step="any" inputMode="decimal" aria-label={`New value of ${asset.name}`} value={draft} onChange={(e) => setDraft(Number(e.target.value) || 0)} autoFocus />
+            <input type="number" min={0} step="any" inputMode="decimal" aria-label={t('New value of {name}', { name: asset.name })} value={draft} onChange={(e) => setDraft(Number(e.target.value) || 0)} autoFocus />
             <button type="submit" className="link-button">
-              Save
+              {t('Save')}
             </button>
           </form>
         ) : (
@@ -104,11 +104,11 @@ function AssetRow({ asset, today }: { asset: OtherAsset; today: string }) {
       <td className="row-actions">
         {!editing && (
           <button type="button" className="link-button" onClick={() => setEditing(true)}>
-            Update value
+            {t('Update value')}
           </button>
         )}
         <button type="button" className="link-button" aria-label={`Remove ${asset.name}`} onClick={() => void save((assets) => assets.filter((a) => a.id !== asset.id))}>
-          Remove
+          {t('Remove')}
         </button>
       </td>
     </tr>
@@ -130,14 +130,14 @@ function AddAsset({ today, onDone }: { today: string; onDone: () => void }) {
   }
 
   return (
-    <form className="settings-form" onSubmit={add} aria-label="Add an asset">
+    <form className="settings-form" onSubmit={add} aria-label={t('Add an asset')}>
       <div className="form-grid">
         <label>
-          Name
-          <input value={name} required placeholder="e.g. Savings account" onChange={(e) => setName(e.target.value)} />
+          {t('Name')}
+          <input value={name} required placeholder={t('e.g. Savings account')} onChange={(e) => setName(e.target.value)} />
         </label>
         <label>
-          Kind
+          {t('Kind')}
           <select value={kind} onChange={(e) => setKind(e.target.value as OtherAssetKind)}>
             {OTHER_ASSET_KINDS.map((k) => (
               <option key={k.key} value={k.key}>
@@ -152,15 +152,15 @@ function AddAsset({ today, onDone }: { today: string; onDone: () => void }) {
         </label>
         <label className="radio">
           <input type="checkbox" checked={debt} onChange={(e) => setDebt(e.target.checked)} />
-          It is a debt, such as a mortgage
+          {t('It is a debt, such as a mortgage')}
         </label>
       </div>
       <div className="actions">
         <button type="submit" className="primary">
-          Add
+          {t('Add')}
         </button>
         <button type="button" onClick={onDone}>
-          Cancel
+          {t('Cancel')}
         </button>
       </div>
     </form>

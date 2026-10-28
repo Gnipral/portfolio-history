@@ -5,6 +5,7 @@ import { incomeRows } from '../../engine/analysis/income.ts'
 import type { EngineInputs } from '../../engine/loadInputs.ts'
 import { localToday } from '../../market/dates.ts'
 import { displayCurrency, formatDate, formatEur, formatPercent, formatSignedEur, trendClass } from '../format.ts'
+import { t } from '../../i18n/i18n.ts'
 import { SalesTable } from './SalesTable.tsx'
 import { TaxReportPanel } from './TaxReportPanel.tsx'
 import { TaxRulesForm } from './TaxRulesForm.tsx'
@@ -17,24 +18,38 @@ interface Props {
 
 /** The chosen rules in one sentence or two, so the result can be checked against them. */
 function describe(rules: CapitalGainsRules): string {
-  if (rules.rate === 0) return 'No tax on realized gains under these rules.'
+  if (rules.rate === 0) return t('No tax on realized gains under these rules.')
+  const rate = formatPercent(rules.rate, false)
   const parts = [
-    `${formatPercent(rules.rate, false)} on the net gains of a year${rules.yearlyExemption > 0 ? ` above an exemption of ${formatEur(rules.yearlyExemption, true)}` : ''}${rules.firstTaxedYear ? `, from ${rules.firstTaxedYear} on` : ''}.`,
+    rules.yearlyExemption > 0
+      ? t('{rate} on the net gains of a year above an exemption of {exemption}', { rate, exemption: formatEur(rules.yearlyExemption, true) })
+      : t('{rate} on the net gains of a year', { rate }),
   ]
+  parts[0] += rules.firstTaxedYear ? `${t(', from {year} on', { year: rules.firstTaxedYear })}.` : '.'
   if (rules.exemptionCarryOver > 0) {
-    parts.push(`An unused exemption carries over up to ${formatEur(rules.exemptionCarryOver, true)} a year, to at most ${formatEur(rules.maxExemption, true)}.`)
+    parts.push(
+      t('An unused exemption carries over up to {amount} a year, to at most {max}.', {
+        amount: formatEur(rules.exemptionCarryOver, true),
+        max: formatEur(rules.maxExemption, true),
+      }),
+    )
   }
   if (rules.referenceDate) {
+    const date = formatDate(rules.referenceDate)
     parts.push(
-      `What you held on ${formatDate(rules.referenceDate)} counts at its value of that day${rules.stepUp === 'higher' ? ', or at its purchase price when that is higher' : ''}.`,
+      rules.stepUp === 'higher'
+        ? t('What you held on {date} counts at its value of that day, or at its purchase price when that is higher.', { date })
+        : t('What you held on {date} counts at its value of that day.', { date }),
     )
   }
   parts.push(
     rules.lossCarryForwardYears === 0
-      ? 'Losses only offset gains of the same year.'
-      : `Losses offset gains of later years${rules.lossCarryForwardYears >= 99 ? '' : ` for ${rules.lossCarryForwardYears} years`}.`,
+      ? t('Losses only offset gains of the same year.')
+      : rules.lossCarryForwardYears >= 99
+        ? t('Losses offset gains of later years.')
+        : t('Losses offset gains of later years for {years} years.', { years: rules.lossCarryForwardYears }),
   )
-  parts.push(`Units sold are matched ${rules.costBasis === 'fifo' ? 'first in, first out' : 'at their average purchase price'}.`)
+  parts.push(rules.costBasis === 'fifo' ? t('Units sold are matched first in, first out.') : t('Units sold are matched at their average purchase price.'))
   return parts.join(' ')
 }
 
@@ -58,20 +73,20 @@ export function TaxesSection({ inputs, rules, onRulesChange }: Props) {
 
   return (
     <>
-      <TaxReportPanel gains={gains} income={income} charges={charges} rulesLabel={isAdjusted(rules) ? `${preset.label}, adjusted` : preset.label} />
+      <TaxReportPanel gains={gains} income={income} charges={charges} rulesLabel={isAdjusted(rules) ? t('{name}, adjusted', { name: t(preset.label) }) : t(preset.label)} />
       <div className="panel">
-        <h3>Taxes paid</h3>
+        <h3>{t('Taxes paid')}</h3>
         {taxed.length === 0 ? (
-          <p className="muted">The export contains no taxes.</p>
+          <p className="muted">{t('The export contains no taxes.')}</p>
         ) : (
           <table className="table">
             <thead>
               <tr>
-                <th>Year</th>
-                <th className="num">Stock exchange tax (TOB)</th>
-                <th className="num">Withheld on dividends and interest</th>
-                <th className="num">Other</th>
-                <th className="num">Total</th>
+                <th>{t('Year')}</th>
+                <th className="num">{t('Stock exchange tax (TOB)')}</th>
+                <th className="num">{t('Withheld on dividends and interest')}</th>
+                <th className="num">{t('Other')}</th>
+                <th className="num">{t('Total')}</th>
               </tr>
             </thead>
             <tbody>
@@ -88,35 +103,33 @@ export function TaxesSection({ inputs, rules, onRulesChange }: Props) {
           </table>
         )}
         <p className="muted small">
-          Withheld taxes are the foreign and the domestic withholding tax together, as the broker booked them. Most exports do not
-          tell them apart.
+          {t('Withheld taxes are the foreign and the domestic withholding tax together, as the broker booked them. Most exports do not tell them apart.')}
         </p>
       </div>
 
       <div className="panel">
-        <h3>Tax on capital gains (estimate)</h3>
+        <h3>{t('Tax on capital gains (estimate)')}</h3>
         {displayCurrency() !== 'EUR' && (
           <p className="callout warning small">
-            Amounts are in {displayCurrency()}. The tax rules below count in EUR: switch the currency back to EUR in Settings for
-            a tax estimate.
+            {t('Amounts are in {currency}. The tax rules below count in EUR: switch the currency back to EUR in Settings for a tax estimate.', { currency: displayCurrency() })}
           </p>
         )}
         <TaxRulesForm rules={rules} onChange={onRulesChange} />
         <p className="muted small">{describe(rules)}</p>
         {gains.years.length === 0 ? (
-          <p className="muted">No taxed sales yet.</p>
+          <p className="muted">{t('No taxed sales yet.')}</p>
         ) : (
           <table className="table">
             <thead>
               <tr>
-                <th>Year</th>
-                <th className="num">Gains</th>
-                <th className="num">Losses</th>
-                <th className="num">Net</th>
-                {rules.lossCarryForwardYears > 0 && <th className="num">Earlier losses used</th>}
-                <th className="num">Exemption</th>
-                <th className="num">Taxable</th>
-                <th className="num">Estimated tax</th>
+                <th>{t('Year')}</th>
+                <th className="num">{t('Gains')}</th>
+                <th className="num">{t('Losses')}</th>
+                <th className="num">{t('Net')}</th>
+                {rules.lossCarryForwardYears > 0 && <th className="num">{t('Earlier losses used')}</th>}
+                <th className="num">{t('Exemption')}</th>
+                <th className="num">{t('Taxable')}</th>
+                <th className="num">{t('Estimated tax')}</th>
               </tr>
             </thead>
             <tbody>
@@ -139,17 +152,16 @@ export function TaxesSection({ inputs, rules, onRulesChange }: Props) {
         )}
         {rules.referenceDate && gains.withoutReference.length > 0 && (
           <p className="callout warning small">
-            No market price on {formatDate(rules.referenceDate)} for {gains.withoutReference.join(', ')}: their purchase price is
-            used, which can make the gain look larger. Add a ticker on the Prices page.
+            {t('No market price on {date} for {products}: their purchase price is used, which can make the gain look larger. Add a ticker on the Prices page.', { date: formatDate(rules.referenceDate), products: gains.withoutReference.join(', ') })}
           </p>
         )}
         <ul className="muted small">
-          {!isAdjusted(rules) && preset.notes.map((note) => <li key={note}>{note}</li>)}
-          <li>An estimate, not tax advice: rates and exemptions change, and your tax return is what counts.</li>
+          {!isAdjusted(rules) && preset.notes.map((note) => <li key={note}>{t(note)}</li>)}
+          <li>{t('An estimate, not tax advice: rates and exemptions change, and your tax return is what counts.')}</li>
         </ul>
         {gains.sales.length > 0 && (
           <>
-            <h4>Sales counted</h4>
+            <h4>{t('Sales counted')}</h4>
             <SalesTable sales={gains.sales} />
           </>
         )}

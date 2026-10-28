@@ -12,6 +12,7 @@ import type { PriceProvider, ProviderResult } from './providers/types.ts'
 import type { RequestQueue } from './queue.ts'
 import { syncFx, syncStaticBenchmark } from './staticData.ts'
 import type { DateRange, SymbolRecord } from './types.ts'
+import { t } from '../i18n/i18n.ts'
 
 export interface SyncProgress {
   phase: 'fx' | 'benchmarks' | 'symbols' | 'prices' | 'done'
@@ -65,7 +66,7 @@ async function resolveSymbols(
 
   const securities = pending.filter((i) => i.kind === 'security' && i.isin)
   if (securities.length > 0 && !settings.proxyUrl) {
-    for (const i of securities) problems[i.key] = 'No symbol yet: set the price proxy URL in Settings, or enter the symbol manually.'
+    for (const i of securities) problems[i.key] = t('No symbol yet: set the price proxy URL in Settings, or enter the symbol manually.')
   } else {
     for (let start = 0; start < securities.length; start += FIGI_BATCH) {
       const batch = securities.slice(start, start + FIGI_BATCH)
@@ -77,8 +78,8 @@ async function resolveSymbols(
           ),
         )
         const records: SymbolRecord[] = batch.map((instrument, n) => {
-          const result = results[n] ?? { error: 'No answer' }
-          if ('error' in result) problems[instrument.key] = `Symbol not found: ${result.error}. Enter it manually.`
+          const result = results[n] ?? { error: t('No answer') }
+          if ('error' in result) problems[instrument.key] = t('Symbol not found: {error}. Enter it manually.', { error: result.error })
           return {
             key: instrument.key,
             kind: 'security',
@@ -89,7 +90,7 @@ async function resolveSymbols(
         })
         await database.symbols.bulkPut(records)
       } catch (error) {
-        for (const i of batch) problems[i.key] = `Symbol lookup failed: ${String(error)}`
+        for (const i of batch) problems[i.key] = t('Symbol lookup failed: {error}', { error: String(error) })
         if (isNetworkError(error)) connection.push(...batch.map((i) => i.key))
       }
     }
@@ -98,7 +99,7 @@ async function resolveSymbols(
   for (const instrument of pending.filter((i) => i.kind === 'crypto')) {
     try {
       const id = instrument.ticker ? await queueFor(queues, 'coingecko').run(() => searchCoinId(instrument.ticker as string)) : undefined
-      if (!id) problems[instrument.key] = 'Coin not found on CoinGecko. Enter the symbol as crypto:<coingecko id>.'
+      if (!id) problems[instrument.key] = t('Coin not found on CoinGecko. Enter the symbol as crypto:<coingecko id>.')
       await database.symbols.put({
         key: instrument.key,
         kind: 'crypto',
@@ -107,7 +108,7 @@ async function resolveSymbols(
         ...(id ? { symbol: `${CRYPTO_PREFIX}${id}` } : { error: 'not found' }),
       })
     } catch (error) {
-      problems[instrument.key] = `Coin lookup failed: ${String(error)}`
+      problems[instrument.key] = t('Coin lookup failed: {error}', { error: String(error) })
       if (isNetworkError(error)) connection.push(instrument.key)
     }
   }
@@ -133,7 +134,7 @@ async function fetchRange(
   queues: Record<string, RequestQueue>,
 ): Promise<{ result: ProviderResult; provider: PriceProvider }> {
   const candidates = providers.filter((p) => p.isAvailable(settings) && p.supports(symbol, kind))
-  if (candidates.length === 0) throw new Error('No price source configured for this symbol. Add an API key or the price proxy in Settings.')
+  if (candidates.length === 0) throw new Error(t('No price source configured for this symbol. Add an API key or the price proxy in Settings.'))
   const failures: unknown[] = []
   for (const provider of candidates) {
     try {
@@ -160,11 +161,11 @@ export async function syncMarketData(options: SyncOptions): Promise<SyncReport> 
   const problems: Record<string, string> = {}
   const connection: string[] = []
 
-  onProgress?.({ phase: 'fx', done: 0, total: 1, message: 'Updating exchange rates' })
+  onProgress?.({ phase: 'fx', done: 0, total: 1, message: t('Updating exchange rates') })
   errors.push(...(await syncFx(database, today)).errors)
 
   const benchmarks = BENCHMARKS.filter((b) => (options.benchmarkIds ?? ['iwda']).includes(b.id))
-  onProgress?.({ phase: 'benchmarks', done: 0, total: benchmarks.length, message: 'Loading benchmark data' })
+  onProgress?.({ phase: 'benchmarks', done: 0, total: benchmarks.length, message: t('Loading benchmark data') })
   for (const benchmark of benchmarks) {
     try {
       await syncStaticBenchmark(database, benchmark, today)
@@ -174,7 +175,7 @@ export async function syncMarketData(options: SyncOptions): Promise<SyncReport> 
   }
 
   const instruments = deriveInstruments(transactions, today)
-  onProgress?.({ phase: 'symbols', done: 0, total: instruments.length, message: 'Looking up symbols' })
+  onProgress?.({ phase: 'symbols', done: 0, total: instruments.length, message: t('Looking up symbols') })
   await resolveSymbols({ database, settings, now, queues }, instruments, problems, connection)
 
   const records = new Map((await database.symbols.toArray()).map((r) => [r.key, r]))
@@ -190,7 +191,7 @@ export async function syncMarketData(options: SyncOptions): Promise<SyncReport> 
 
   let done = 0
   const total = jobs.length
-  onProgress?.({ phase: 'prices', done, total, message: 'Fetching prices' })
+  onProgress?.({ phase: 'prices', done, total, message: t('Fetching prices') })
   await Promise.all(
     jobs.map(async (job) => {
       try {
@@ -211,7 +212,7 @@ export async function syncMarketData(options: SyncOptions): Promise<SyncReport> 
         if (isNetworkError(error)) connection.push(job.key)
       } finally {
         done++
-        onProgress?.({ phase: 'prices', done, total, message: `Fetching prices (${done}/${total})` })
+        onProgress?.({ phase: 'prices', done, total, message: `${t('Fetching prices')} (${done}/${total})` })
       }
     }),
   )

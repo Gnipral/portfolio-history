@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { t } from '../../i18n/i18n.ts'
 import { reportUrl } from './report.ts'
 
 interface Props {
@@ -38,25 +39,25 @@ export class ErrorBoundary extends Component<Props, State> {
     return (
       <div className="callout error error-boundary" role="alert">
         <p>
-          <strong>{label ? `${label} could not be shown.` : 'Something went wrong on this page.'}</strong> Your data is
-          safe; nothing was changed.
+          <strong>{label ? t('{what} could not be shown.', { what: label }) : t('Something went wrong on this page.')}</strong>{' '}
+          {t('Your data is safe; nothing was changed.')}
         </p>
         <p className="muted small">{message}</p>
         <div className="actions">
           {label ? (
             <button type="button" onClick={() => this.setState({ error: undefined })}>
-              Try again
+              {t('Try again')}
             </button>
           ) : (
             <button type="button" className="primary" onClick={() => window.location.reload()}>
-              Reload
+              {t('Reload')}
             </button>
           )}
           <a href={reportUrl(error, window.location.hash.slice(1) || '/')} target="_blank" rel="noreferrer">
-            Report this problem
+            {t('Report this problem')}
           </a>
         </div>
-        <p className="muted small">The report opens on GitHub with the error and the page, never your portfolio. You see it before you send it.</p>
+        <p className="muted small">{t('The report opens on GitHub with the error and the page, never your portfolio. You see it before you send it.')}</p>
       </div>
     )
   }
