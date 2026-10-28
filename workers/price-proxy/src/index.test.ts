@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import worker, { cacheSeconds, yahooUrl, type Env } from './index.ts'
+import worker, { cacheSeconds, searchResults, yahooUrl, type Env } from './index.ts'
 
 const env: Env = { ALLOWED_ORIGINS: 'https://gnipral.github.io, http://localhost:5173' }
 const ctx = { waitUntil: () => {} }
@@ -109,5 +109,32 @@ describe('helpers', () => {
     expect(cacheSeconds(String(now - 10 * 86_400), now)).toBe(7 * 86_400)
     expect(cacheSeconds(String(now), now)).toBe(3_600)
     expect(cacheSeconds(null, now)).toBe(3_600)
+  })
+})
+
+describe('search', () => {
+  it('keeps only quotes with a chart, and only the fields the app shows', () => {
+    const results = searchResults({
+      quotes: [
+        { symbol: 'AAPL', longname: 'Apple Inc.', shortname: 'Apple', exchDisp: 'NASDAQ', quoteType: 'EQUITY' },
+        { symbol: 'IWDA.AS', shortname: 'iShares Core MSCI World', exchDisp: 'Amsterdam', quoteType: 'ETF' },
+        { symbol: 'AAPL260116C00200000', shortname: 'An option', quoteType: 'OPTION' },
+        { symbol: 'bad symbol!', longname: 'Nope', quoteType: 'EQUITY' },
+      ],
+    })
+    expect(results).toEqual([
+      { symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ', type: 'EQUITY' },
+      { symbol: 'IWDA.AS', name: 'iShares Core MSCI World', exchange: 'Amsterdam', type: 'ETF' },
+    ])
+    expect(searchResults(null)).toEqual([])
+  })
+
+  it('asks Yahoo for the query and answers the trimmed list', async () => {
+    const upstream = vi.fn(async () => Response.json({ quotes: [{ symbol: 'ASML.AS', longname: 'ASML Holding N.V.', exchDisp: 'Amsterdam', quoteType: 'EQUITY' }] }))
+    vi.stubGlobal('fetch', upstream)
+    const response = await call('/yahoo/search?q=asml')
+    expect(await response.json()).toEqual({ results: [{ symbol: 'ASML.AS', name: 'ASML Holding N.V.', exchange: 'Amsterdam', type: 'EQUITY' }] })
+    expect(String((upstream.mock.calls[0] as unknown[])[0])).toContain('q=asml')
+    expect((await call('/yahoo/search?q=')).status).toBe(400)
   })
 })

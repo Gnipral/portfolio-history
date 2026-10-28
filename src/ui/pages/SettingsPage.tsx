@@ -6,7 +6,8 @@ import { BackupSection } from '../components/BackupSection.tsx'
 import { DemoButton } from '../components/DemoBanner.tsx'
 import { BASE_CURRENCIES, type BaseCurrency } from '../../engine/baseCurrency.ts'
 import type { CostBasisMethod } from '../../engine/options.ts'
-import { BENCHMARKS } from '../../market/benchmarks.ts'
+import { benchmarkCatalog } from '../../market/benchmarks.ts'
+import { BenchmarkSearch } from '../components/BenchmarkSearch.tsx'
 import { DEFAULT_SETTINGS, saveSettings, useSettings, type Settings, type TextSetting } from '../../settings/settings.ts'
 import {
   PALETTES,
@@ -63,6 +64,8 @@ export function SettingsPage() {
     setSaved(true)
   }
 
+  const catalog = benchmarkCatalog(form.customBenchmarks)
+
   const field = (key: TextSetting) => ({
     value: form[key],
     onChange: (e: { target: { value: string } }) => {
@@ -108,19 +111,59 @@ export function SettingsPage() {
             {t('Compare the portfolio with')}
             <select {...field('benchmarkId')}>
               <option value="">{t('Nothing')}</option>
-              {BENCHMARKS.map((b) => (
+              {catalog.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name} ({b.symbol})
                 </option>
               ))}
             </select>
             <span className="muted small">
-              {t('The dashboard shows what the same deposits and withdrawals, on the same days, would have become in this fund.')}
+              {t('The dashboard shows what the same deposits and withdrawals, on the same days, would have become in this fund.')}{' '}
+              {t('This is the default; under the chart you can compare with something else for a moment.')}
             </span>
           </label>
+          <div className="stack" role="group" aria-label={t('Own stocks to compare with')}>
+            <span>{t('Own stocks to compare with')}</span>
+            {form.customBenchmarks.length > 0 && (
+              <ul className="benchmark-results">
+                {form.customBenchmarks.map((b) => (
+                  <li key={b.id}>
+                    <span>
+                      <strong>{b.symbol}</strong> {b.name}
+                    </span>
+                    <button
+                      type="button"
+                      className="link-button"
+                      aria-label={t('Remove {name}', { name: b.name })}
+                      onClick={() => {
+                        setSaved(false)
+                        const mix = Object.fromEntries(Object.entries(form.benchmarkMix).filter(([id]) => id !== b.id))
+                        setForm({
+                          ...form,
+                          customBenchmarks: form.customBenchmarks.filter((c) => c.id !== b.id),
+                          benchmarkId: form.benchmarkId === b.id ? '' : form.benchmarkId,
+                          extraBenchmarkIds: form.extraBenchmarkIds.filter((id) => id !== b.id),
+                          benchmarkMix: mix,
+                        })
+                      }}
+                    >
+                      {t('Remove')}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <BenchmarkSearch
+              onPick={(benchmark) => {
+                if (catalog.some((b) => b.symbol === benchmark.symbol)) return
+                setSaved(false)
+                setForm({ ...form, customBenchmarks: [...form.customBenchmarks, benchmark] })
+              }}
+            />
+          </div>
           <div className="stack" role="group" aria-label={t('Also show')}>
             <span>{t('Also show')}</span>
-            {BENCHMARKS.filter((b) => b.id !== form.benchmarkId).map((b) => (
+            {catalog.filter((b) => b.id !== form.benchmarkId).map((b) => (
               <label key={b.id} className="radio">
                 <input
                   type="checkbox"
@@ -138,7 +181,7 @@ export function SettingsPage() {
           <div className="stack" role="group" aria-label={t('Benchmark mix')}>
             <span>{t('Own mix in percent, shown as one more line when the parts add up to 100')}</span>
             <div className="mix-grid">
-              {BENCHMARKS.map((b) => (
+              {catalog.map((b) => (
                 <label key={b.id}>
                   {b.symbol}
                   <input

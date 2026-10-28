@@ -70,7 +70,17 @@ export async function loadEngineInputs(database: PortfolioDatabase, benchmarks: 
     prices,
     benchmarks: benchmarks.flatMap((info) => {
       const list = bySymbol.get(info.symbol)
-      return list?.length ? [{ info, series: rebaseSeries(PriceSeries.fromPoints(info.symbol, list), rate) }] : []
+      if (!list?.length) return []
+      // A stock added to compare with can quote in dollars or pence: its closes go to EUR first, at the rate of each day.
+      const currency = coverage.find((c) => c.symbol === info.symbol)?.currency || info.currency || 'EUR'
+      const inEur =
+        currency === 'EUR'
+          ? list
+          : list.flatMap((p) => {
+              const close = fx.toEur(p.close, currency, p.date)
+              return close === undefined ? [] : [{ ...p, close }]
+            })
+      return inEur.length ? [{ info, series: rebaseSeries(PriceSeries.fromPoints(info.symbol, inEur), rate) }] : []
     }),
   }
 }
