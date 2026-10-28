@@ -18,7 +18,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { BenchmarkLine } from './benchmarkLines.ts'
 import type { DailyPoint } from '../../engine/series.ts'
 import { DEFAULT_CHART_STYLE, type ChartStyle } from '../../settings/settings.ts'
-import { PALETTES, readPalette, storePalette, type Palette } from '../../theme/theme.ts'
+import { PALETTES, storePalette } from '../../theme/theme.ts'
+import { usePalette } from '../usePalette.ts'
 import { formatDate, formatEur, formatPercent } from '../format.ts'
 import { chartData, type ChartMode } from './chartData.ts'
 import { useThemeColors } from './useThemeColors.ts'
@@ -80,9 +81,12 @@ function canFullscreen(element: HTMLElement | null): boolean {
   return Boolean(element?.requestFullscreen && document.fullscreenEnabled)
 }
 
-/** The value of a CSS color variable such as `--series-2`; lightweight-charts needs the color itself. */
-function cssColor(variable: string | undefined): string {
-  return variable ? getComputedStyle(document.documentElement).getPropertyValue(variable).trim() || '#888' : '#888'
+/**
+ * The value of a CSS color variable such as `--series-2` as the chart sees it (with the palette of
+ * its block); lightweight-charts needs the color itself.
+ */
+function cssColor(variable: string | undefined, element: Element | null): string {
+  return variable ? getComputedStyle(element ?? document.documentElement).getPropertyValue(variable).trim() || '#888' : '#888'
 }
 
 /** Value and profit over time with a crosshair that follows, and drives, the selected day. */
@@ -99,7 +103,9 @@ export function PortfolioChart({
 }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const refs = useRef<ChartRefs | null>(null)
-  const colors = useThemeColors()
+  const wrapper = useRef<HTMLDivElement>(null)
+  const palette = usePalette()
+  const colors = useThemeColors(wrapper, palette)
   const colorsRef = useRef(colors)
   colorsRef.current = colors
   const benchmarkPoints = useMemo(() => benchmarks.map((b) => b.points), [benchmarks])
@@ -113,7 +119,6 @@ export function PortfolioChart({
   // The divider between the value and the profit pane: over the plot area only, never over the
   // price axis and its labels. Null without the profit pane.
   const [divider, setDivider] = useState<{ top: number; left: number; width: number } | null>(null)
-  const wrapper = useRef<HTMLDivElement>(null)
   const [expanded, setExpanded] = useState(false)
   const [styleOpen, setStyleOpen] = useState(false)
   // The bar above the chart moves it down: the divider over the panes moves along.
@@ -252,7 +257,7 @@ export function PortfolioChart({
       r.benchmarks.push(r.chart.addSeries(LineSeries, { lineWidth: 2, priceLineVisible: false, lastValueVisible: false }, 0))
     }
     r.benchmarks.forEach((line, i) => {
-      line.applyOptions({ color: cssColor(benchmarksRef.current[i]?.color) })
+      line.applyOptions({ color: cssColor(benchmarksRef.current[i]?.color, wrapper.current) })
       line.setData(data.benchmarks[i] ?? [])
     })
     // The 0 line moves with the pane it belongs to; it is made again below.
@@ -401,7 +406,7 @@ function StylePanel({
   onChange: (change: Partial<ChartStyle>) => void
   onClose: () => void
 }) {
-  const [palette, setPalette] = useState<Palette>(readPalette)
+  const palette = usePalette()
   const option = (key: keyof ChartStyle, label: string, eurOnly = false) => (
     <button
       type="button"
@@ -439,7 +444,6 @@ function StylePanel({
               title={p.description}
               onClick={() => {
                 storePalette(p.id)
-                setPalette(p.id)
               }}
             >
               <span className="palette-swatches" aria-hidden="true">
