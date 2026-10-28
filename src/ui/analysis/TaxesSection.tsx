@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
 import { capitalGainsTax, isAdjusted, presetOf, type CapitalGainsRules } from '../../engine/analysis/capitalGains.ts'
 import { chargesByYear } from '../../engine/analysis/charges.ts'
+import { incomeRows } from '../../engine/analysis/income.ts'
 import type { EngineInputs } from '../../engine/loadInputs.ts'
 import { localToday } from '../../market/dates.ts'
 import { formatDate, formatEur, formatPercent, formatSignedEur, trendClass } from '../format.ts'
 import { SalesTable } from './SalesTable.tsx'
+import { TaxReportPanel } from './TaxReportPanel.tsx'
 import { TaxRulesForm } from './TaxRulesForm.tsx'
 
 interface Props {
@@ -39,6 +41,7 @@ function describe(rules: CapitalGainsRules): string {
 /** Taxes paid per year, and an estimate of the tax on capital gains under the rules of a country. */
 export function TaxesSection({ inputs, rules, onRulesChange }: Props) {
   const charges = useMemo(() => chargesByYear(inputs.transactions), [inputs])
+  const income = useMemo(() => incomeRows(inputs.transactions), [inputs])
   const gains = useMemo(
     () =>
       capitalGainsTax(
@@ -55,6 +58,7 @@ export function TaxesSection({ inputs, rules, onRulesChange }: Props) {
 
   return (
     <>
+      <TaxReportPanel gains={gains} income={income} charges={charges} rulesLabel={isAdjusted(rules) ? `${preset.label}, adjusted` : preset.label} />
       <div className="panel">
         <h3>Taxes paid</h3>
         {taxed.length === 0 ? (

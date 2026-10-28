@@ -1905,3 +1905,9 @@ progress {
 .table .row-actions .link-button + .link-button {
   margin-left: 0.75rem;
 }
+
+.inline-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
