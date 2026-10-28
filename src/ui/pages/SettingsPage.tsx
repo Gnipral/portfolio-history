@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { deleteAllData } from '../../data/portfolio.ts'
+import { isDemo } from '../../demo/demoMode.ts'
+import { DemoButton } from '../components/DemoBanner.tsx'
 import type { CostBasisMethod } from '../../engine/options.ts'
 import { BENCHMARKS } from '../../market/benchmarks.ts'
 import { DEFAULT_SETTINGS, saveSettings, useSettings, type Settings, type TextSetting } from '../../settings/settings.ts'
@@ -193,6 +195,18 @@ export function SettingsPage() {
               <option value="dark">Dark</option>
             </select>
           </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Demo</legend>
+          <p className="muted small">
+            {isDemo()
+              ? 'You are looking at a made-up portfolio with its own settings. Leave the demo to get back to your own data.'
+              : 'Look around in a made-up portfolio with prices that need no connection. Your own data is kept apart and stays untouched.'}
+          </p>
+          <div className="actions">
+            <DemoButton />
+          </div>
         </fieldset>
 
         <fieldset>
