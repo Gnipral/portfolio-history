@@ -1,9 +1,25 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "includes": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "workers/*/src/**/*.ts", "e2e/**/*.ts", "*.ts"] },
-  "formatter": { "enabled": false },
-  "assist": { "enabled": false },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "src/**/*.{ts,tsx}",
+      "scripts/**/*.ts",
+      "workers/*/src/**/*.ts",
+      "e2e/**/*.ts",
+      "*.ts"
+    ]
+  },
+  "formatter": {
+    "enabled": false
+  },
+  "assist": {
+    "enabled": false
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -26,5 +42,21 @@
         "noArrayIndexKey": "off"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "src/**",
+        "scripts/**",
+        "workers/**"
+      ],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "usePlaywrightValidDescribeCallback": "off"
+          }
+        }
+      }
+    }
+  ]
 }
