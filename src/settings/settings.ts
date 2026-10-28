@@ -73,6 +73,8 @@ export interface Settings {
   baseCurrency: BaseCurrency
   /** Savings, pension savings, real estate and debts outside the brokers, for the net worth. */
   otherAssets: OtherAsset[]
+  /** Instruments switched off on the Prices page: left out of every figure and chart, as if never traded. */
+  excludedInstruments: string[]
 }
 
 /** Settings edited as text in the settings form. */
@@ -99,6 +101,7 @@ export const DEFAULT_SETTINGS: Settings = {
   planning: DEFAULT_PLANNING,
   baseCurrency: 'EUR',
   otherAssets: [],
+  excludedInstruments: [],
 }
 
 const SETTINGS_KEY = 'settings'

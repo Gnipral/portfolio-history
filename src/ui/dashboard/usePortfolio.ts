@@ -10,6 +10,7 @@ import { BENCHMARKS, DEFAULT_BENCHMARK_ID } from '../../market/benchmarks.ts'
 import { loadSettings, useSettings } from '../../settings/settings.ts'
 import { setDisplayCurrency } from '../format.ts'
 import { useOnline } from '../useOnline.ts'
+import { instrumentKey } from '../../market/instruments.ts'
 import { filterByAssetClass } from './assetClasses.ts'
 
 /** Prices are brought up to date once per day, import and benchmark per session, not on every visit of the page. */
@@ -44,7 +45,7 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
   const settings = useSettings()
   const benchmarkId = settings?.benchmarkId
   const baseCurrency = settings?.baseCurrency ?? 'EUR'
-  const [inputs, setInputs] = useState<EngineInputs | null>(null)
+  const [loaded, setInputs] = useState<EngineInputs | null>(null)
   const [sync, setSync] = useState<SyncProgress | null>(null)
   const [syncProblems, setSyncProblems] = useState(0)
   const [slowConnection, setSlowConnection] = useState(false)
@@ -101,13 +102,21 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
     }
   }, [transactionCount, benchmarkId, baseCurrency, online, attempt])
 
+  // Products switched off on the Prices page count nowhere: not in the figures, the chart or the analysis.
+  const excludedKey = (settings?.excludedInstruments ?? []).join('|')
+  const counted = useMemo(() => {
+    if (!loaded || excludedKey === '') return loaded
+    const excluded = new Set(excludedKey.split('|'))
+    return { ...loaded, transactions: loaded.transactions.filter((t) => !excluded.has(instrumentKey(t))) }
+  }, [loaded, excludedKey])
+
   const filterKey = assetClasses.join('|')
   const filtered = filterKey !== ''
   // Cash belongs to no type of asset: a filtered view is securities only.
   const options = useMemo(() => (filtered ? { ...baseOptions, includeDeposits: false } : baseOptions), [baseOptions, filtered])
   const view = useMemo(
-    () => (inputs && filtered ? { ...inputs, transactions: filterByAssetClass(inputs.transactions, filterKey.split('|')) } : inputs),
-    [inputs, filtered, filterKey],
+    () => (counted && filtered ? { ...counted, transactions: filterByAssetClass(counted.transactions, filterKey.split('|')) } : counted),
+    [counted, filtered, filterKey],
   )
   const series = useMemo(
     () => (view && view.transactions.length > 0 ? computeDailySeries(view.transactions, view.prices, options, localToday()) : null),
@@ -115,10 +124,10 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
   )
 
   // The amounts are in the currency the inputs were converted to, which can still be EUR.
-  if (inputs) setDisplayCurrency(inputs.currency)
-  const currencyFallback = inputs && inputs.currency !== baseCurrency ? baseCurrency : null
+  if (loaded) setDisplayCurrency(loaded.currency)
+  const currencyFallback = loaded && loaded.currency !== baseCurrency ? baseCurrency : null
 
-  return { transactionCount, allInputs: inputs, inputs: view, options, series, sync, syncProblems, slowConnection, online, currencyFallback }
+  return { transactionCount, allInputs: counted, inputs: view, options, series, sync, syncProblems, slowConnection, online, currencyFallback }
 }
 
 /** Lets tests start from a clean state. */

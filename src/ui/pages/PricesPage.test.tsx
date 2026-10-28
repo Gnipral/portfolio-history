@@ -1,11 +1,11 @@
 import 'fake-indexeddb/auto'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../../data/db.ts'
 import { degiroAdapter } from '../../import/adapters/degiro/index.ts'
 import { SAMPLE_ROWS, table } from '../../import/adapters/degiro/fixtures.ts'
-import { saveSettings } from '../../settings/settings.ts'
+import { loadSettings, saveSettings } from '../../settings/settings.ts'
 import { PricesPage } from './PricesPage.tsx'
 
 beforeEach(async () => {
@@ -23,6 +23,18 @@ function renderPage() {
 }
 
 describe('PricesPage', () => {
+  it('switches a product off and on for every figure', async () => {
+    renderPage()
+    const box = (await screen.findByLabelText('Count EXAMPLE INDUSTRIES CORP')) as HTMLInputElement
+    expect(box.checked).toBe(true)
+    fireEvent.click(box)
+    await screen.findByText('not counted')
+    const key = (await loadSettings()).excludedInstruments
+    expect(key).toHaveLength(1)
+    fireEvent.click(screen.getByLabelText('Count EXAMPLE INDUSTRIES CORP'))
+    await waitFor(async () => expect((await loadSettings()).excludedInstruments).toEqual([]))
+  })
+
   it('lists instruments and asks for a price source when none is set', async () => {
     await saveSettings({ proxyUrl: '' })
     renderPage()

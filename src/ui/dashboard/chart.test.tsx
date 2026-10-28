@@ -84,7 +84,7 @@ const chartMock = vi.hoisted(() => {
       { setHeight: () => {}, getHeight: () => 300 },
       { setHeight: () => {}, getHeight: () => 120 },
     ],
-    timeScale: () => ({ fitContent: () => {} }),
+    timeScale: () => ({ fitContent: () => {}, subscribeVisibleLogicalRangeChange: () => {}, unsubscribeVisibleLogicalRangeChange: () => {} }),
     subscribeCrosshairMove: (handler: Move) => {
       state.move = handler
     },

@@ -8,13 +8,14 @@ import { CRYPTO_PREFIX } from '../../market/providers/coinGecko.ts'
 import { isValidSymbol } from '../../market/symbols.ts'
 import { addManualSplit, clearSymbol, setManualSymbol, syncMarketData, type SyncProgress, type SyncReport } from '../../market/sync.ts'
 import type { PriceCoverage, SymbolRecord } from '../../market/types.ts'
-import { loadSettings, useSettings } from '../../settings/settings.ts'
+import { loadSettings, updateSettings, useSettings } from '../../settings/settings.ts'
 import { formatDate } from '../format.ts'
 import { t } from '../../i18n/i18n.ts'
 import { Rich } from '../../i18n/Rich.tsx'
 
 export function PricesPage() {
   const settings = useSettings()
+  const excluded = settings?.excludedInstruments ?? []
   const data = useLiveQuery(async () => {
     const [transactions, symbols, coverage, splits] = await Promise.all([
       db.transactions.toArray(),
@@ -67,6 +68,7 @@ export function PricesPage() {
       <p className="muted">
         {t('Daily closing prices are fetched once and stored on this device. Only the symbol is sent to price sources, never quantities or amounts.')}
       </p>
+      <p className="muted small">{t('Switch a product off under Counts to leave it out of every figure, the chart and the analysis, as if you never traded it.')}</p>
 
       {noSource && (
         <div className="callout warning">
@@ -102,6 +104,7 @@ export function PricesPage() {
       <table className="table">
         <thead>
           <tr>
+            <th>{t('Counts')}</th>
             <th>{t('Product')}</th>
             <th>ISIN</th>
             <th>{t('Symbol')}</th>
@@ -117,6 +120,14 @@ export function PricesPage() {
               record={data.symbols.get(instrument.key)}
               coverage={coverageFor(data.symbols.get(instrument.key), data.coverage)}
               problem={report?.problems[instrument.key]}
+              counted={!excluded.includes(instrument.key)}
+              onCountedChange={(on) =>
+                void updateSettings((current) => ({
+                  excludedInstruments: on
+                    ? current.excludedInstruments.filter((key) => key !== instrument.key)
+                    : [...current.excludedInstruments.filter((key) => key !== instrument.key), instrument.key],
+                }))
+              }
             />
           ))}
         </tbody>
@@ -136,11 +147,15 @@ function InstrumentRow({
   record,
   coverage,
   problem,
+  counted,
+  onCountedChange,
 }: {
   instrument: Instrument
   record: SymbolRecord | undefined
   coverage: PriceCoverage | undefined
   problem: string | undefined
+  counted: boolean
+  onCountedChange: (counted: boolean) => void
 }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState('')
@@ -162,9 +177,18 @@ function InstrumentRow({
   const status = problem ?? record?.error ?? (coverage ? 'OK' : record?.symbol ? t('Not fetched yet') : t('No symbol'))
 
   return (
-    <tr>
+    <tr className={counted ? undefined : 'excluded'}>
+      <td>
+        <input
+          type="checkbox"
+          checked={counted}
+          aria-label={t('Count {name}', { name: instrument.product })}
+          onChange={(e) => onCountedChange(e.target.checked)}
+        />
+      </td>
       <td>
         {instrument.product}
+        {!counted && <span className="badge warning">{t('not counted')}</span>}
         {!instrument.open && <span className="muted small"> ({t('closed')})</span>}
       </td>
       <td>{instrument.isin}</td>

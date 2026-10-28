@@ -30,7 +30,7 @@ import { ErrorBoundary } from '../errors/ErrorBoundary.tsx'
 import { DEFAULT_SETTINGS, saveSettings, updateSettings, useSettings } from '../../settings/settings.ts'
 import { t, tn } from '../../i18n/i18n.ts'
 import { Rich } from '../../i18n/Rich.tsx'
-import { displayCurrency, formatPercent, formatSignedEur, trendClass } from '../format.ts'
+import { displayCurrency, formatDate, formatPercent, formatSignedEur, trendClass } from '../format.ts'
 
 // The chart libraries are large; load them only when the dashboard shows data.
 const PortfolioChart = lazy(() => import('../dashboard/PortfolioChart.tsx').then((m) => ({ default: m.PortfolioChart })))
@@ -65,7 +65,8 @@ export function DashboardPage() {
   const visible = useMemo(() => (period ? periodRange(points, period) : visibleRange(points, range)), [points, range, period])
   const selected = clampIndex(selectedIndex, visible)
   const point = points[selected]
-  const change = rangeChange(points, visible.from, visible.to)
+  // Up to the day under the pointer, like every other figure on the page; without one, the end of the range.
+  const change = rangeChange(points, visible.from, selected)
   const selectedDate = point?.date
   const positions = useMemo(
     () => (inputs && selectedDate ? positionsOn(inputs.transactions, inputs.prices, options, selectedDate) : []),
@@ -222,11 +223,12 @@ export function DashboardPage() {
               }}
             />
             <p className="muted small">
-              {period ? period.name : range === 'ALL' ? t('Since the first transaction') : range === 'YTD' ? t('Year to date') : t('Last {range}', { range })}:{' '}
+              {period ? period.name : range === 'ALL' ? t('Since the first transaction') : range === 'YTD' ? t('Year to date') : t('Last {range}', { range })}
+              {selected < visible.to && ` ${t('up to {date}', { date: formatDate(point.date) })}`}:{' '}
               <span className={trendClass(change.pnl)}>{formatSignedEur(change.pnl)}</span>, {t('time-weighted')}{' '}
               <span className={trendClass(change.twr)}>{formatPercent(change.twr)}</span>
               {benchmarks.map((line) => {
-                const lineChange = rangeChange(line.points, visible.from, visible.to)
+                const lineChange = rangeChange(line.points, visible.from, selected)
                 return (
                   <span key={line.id}>
                     . {t('The same money in {name}', { name: line.label })}:{' '}
