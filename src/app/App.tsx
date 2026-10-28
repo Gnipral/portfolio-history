@@ -10,6 +10,7 @@ import { ImportPage } from '../ui/pages/ImportPage.tsx'
 import { PricesPage } from '../ui/pages/PricesPage.tsx'
 import { SettingsPage } from '../ui/pages/SettingsPage.tsx'
 import { SharedCardPage } from '../ui/pages/SharedCardPage.tsx'
+import { TransactionsPage } from '../ui/pages/TransactionsPage.tsx'
 
 export function App() {
   return (
@@ -51,6 +52,7 @@ export function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/analysis" element={<AnalysisPage />} />
           <Route path="/import" element={<ImportPage />} />
+          <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/prices" element={<PricesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/s/:data" element={<SharedCardPage />} />
