@@ -49,6 +49,25 @@ describe('importTables', () => {
     }
   })
 
+  it('reports only the header row of an unknown spreadsheet, without preamble, data or file name', () => {
+    const rows = [['Account', 'BE12 3456 7890 1234'], [], ['Date', 'Description', 'Amount', null], ['01-01-2026', 'Coffee', -3]]
+    try {
+      importTables([{ fileName: 'statement-12345.xlsx', sheetName: 'Sheet1', rows }])
+      expect.unreachable()
+    } catch (error) {
+      expect((error as ImportError).report).toBe('XLSX, sheet "Sheet1": Date | Description | Amount')
+    }
+  })
+
+  it('has no report for an unknown PDF, whose first line can be a name', () => {
+    try {
+      importTables([{ fileName: 'note.pdf', rows: [], text: 'Jan Janssens\nStraat 1' }])
+      expect.unreachable()
+    } catch (error) {
+      expect((error as ImportError).report).toBeUndefined()
+    }
+  })
+
   it('throws for an empty selection', () => {
     expect(() => importTables([])).toThrow(ImportError)
   })

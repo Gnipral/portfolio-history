@@ -82,6 +82,12 @@ export function BenchmarkPicker({ settings, catalog, lines, onChange, onAdd, tem
           {t('Default and mix')}
         </Link>
       )}
+      <details className="benchmark-method small">
+        <summary>{t('How is this compared?')}</summary>
+        <p className="muted">
+          {t("IWDA, VWCE and SXR8 are accumulating ETFs quoted in EUR: their dividends are reinvested inside the fund, so the price already includes them. Every euro you put in buys the benchmark on the same day; every euro you take out sells it. Broker fees and taxes such as the Belgian TOB are left out, so a real account would end slightly lower. Another base currency or a stock you add is converted at the ECB rate of the day.")}
+        </p>
+      </details>
       {searching && (
         <div className="benchmark-picker-search">
           <BenchmarkSearch

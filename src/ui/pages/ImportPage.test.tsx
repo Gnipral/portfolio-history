@@ -68,5 +68,9 @@ ${ROW}
     chooseFile('bank.csv', 'Date,Description,Amount\n01-01-2026,Coffee,-3\n')
     expect(await screen.findByText('File not recognized as a supported broker export.')).toBeTruthy()
     expect(screen.getByText(/Header found: Date, Description, Amount/)).toBeTruthy()
+    expect(screen.getByText('CSV: Date | Description | Amount')).toBeTruthy()
+    const report = screen.getByRole('link', { name: 'Report on GitHub' }).getAttribute('href') ?? ''
+    expect(new URL(report).searchParams.get('body')).toContain('CSV: Date | Description | Amount')
+    expect(report).not.toContain('Coffee')
   })
 })
