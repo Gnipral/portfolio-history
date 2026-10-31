@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { addDays } from '../../market/dates.ts'
-import { indexAtRatio, panWindow, stepPlayhead, trimEnd, trimStart, windowFromRange } from './timeline.ts'
+import { grabAt, indexAtRatio, PLAYHEAD_REACH, stepPlayhead, trimEnd, trimStart, windowFromRange } from './timeline.ts'
 import { Timeline } from './Timeline.tsx'
 
 afterEach(cleanup)
@@ -19,10 +19,19 @@ describe('timeline moves', () => {
     expect(trimEnd({ from: 10, to: 50 }, 500, 100)).toEqual({ from: 10, to: 99 })
   })
 
-  it('pans the window as a whole, within the history', () => {
-    expect(panWindow({ from: 10, to: 30 }, 5, 100)).toEqual({ from: 15, to: 35 })
-    expect(panWindow({ from: 10, to: 30 }, 200, 100)).toEqual({ from: 79, to: 99 })
-    expect(panWindow({ from: 10, to: 30 }, -50, 100)).toEqual({ from: 0, to: 20 })
+  it('takes hold of the playhead within its reach, also when it stands on an end of the window', () => {
+    // A strip of 990px over 100 days: day i is at 10·i px. Window 20–80, playhead on its end.
+    const grab = (x: number, playhead = 80) => grabAt(x, 990, 100, { from: 20, to: 80 }, playhead)
+    expect(grab(800)).toBe('playhead')
+    expect(grab(800 - PLAYHEAD_REACH)).toBe('playhead')
+    // The handles sit outside the window.
+    expect(grab(805)).toBe('end')
+    expect(grab(195)).toBe('start')
+    // Far from the playhead inside the window: the playhead, which then comes there.
+    expect(grab(500)).toBe('playhead')
+    // Right at an edge, away from the playhead: the handle.
+    expect(grab(203, 50)).toBe('start')
+    expect(grab(797, 50)).toBe('end')
   })
 
   it('maps a point of the strip and a zoom of the chart to whole days', () => {
@@ -48,38 +57,46 @@ describe('Timeline', () => {
     const handlers = { onWindow: vi.fn(), onPlayhead: vi.fn(), onRange: vi.fn() }
     render(<Timeline points={points} window={{ from: 20, to: 80 }} playhead={80} range={null} {...handlers} {...props} />)
     const strip = screen.getByRole('slider', { name: 'Playhead' })
-    // jsdom has no layout: the strip is 1000px wide, so 10px is one day apart from the edge.
+    // jsdom has no layout: the strip is 990px wide, so day i is at 10·i px.
     strip.getBoundingClientRect = () => ({ left: 0, width: 990, top: 0, height: 40, right: 990, bottom: 40, x: 0, y: 0, toJSON: () => ({}) })
     return { ...handlers, strip }
   }
 
-  it('trims the start with its handle', () => {
-    const { onWindow } = setup()
-    const handle = screen.getByRole('button', { name: 'Start of the period' })
-    fireEvent.pointerDown(handle, { clientX: 200, pointerId: 1 })
-    fireEvent.pointerMove(handle, { clientX: 100, pointerId: 1 })
+  it('trims the start and the end with their handles, outside the window', () => {
+    const { onWindow, strip } = setup()
+    fireEvent.pointerDown(strip, { clientX: 196, pointerId: 1 })
+    fireEvent.pointerMove(strip, { clientX: 100, pointerId: 1 })
     expect(onWindow).toHaveBeenLastCalledWith({ from: 10, to: 80 })
+    fireEvent.pointerUp(strip, { clientX: 100, pointerId: 1 })
+
+    fireEvent.pointerDown(strip, { clientX: 805, pointerId: 2 })
+    fireEvent.pointerMove(strip, { clientX: 900, pointerId: 2 })
+    expect(onWindow).toHaveBeenLastCalledWith({ from: 20, to: 90 })
   })
 
-  it('trims the end and pans the body', () => {
-    const { onWindow } = setup()
-    const end = screen.getByRole('button', { name: 'End of the period' })
-    fireEvent.pointerDown(end, { clientX: 800, pointerId: 1 })
-    fireEvent.pointerMove(end, { clientX: 900, pointerId: 1 })
-    expect(onWindow).toHaveBeenLastCalledWith({ from: 20, to: 90 })
-    fireEvent.pointerUp(end, { clientX: 900, pointerId: 1 })
+  it('never moves the window as a whole', () => {
+    const { onWindow, onPlayhead, strip } = setup()
+    fireEvent.pointerDown(strip, { clientX: 500, pointerId: 1 })
+    fireEvent.pointerMove(strip, { clientX: 450, pointerId: 1 })
+    fireEvent.pointerUp(strip, { clientX: 450, pointerId: 1 })
+    expect(onWindow).not.toHaveBeenCalled()
+    expect(onPlayhead).toHaveBeenLastCalledWith(45)
+  })
 
-    const body = screen.getByTestId('timeline-window')
-    fireEvent.pointerDown(body, { clientX: 500, pointerId: 2 })
-    fireEvent.pointerMove(body, { clientX: 450, pointerId: 2 })
-    expect(onWindow).toHaveBeenLastCalledWith({ from: 15, to: 75 })
+  it('takes the playhead a little next to it and drags it, even on the end of the window', () => {
+    const { onWindow, onPlayhead, strip } = setup()
+    // 8px left of the playhead on day 80: within reach, so it does not jump.
+    fireEvent.pointerDown(strip, { clientX: 792, pointerId: 1 })
+    expect(onPlayhead).not.toHaveBeenCalled()
+    fireEvent.pointerMove(strip, { clientX: 600, pointerId: 1 })
+    expect(onPlayhead).toHaveBeenLastCalledWith(60)
+    expect(onWindow).not.toHaveBeenCalled()
   })
 
   it('moves the playhead with a click in the window, and with the arrow keys', () => {
-    const { onPlayhead } = setup()
-    const body = screen.getByTestId('timeline-window')
-    fireEvent.pointerDown(body, { clientX: 500, pointerId: 1 })
-    fireEvent.pointerUp(body, { clientX: 500, pointerId: 1 })
+    const { onPlayhead, strip } = setup()
+    fireEvent.pointerDown(strip, { clientX: 500, pointerId: 1 })
+    fireEvent.pointerUp(strip, { clientX: 500, pointerId: 1 })
     expect(onPlayhead).toHaveBeenLastCalledWith(50)
     fireEvent.keyDown(document.body, { key: 'ArrowLeft' })
     expect(onPlayhead).toHaveBeenLastCalledWith(79)
