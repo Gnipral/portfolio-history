@@ -3,7 +3,7 @@ import type { CapitalGainsResult, CapitalGainsYear } from './capitalGains.ts'
 import type { ChargesYear } from './charges.ts'
 import type { IncomeRow } from './income.ts'
 import { t } from '../../i18n/i18n.ts'
-import { csvAmount as amount, toCsv } from '../../data/csv.ts'
+import { csvAmount as amount, type CsvValue, toCsv } from '../../data/csv.ts'
 
 /** Everything about one calendar year that a tax return asks for, in the base currency. */
 export interface TaxReport {
@@ -54,7 +54,7 @@ export function incomeSummary(report: TaxReport) {
 
 /** The report as CSV, in the format of src/data/csv.ts. */
 export function taxReportCsv(report: TaxReport, currency = 'EUR'): string {
-  const rows: (string | number)[][] = [[t('Tax report {year}', { year: report.year })], [t('All amounts in {currency}', { currency })], []]
+  const rows: CsvValue[][] = [[t('Tax report {year}', { year: report.year })], [t('All amounts in {currency}', { currency })], []]
   if (report.gains) {
     const g = report.gains
     rows.push([t('Capital gains (estimate)')], [t('Gains'), t('Losses'), t('Net'), t('Earlier losses used'), t('Exemption'), t('Taxable'), t('Estimated tax')])
