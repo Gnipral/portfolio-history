@@ -253,6 +253,10 @@ export function PortfolioChart({ points, window, inspected, mode, benchmarks = [
 
     const last = () => Math.max(0, countRef.current - 1)
     const handleMove = (param: MouseEventParams<Time>) => {
+      // Setting the crosshair to the playhead also reports a move to a point, without a pointer behind it:
+      // that is not a hover, or the inspected day would stick there and stop following the timeline.
+      // Leaving the chart comes without a point, and does clear the hover.
+      if (param.point && !param.sourceEvent) return
       if (!param.point || param.logical === undefined) {
         hoverRef.current(null)
         return

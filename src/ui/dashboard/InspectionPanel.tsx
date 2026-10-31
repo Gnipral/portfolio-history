@@ -70,7 +70,9 @@ export function InspectionPanel({ date, pinned, onUnpin, figures, benchmarkLabel
       </div>
       <div className="inspection-date">
         <span className="label-caps">{t('Valuation date')}</span>
-        <strong className="inspection-day">{formatDate(date)}</strong>
+        <strong className="inspection-day" data-date={date}>
+          {formatDate(date)}
+        </strong>
       </div>
 
       {transactions.length > 0 && (
