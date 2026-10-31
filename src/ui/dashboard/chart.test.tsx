@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DailyPoint } from '../../engine/series.ts'
 import { chartData } from './chartData.ts'
 import { storePalette } from '../../theme/theme.ts'
+import { ChartToolbar } from './ChartToolbar.tsx'
 import { PortfolioChart, spreadLabels } from './PortfolioChart.tsx'
 
 function point(date: string, value: number, extra: Partial<DailyPoint> = {}): DailyPoint {
@@ -61,13 +62,16 @@ describe('chartData', () => {
   })
 })
 
-// Minimal stand-in for lightweight-charts: records calls and lets the test move the crosshair.
+// Minimal stand-in for lightweight-charts: records calls and lets the test move the crosshair and click.
 const chartMock = vi.hoisted(() => {
-  type Move = (param: { time?: string; logical?: number }) => void
-  const state: { move: Move | undefined; crosshair: unknown[][]; data: unknown[][] } = {
+  type Handler = (param: { time?: string; logical?: number; point?: { x: number; y: number } }) => void
+  const state: { move: Handler | undefined; click: Handler | undefined; crosshair: unknown[][]; data: unknown[][]; ranges: unknown[]; markers: unknown[][] } = {
     move: undefined,
+    click: undefined,
     crosshair: [],
     data: [],
+    ranges: [],
+    markers: [],
   }
   const series = () => ({
     setData: (d: unknown[]) => state.data.push(d),
@@ -85,11 +89,21 @@ const chartMock = vi.hoisted(() => {
       { setHeight: () => {}, getHeight: () => 300 },
       { setHeight: () => {}, getHeight: () => 120 },
     ],
-    timeScale: () => ({ fitContent: () => {}, timeToCoordinate: () => 100, subscribeVisibleLogicalRangeChange: () => {}, unsubscribeVisibleLogicalRangeChange: () => {} }),
-    subscribeCrosshairMove: (handler: Move) => {
+    timeScale: () => ({
+      fitContent: () => {},
+      timeToCoordinate: () => 100,
+      setVisibleLogicalRange: (range: unknown) => state.ranges.push(range),
+      subscribeVisibleLogicalRangeChange: () => {},
+      unsubscribeVisibleLogicalRangeChange: () => {},
+    }),
+    subscribeCrosshairMove: (handler: Handler) => {
       state.move = handler
     },
     unsubscribeCrosshairMove: () => {},
+    subscribeClick: (handler: Handler) => {
+      state.click = handler
+    },
+    unsubscribeClick: () => {},
     setCrosshairPosition: (...args: unknown[]) => state.crosshair.push(args),
     remove: () => {},
   }
@@ -98,6 +112,10 @@ const chartMock = vi.hoisted(() => {
 
 vi.mock('lightweight-charts', () => ({
   createChart: () => chartMock.chart,
+  createSeriesMarkers: (_series: unknown, markers: unknown[]) => {
+    chartMock.state.markers.push(markers)
+    return { setMarkers: (next: unknown[]) => chartMock.state.markers.push(next) }
+  },
   AreaSeries: {},
   LineSeries: {},
   BaselineSeries: {},
@@ -109,71 +127,101 @@ vi.mock('lightweight-charts', () => ({
 
 afterEach(cleanup)
 
+const all = { from: 0, to: 2 }
+
 describe('PortfolioChart', () => {
-  it('reports the hovered day and shows its values in the legend', () => {
+  it('reports the day under the pointer, and null when the pointer leaves', () => {
     const onHover = vi.fn()
-    render(<PortfolioChart points={points} from={1} to={2} selected={2} mode="eur" onHover={onHover} />)
-
-    act(() => chartMock.state.move?.({ time: '2026-10-16', logical: 0 }))
-    expect(onHover).toHaveBeenCalledWith(1)
+    render(<PortfolioChart points={points} window={all} inspected={2} mode="eur" onHover={onHover} />)
+    act(() => chartMock.state.move?.({ time: '2026-10-16', logical: 1, point: { x: 10, y: 10 } }))
+    expect(onHover).toHaveBeenLastCalledWith(1)
     act(() => chartMock.state.move?.({}))
-    expect(onHover).toHaveBeenCalledTimes(1)
-
-    expect(screen.getByText(/Value €1,210.00/)).toBeTruthy()
+    expect(onHover).toHaveBeenLastCalledWith(null)
   })
 
-  it('moves the crosshair to a day chosen elsewhere', () => {
-    const { rerender } = render(
-      <PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} />,
+  it('pins the clicked day', () => {
+    const onPick = vi.fn()
+    render(<PortfolioChart points={points} window={all} inspected={2} mode="eur" onHover={() => {}} onPick={onPick} />)
+    act(() => chartMock.state.click?.({ time: '2026-10-15', logical: 0, point: { x: 1, y: 1 } }))
+    expect(onPick).toHaveBeenCalledWith(0)
+  })
+
+  it('shows the window of the period, and moves the crosshair to the inspected day', () => {
+    const { rerender } = render(<PortfolioChart points={points} window={{ from: 1, to: 2 }} inspected={2} mode="eur" onHover={() => {}} />)
+    expect(chartMock.state.ranges.at(-1)).toEqual({ from: 1, to: 2 })
+    rerender(<PortfolioChart points={points} window={{ from: 1, to: 2 }} inspected={1} mode="eur" onHover={() => {}} />)
+    expect(chartMock.state.crosshair.at(-1)?.slice(0, 2)).toEqual([1100, '2026-10-16'])
+  })
+
+  it('marks deposits, buys, sells and dividends on the value line', () => {
+    render(
+      <PortfolioChart
+        points={points}
+        window={all}
+        inspected={2}
+        mode="eur"
+        onHover={() => {}}
+        markers={[{ date: '2026-10-16', kinds: ['deposit', 'buy'] }]}
+      />,
     )
-    rerender(<PortfolioChart points={points} from={0} to={2} selected={0} mode="eur" onHover={() => {}} />)
-    expect(chartMock.state.crosshair.at(-1)?.slice(0, 2)).toEqual([1000, '2026-10-15'])
-  })
-
-  it('fills the window with the button or F, and leaves it with Esc', () => {
-    render(<PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} />)
-    const wrapper = () => screen.getByTestId('portfolio-chart').parentElement as HTMLElement
-    fireEvent.click(screen.getByRole('button', { name: 'Full screen' }))
-    expect(wrapper().classList.contains('expanded')).toBe(true)
-    fireEvent.keyDown(document, { key: 'Escape' })
-    expect(wrapper().classList.contains('expanded')).toBe(false)
-    fireEvent.keyDown(document, { key: 'f' })
-    expect(screen.getByRole('button', { name: 'Exit full screen' })).toBeTruthy()
+    expect((chartMock.state.markers.at(-1) as { id: string }[]).map((m) => m.id)).toEqual(['2026-10-16:deposit', '2026-10-16:buy'])
   })
 
   it('names the profit pane in EUR only', async () => {
-    const { rerender } = render(<PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} chartStyle={{ fill: true, invested: true, profitPane: true, log: false }} />)
+    const style = { fill: true, invested: true, profitPane: true, log: false }
+    const { rerender } = render(<PortfolioChart points={points} window={all} inspected={2} mode="eur" onHover={() => {}} chartStyle={style} />)
     expect(await screen.findByText('Profit / loss')).toBeTruthy()
-    rerender(<PortfolioChart points={points} from={0} to={2} selected={2} mode="percent" onHover={() => {}} chartStyle={{ fill: true, invested: true, profitPane: true, log: false }} />)
+    rerender(<PortfolioChart points={points} window={all} inspected={2} mode="percent" onHover={() => {}} chartStyle={style} />)
     expect(screen.queryByText('Profit / loss')).toBeNull()
   })
+})
 
-  it('changes its style from its own menu, and keeps EUR-only options for EUR', () => {
+describe('ChartToolbar', () => {
+  const style = { fill: true, invested: true, profitPane: false, log: false }
+  const toolbar = (props: Partial<Parameters<typeof ChartToolbar>[0]> = {}) => (
+    <ChartToolbar
+      mode="eur"
+      onMode={() => {}}
+      benchmarks={[]}
+      benchmarkPicker={<p>Picker</p>}
+      chartStyle={style}
+      onStyleChange={() => {}}
+      panelOpen
+      onPanel={() => {}}
+      expanded={false}
+      onExpand={() => {}}
+      {...props}
+    />
+  )
+
+  it('changes the style from the View menu, with the colours stored as in Settings', () => {
     const onStyleChange = vi.fn()
-    const style = { fill: true, invested: true, profitPane: true, log: false }
-    const { rerender } = render(
-      <PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} chartStyle={style} onStyleChange={onStyleChange} />,
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Chart style' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Logarithmic scale' }))
+    render(toolbar({ onStyleChange }))
+    fireEvent.click(screen.getByRole('button', { name: /View/ }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Logarithmic scale' }))
     expect(onStyleChange).toHaveBeenCalledWith({ log: true })
-    // The colors are there too, and stored like in Settings.
-    fireEvent.click(screen.getByRole('radio', { name: /Colour-blind friendly/ }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Colour-blind friendly' }))
     expect(localStorage.getItem('palette')).toBe('colorblind')
-    expect(screen.getByRole('radio', { name: /Colour-blind friendly/ }).getAttribute('aria-checked')).toBe('true')
     act(() => storePalette('standard'))
+  })
 
-    rerender(
-      <PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} chartStyle={{ ...style, invested: false, profitPane: false }} onStyleChange={onStyleChange} />,
-    )
-    expect(screen.queryByText(/Invested €/)).toBeNull()
-    expect(screen.queryByText(/Profit €/)).toBeNull()
-    expect(screen.queryByText('Profit / loss')).toBeNull()
+  it('keeps the options of the currency for the currency', () => {
+    render(toolbar({ mode: 'percent' }))
+    expect((screen.getByRole('button', { name: 'Profit/Loss' }) as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: /View/ }))
+    expect((screen.getByRole('checkbox', { name: 'Logarithmic scale' }) as HTMLInputElement).disabled).toBe(true)
+  })
 
-    rerender(
-      <PortfolioChart points={points} from={0} to={2} selected={2} mode="percent" onHover={() => {}} chartStyle={style} onStyleChange={onStyleChange} />,
-    )
-    expect((screen.getByRole('button', { name: 'Logarithmic scale' }) as HTMLButtonElement).disabled).toBe(true)
+  it('opens the benchmark choice from the legend, and toggles the profit pane and the side panel', () => {
+    const onStyleChange = vi.fn()
+    const onPanel = vi.fn()
+    render(toolbar({ onStyleChange, onPanel }))
+    fireEvent.click(screen.getByRole('button', { name: /Benchmark/ }))
+    expect(screen.getByText('Picker')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Profit/Loss' }))
+    expect(onStyleChange).toHaveBeenCalledWith({ profitPane: true })
+    fireEvent.click(screen.getByRole('button', { name: 'Side panel' }))
+    expect(onPanel).toHaveBeenCalledWith(false)
   })
 })
 

@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Position } from '../../engine/positions.ts'
 import { nextSort, sortPositions, withWeights } from './positionSort.ts'
 import { PositionsTable } from './PositionsTable.tsx'
@@ -45,16 +45,17 @@ describe('position sorting', () => {
 })
 
 describe('PositionsTable', () => {
-  const products = () => screen.getAllByRole('row').slice(1).map((row) => within(row).getAllByRole('cell')[0]?.textContent)
+  const products = () =>
+    [...(screen.getByRole('table').querySelector('tbody')?.querySelectorAll('tr.holding') ?? [])].map((row) => row.querySelector('.holding-name')?.textContent)
 
   it('shows the largest position first and sorts on click', () => {
     render(<PositionsTable positions={positions.slice(0, 2)} date="2026-10-19" />)
     expect(products()).toEqual(['Alpha', 'Beta'])
     fireEvent.click(screen.getByRole('button', { name: /Product/ }))
     expect(products()).toEqual(['Alpha', 'Beta'])
-    fireEvent.click(screen.getByRole('button', { name: /P\/L %/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Total return/ }))
     expect(products()).toEqual(['Beta', 'Alpha'])
-    expect(screen.getByRole('columnheader', { name: /P\/L %/ }).getAttribute('aria-sort')).toBe('descending')
+    expect(screen.getByRole('columnheader', { name: /Total return/ }).getAttribute('aria-sort')).toBe('descending')
   })
 
   it('marks positions valued at a trade price', () => {
@@ -65,5 +66,19 @@ describe('PositionsTable', () => {
   it('says when nothing is held', () => {
     render(<PositionsTable positions={[]} date="2026-10-19" />)
     expect(screen.getByText('No open positions on 19 Oct 2026.')).toBeTruthy()
+  })
+})
+
+describe('PositionsTable rows', () => {
+  it('names the exchange, type and currency, adds a totals row, and opens a row in place', () => {
+    const onSelect = vi.fn()
+    const facts = new Map([['A', { exchange: 'EAM', type: 'ETFs', currency: 'EUR' }]])
+    const { rerender } = render(<PositionsTable positions={[position('A', 150, 100)]} date="2026-10-19" facts={facts} onSelect={onSelect} detail={() => <p>Chart of A</p>} />)
+    expect(screen.getByText(/EAM · ETFs · EUR/)).toBeTruthy()
+    expect(screen.getByText('Total')).toBeTruthy()
+    fireEvent.click(screen.getByText('A'))
+    expect(onSelect).toHaveBeenCalledWith('A')
+    rerender(<PositionsTable positions={[position('A', 150, 100)]} date="2026-10-19" facts={facts} selectedKey="A" onSelect={onSelect} detail={() => <p>Chart of A</p>} />)
+    expect(screen.getByText('Chart of A')).toBeTruthy()
   })
 })
