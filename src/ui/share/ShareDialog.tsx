@@ -7,6 +7,7 @@ import { cardFile, drawShareCard, loadCardFonts, POSITION_ROWS, type ShareFormat
 import { shareCard, shareText, type PositionOrder } from './shareCard.ts'
 import { shareLink } from './shareLink.ts'
 import { t } from '../../i18n/i18n.ts'
+import './share.css'
 
 interface Props {
   points: DailyPoint[]

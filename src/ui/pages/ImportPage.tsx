@@ -364,7 +364,7 @@ function PreviewSection({ number, result }: { number: number; result: ImportResu
             <tbody>
               {shown.map((tx) => (
                 <tr key={tx.id}>
-                  <td className="num">{tx.date}</td>
+                  <td className="date">{tx.date}</td>
                   <td>{t(TYPE_LABELS[tx.type] ?? tx.type)}</td>
                   <td>
                     {tx.product}

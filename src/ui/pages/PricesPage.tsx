@@ -12,6 +12,8 @@ import { loadSettings, updateSettings, useSettings } from '../../settings/settin
 import { formatDate } from '../format.ts'
 import { t } from '../../i18n/i18n.ts'
 import { Rich } from '../../i18n/Rich.tsx'
+import { Section } from '../components/Section.tsx'
+import './pages.css'
 
 export function PricesPage() {
   const settings = useSettings()
@@ -63,14 +65,26 @@ export function PricesPage() {
   }
 
   return (
-    <section className="stack">
-      <h2>{t('Prices')}</h2>
-      <p className="muted">
-        {t('Daily closing prices are fetched once and stored on this device. Only the symbol is sent to price sources, never quantities or amounts.')}
-      </p>
-      <p className="small">
-        <Link to="/check">{t('Data check')} →</Link> {t('lists what can make a figure wrong, such as a wrong symbol or a missing split.')}
-      </p>
+    <div className="page prices-page">
+      <header className="page-head">
+        <h2>{t('Prices')}</h2>
+        <p className="muted">
+          {t('Daily closing prices are fetched once and stored on this device. Only the symbol is sent to price sources, never quantities or amounts.')}
+        </p>
+        <p className="small">
+          <Link to="/check">{t('Data check')} →</Link> {t('lists what can make a figure wrong, such as a wrong symbol or a missing split.')}
+        </p>
+      </header>
+
+      <Section
+        number={1}
+        title={t('Products')}
+        aside={
+          <button type="button" className="primary" disabled={running} onClick={() => void update()}>
+            {running ? t('Updating…') : t('Update prices')}
+          </button>
+        }
+      >
       <p className="muted small">{t('Switch a product off under Counts to leave it out of every figure, the chart and the analysis, as if you never traded it.')}</p>
 
       {noSource && (
@@ -83,9 +97,6 @@ export function PricesPage() {
       )}
 
       <div className="actions">
-        <button type="button" className="primary" disabled={running} onClick={() => void update()}>
-          {running ? t('Updating…') : t('Update prices')}
-        </button>
         {progress && (
           <span className="progress" role="status">
             <progress max={progress.total || 1} value={progress.phase === 'done' ? progress.total || 1 : progress.done} />
@@ -104,6 +115,7 @@ export function PricesPage() {
         </div>
       )}
 
+      <div className="table-scroll">
       <table className="table">
         <thead>
           <tr>
@@ -135,9 +147,13 @@ export function PricesPage() {
           ))}
         </tbody>
       </table>
+      </div>
+      </Section>
 
-      <ManualSplits symbols={[...data.symbols.values()].flatMap((s) => (s.symbol ? [s.symbol] : []))} splits={data.splits} />
-    </section>
+      <Section number={2} title={t('Splits')} aside={t('{count} stored', { count: data.splits.length })}>
+        <ManualSplits symbols={[...data.symbols.values()].flatMap((s) => (s.symbol ? [s.symbol] : []))} splits={data.splits} />
+      </Section>
+    </div>
   )
 }
 
@@ -191,7 +207,7 @@ function InstrumentRow({
       </td>
       <td>
         {instrument.product}
-        {!counted && <span className="badge warning">{t('not counted')}</span>}
+        {!counted && <span className="cell-note">{t('not counted')}</span>}
         {!instrument.open && <span className="muted small"> ({t('closed')})</span>}
       </td>
       <td>{instrument.isin}</td>
@@ -208,7 +224,7 @@ function InstrumentRow({
         ) : (
           <>
             <code>{record?.symbol ?? '–'}</code>
-            {record?.source === 'manual' && <span className="badge info">{t('manual')}</span>}{' '}
+            {record?.source === 'manual' && <span className="cell-note">{t('set by hand')}</span>}{' '}
             <button
               type="button"
               className="link-button"

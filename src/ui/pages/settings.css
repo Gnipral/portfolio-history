@@ -100,3 +100,28 @@
     position: static;
   }
 }
+
+/* Backup: the password above its field, aligned with the button. */
+.settings-page .backup .actions {
+  align-items: flex-end;
+}
+
+.settings-page .backup .inline-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.settings-page .backup .inline-label input {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.settings-page .backup p {
+  margin: 0 0 0.75rem;
+}

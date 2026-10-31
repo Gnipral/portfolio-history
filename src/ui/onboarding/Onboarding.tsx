@@ -6,6 +6,7 @@ import { t } from '../../i18n/i18n.ts'
 import { DEFAULT_SETTINGS, saveSettings, useSettings } from '../../settings/settings.ts'
 import { readThemePreference, storeThemePreference, type ThemePreference } from '../../theme/theme.ts'
 import { markOnboarded } from './onboarded.ts'
+import './onboarding.css'
 
 const STEPS = 3
 

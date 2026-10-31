@@ -10,6 +10,8 @@ import { DEFAULT_SETTINGS, useSettings } from '../../settings/settings.ts'
 import { engineOptions, TOGGLES } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
 import { formatDate, formatEur } from '../format.ts'
+import { Section } from '../components/Section.tsx'
+import './pages.css'
 
 /** Rows shown per check before "and N more". */
 const SHOWN = 6
@@ -197,20 +199,24 @@ export function DataCheckPage() {
   const ordered = [...all].sort((a, b) => rank(a) - rank(b))
 
   return (
-    <section className="stack">
-      <h2>{t('Data check')}</h2>
-      <p className={problems === 0 ? 'positive' : undefined} role="status">
-        {problems === 0
-          ? t('Everything checks out: the figures rest on complete data.')
-          : tn(problems, '{count} thing to look at for the right figures.', '{count} things to look at for the right figures.')}
-      </p>
-      <p className="muted small">{t('The prices, transactions and export behind your figures, checked on every visit. Nothing here changes a figure.')}</p>
-      <ul className="checks panel">
-        {ordered.map((row) => (
-          <CheckRow key={row.id} row={row} />
-        ))}
-      </ul>
-    </section>
+    <div className="page data-check-page">
+      <header className="page-head">
+        <h2>{t('Data check')}</h2>
+        <p className="muted">{t('The prices, transactions and export behind your figures, checked on every visit. Nothing here changes a figure.')}</p>
+      </header>
+      <Section number={1} title={t('Checks')} aside={tn(all.length, '{count} check', '{count} checks')}>
+        <p role="status">
+          {problems === 0
+            ? t('Everything checks out: the figures rest on complete data.')
+            : tn(problems, '{count} thing to look at for the right figures.', '{count} things to look at for the right figures.')}
+        </p>
+        <ul className="checks panel">
+          {ordered.map((row) => (
+            <CheckRow key={row.id} row={row} />
+          ))}
+        </ul>
+      </Section>
+    </div>
   )
 }
 

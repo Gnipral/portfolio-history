@@ -191,9 +191,18 @@ button.danger {
   color: var(--text-muted);
 }
 
-.field input,
+.field input:not([type='radio']):not([type='checkbox']),
 .field select {
   width: 100%;
+}
+
+/* Radios and checkboxes keep their own size; base.css pads every input. */
+.page input[type='radio'],
+.page input[type='checkbox'] {
+  width: auto;
+  padding: 0;
+  margin: 0.2rem 0 0;
+  flex: none;
 }
 
 .page fieldset {
@@ -232,4 +241,54 @@ button.danger {
   .page-head h2 {
     font-size: 1.4rem;
   }
+}
+
+/* Data check: square marks, the problems filled. */
+.data-check-page .checks {
+  padding: 0 1.1rem;
+}
+
+.data-check-page .check-icon {
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.data-check-page .check-problem .check-icon {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.data-check-page .check-ok .check-icon {
+  background: none;
+  color: var(--text);
+}
+
+.data-check-page .check-count {
+  color: var(--text-muted);
+}
+
+/* Headers stay in the label font; dates are figures but read from the left. */
+.page .table th.num {
+  font-family: var(--font);
+}
+
+.page .table td.date {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Buttons that read as links, side by side in a cell. */
+.page td .link-button + .link-button {
+  margin-left: 0.6rem;
+}
+
+.page .panel > p:first-child {
+  margin-top: 0;
 }
