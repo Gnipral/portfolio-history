@@ -24,7 +24,7 @@ import { ProfitOverview } from '../dashboard/ProfitOverview.tsx'
 import { SummaryCards } from '../dashboard/SummaryCards.tsx'
 import { TimeControls } from '../dashboard/TimeControls.tsx'
 import { PeriodBar } from '../dashboard/PeriodBar.tsx'
-import { clampIndex, periodRange, rangeChange, visibleRange, type RangeKey } from '../dashboard/timeRange.ts'
+import { clampIndex, periodRange, rangeChange, rangeDescription, visibleRange, type RangeKey } from '../dashboard/timeRange.ts'
 import { ToggleBar } from '../dashboard/ToggleBar.tsx'
 import { engineOptions, toggleStates } from '../dashboard/toggles.ts'
 import { usePortfolio } from '../dashboard/usePortfolio.ts'
@@ -255,7 +255,7 @@ export function DashboardPage() {
               }}
             />
             <p className="muted small">
-              {period ? period.name : range === 'ALL' ? t('Since the first transaction') : range === 'YTD' ? t('Year to date') : t('Last {range}', { range })}
+              {period ? period.name : rangeDescription(range)}
               {selected < visible.to && ` ${t('up to {date}', { date: formatDate(point.date) })}`}:{' '}
               <span className={trendClass(change.pnl)}>{formatSignedEur(change.pnl)}</span>, {t('time-weighted')}{' '}
               <span className={trendClass(change.twr)}>{formatPercent(change.twr)}</span>

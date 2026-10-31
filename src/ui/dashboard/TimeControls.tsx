@@ -1,5 +1,5 @@
 import { t } from '../../i18n/i18n.ts'
-import { RANGES, type RangeKey, type VisibleRange } from './timeRange.ts'
+import { RANGES, rangeDescription, type RangeKey, type VisibleRange } from './timeRange.ts'
 
 interface Props {
   dates: string[]
@@ -20,8 +20,8 @@ export function TimeControls({ dates, range, visible, selected, onRange, onSelec
     <div className="time-controls">
       <div className="segmented" role="group" aria-label={t('Period')}>
         {RANGES.map((key) => (
-          <button key={key} type="button" aria-pressed={key === range} onClick={() => onRange(key)}>
-            {key === 'ALL' ? t('All') : key === 'YTD' ? t('YTD') : t(key)}
+          <button key={key} type="button" aria-pressed={key === range} title={rangeDescription(key)} onClick={() => onRange(key)}>
+            {key === 'ALL' ? t('All') : t(key)}
           </button>
         ))}
       </div>
