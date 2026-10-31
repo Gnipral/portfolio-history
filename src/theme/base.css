@@ -607,6 +607,24 @@ input[type='range'] {
   padding: 1.25rem;
 }
 
+
+/* Narrower desktops: the navigation moves to a second row under the logo and the tools. */
+@media (max-width: 1240px) and (min-width: 641px) {
+  .shell-bar {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+
+  .shell-tools {
+    margin-left: auto;
+  }
+
+  .app-nav {
+    order: 3;
+    flex-basis: 100%;
+    min-height: 40px;
+  }
+}
 /* Phones: not designed yet, but nothing may break: the navigation moves to a tab bar. */
 @media (max-width: 640px) {
   .shell-bar,
