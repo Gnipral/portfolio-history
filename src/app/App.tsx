@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router'
 import { t } from '../i18n/i18n.ts'
 import { useSettings } from '../settings/settings.ts'
@@ -8,14 +9,16 @@ import { ThemeToggle } from '../ui/components/ThemeToggle.tsx'
 import { UpdateBanner } from '../ui/components/UpdateBanner.tsx'
 import { ErrorBoundary } from '../ui/errors/ErrorBoundary.tsx'
 import { setDisplayCurrency } from '../ui/format.ts'
-import { AnalysisPage } from '../ui/pages/AnalysisPage.tsx'
-import { ComparePage } from '../ui/pages/ComparePage.tsx'
 import { DashboardPage } from '../ui/pages/DashboardPage.tsx'
-import { ImportPage } from '../ui/pages/ImportPage.tsx'
-import { PricesPage } from '../ui/pages/PricesPage.tsx'
-import { SettingsPage } from '../ui/pages/SettingsPage.tsx'
-import { SharedCardPage } from '../ui/pages/SharedCardPage.tsx'
-import { TransactionsPage } from '../ui/pages/TransactionsPage.tsx'
+
+// The dashboard comes first; every other page loads when it is opened.
+const AnalysisPage = lazy(() => import('../ui/pages/AnalysisPage.tsx').then((m) => ({ default: m.AnalysisPage })))
+const ComparePage = lazy(() => import('../ui/pages/ComparePage.tsx').then((m) => ({ default: m.ComparePage })))
+const ImportPage = lazy(() => import('../ui/pages/ImportPage.tsx').then((m) => ({ default: m.ImportPage })))
+const PricesPage = lazy(() => import('../ui/pages/PricesPage.tsx').then((m) => ({ default: m.PricesPage })))
+const SettingsPage = lazy(() => import('../ui/pages/SettingsPage.tsx').then((m) => ({ default: m.SettingsPage })))
+const SharedCardPage = lazy(() => import('../ui/pages/SharedCardPage.tsx').then((m) => ({ default: m.SharedCardPage })))
+const TransactionsPage = lazy(() => import('../ui/pages/TransactionsPage.tsx').then((m) => ({ default: m.TransactionsPage })))
 
 export function App() {
   // Set while rendering, before any page below formats an amount.
@@ -57,17 +60,19 @@ export function App() {
       </header>
       <main className="app-main">
         <ErrorBoundary resetKey={pathname}>
-          <Routes>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/analysis" element={<AnalysisPage />} />
-            <Route path="/import" element={<ImportPage />} />
-            <Route path="/transactions" element={<TransactionsPage />} />
-            <Route path="/prices" element={<PricesPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/s/:data" element={<SharedCardPage />} />
-            <Route path="/c/:data" element={<ComparePage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <Suspense fallback={null}>
+            <Routes>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/analysis" element={<AnalysisPage />} />
+              <Route path="/import" element={<ImportPage />} />
+              <Route path="/transactions" element={<TransactionsPage />} />
+              <Route path="/prices" element={<PricesPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/s/:data" element={<SharedCardPage />} />
+              <Route path="/c/:data" element={<ComparePage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
         </ErrorBoundary>
       </main>
     </>

@@ -24,9 +24,9 @@ describe('App shell', () => {
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeTruthy()
   })
 
-  it('routes to the import page', () => {
+  it('routes to the import page', async () => {
     renderAt('/import')
-    expect(screen.getByRole('heading', { name: 'Import' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Import' })).toBeTruthy()
   })
 
   it('redirects unknown routes to the dashboard', async () => {
