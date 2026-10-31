@@ -12,6 +12,15 @@ export interface PositionPoint {
   value: number
   /** Cost basis of the units held, in EUR. */
   cost: number
+  /**
+   * Result of the position so far: realized (sales, dividends, its own fees and taxes, as the toggles
+   * say) plus the value above the cost basis of the units held.
+   */
+  pnl: number
+  /** Money put into the position this day (buys, units transferred in), as the ledger counts it. */
+  inflow: number
+  /** Money taken out of the position this day (sales, dividends, units transferred out). */
+  outflow: number
 }
 
 export interface PositionTrade {
@@ -43,7 +52,13 @@ export function positionSeries(
 
   let index = 0
   for (let date = first; date <= today; date = addDays(date, 1)) {
-    while (index < own.length && (own[index] as Transaction).date === date) ledger.apply(own[index++] as Transaction)
+    let inflow = 0
+    let outflow = 0
+    while (index < own.length && (own[index] as Transaction).date === date) {
+      const flows = ledger.apply(own[index++] as Transaction)
+      inflow += flows.inflow
+      outflow += flows.outflow
+    }
     let quantity = 0
     let value = 0
     let cost = 0
@@ -52,7 +67,7 @@ export function positionSeries(
       value += holding.quantity * (prices.price(holding, date)?.eur ?? 0)
       cost += holding.cost
     }
-    points.push({ date, quantity, value, cost })
+    points.push({ date, quantity, value, cost, pnl: ledger.realized + value - cost, inflow, outflow })
   }
   const trades = own
     .filter((t) => ['buy', 'sell', 'transferIn', 'transferOut', 'dividend', 'split'].includes(t.type))

@@ -32,10 +32,12 @@ interface Props {
   series: SeriesResult
   otherAssets: OtherAsset[]
   yearlySpending: number
+  /** With what was found and why it matters; the short list shows only the rules and whether they pass. */
+  detail?: boolean
 }
 
-/** Rules of thumb on how the portfolio is spread today, after Ghostfolio's X-ray. */
-export function RiskChecksPanel({ inputs, options, series, otherAssets, yearlySpending }: Props) {
+/** Rules of thumb on how the portfolio is spread today, after Ghostfolio's X-ray, as a pass/look list. */
+export function RiskChecksPanel({ inputs, options, series, otherAssets, yearlySpending, detail = true }: Props) {
   const last = series.points.at(-1)
   const checks = useMemo(() => {
     if (!last) return null
@@ -125,28 +127,22 @@ export function RiskChecksPanel({ inputs, options, series, otherAssets, yearlySp
   const warnings = rules.filter((r) => r.status === 'warn').length
 
   return (
-    <div className="panel stack">
-      <h3>{t('Risk checks')}</h3>
+    <div className="rc">
       <p className="muted small">
         {warnings === 0 ? t('Every rule of thumb passes.') : t('{count} of {total} rules of thumb ask for a look.', { count: warnings, total: rules.length })}{' '}
         {t('They describe the portfolio today and are no advice: a choice can be right for you anyway.')}
       </p>
-      <ul className="checks">
-        {rules.map((rule) => {
-          const state = rule.status === 'pass' ? 'ok' : rule.status === 'warn' ? 'problem' : 'note'
-          return (
-            <li key={rule.id} className={`check check-${state}`}>
-              <span className="check-icon" aria-hidden="true">
-                {state === 'ok' ? '✓' : state === 'problem' ? '!' : '?'}
-              </span>
-              <div className="check-body">
-                <strong>{rule.title}</strong>
-                <p className="small">{rule.finding}</p>
-                {rule.status !== 'pass' && rule.advice && <p className="muted small">{rule.advice}</p>}
-              </div>
-            </li>
-          )
-        })}
+      <ul className="rc-list">
+        {rules.map((rule) => (
+          <li key={rule.id} className={`rc-row rc-${rule.status}`}>
+            <span className="rc-status">{rule.status === 'pass' ? t('Pass') : rule.status === 'warn' ? t('Look') : t('Unknown')}</span>
+            <div className="rc-body">
+              <strong>{rule.title}</strong>
+              {detail && <p className="small">{rule.finding}</p>}
+              {detail && rule.status !== 'pass' && rule.advice && <p className="muted small">{rule.advice}</p>}
+            </div>
+          </li>
+        ))}
       </ul>
     </div>
   )

@@ -46,8 +46,7 @@ function read(element?: Element | null): ThemeColors {
     accent: v('--accent'),
     positive: v('--positive'),
     negative: v('--negative'),
-    // Categorical slot 2 (orange): never a status color.
-    benchmark: v('--series-2'),
+    benchmark: v('--benchmark'),
     fontMono: v('--font-mono'),
     chart: {
       value: v('--chart-value'),

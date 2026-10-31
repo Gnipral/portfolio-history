@@ -1,6 +1,7 @@
 import { t } from '../../i18n/i18n.ts'
 import { Rich } from '../../i18n/Rich.tsx'
 import { formatDate } from '../format.ts'
+import { Notice } from '../notices/Notices.tsx'
 
 interface Props {
   /** The browser reports no connection at all. */
@@ -15,16 +16,14 @@ interface Props {
 export function ConnectionNotice({ offline, weak, pricesFrom }: Props) {
   if (!offline && !weak) return null
   return (
-    <div className="callout warning connection-notice" role="status">
-      <strong>{offline ? t('No internet connection') : t('Weak internet connection')}</strong>
-      <p>
-        {pricesFrom ? (
-          <Rich text={t('You are seeing the last prices found, from <b>{date}</b>.', { date: formatDate(pricesFrom) })} tags={{ b: (s) => <strong>{s}</strong> }} />
-        ) : (
-          t('You are seeing the last prices found.')
-        )}{' '}
-        {t('New prices are fetched as soon as the connection is stable.')}
-      </p>
-    </div>
+    <Notice kind="warning" id={offline ? 'offline' : 'weak-connection'}>
+      <strong>{offline ? t('No internet connection') : t('Weak internet connection')}</strong>{' '}
+      {pricesFrom ? (
+        <Rich text={t('You are seeing the last prices found, from <b>{date}</b>.', { date: formatDate(pricesFrom) })} tags={{ b: (s) => <strong>{s}</strong> }} />
+      ) : (
+        t('You are seeing the last prices found.')
+      )}{' '}
+      {t('New prices are fetched as soon as the connection is stable.')}
+    </Notice>
   )
 }

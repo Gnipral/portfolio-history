@@ -13,7 +13,7 @@ Live app: https://gnipral.github.io/portfolio-history/
 
 No broker export at hand? Open the app and press **Try the demo**: a made-up portfolio that needs no connection, no account and no file. Feedback and ideas are welcome in the [issues](https://github.com/Gnipral/portfolio-history/issues).
 
-![The dashboard of the demo portfolio: value, invested capital and profit since 2021, compared with the same money in IWDA](docs/screenshots/dashboard.png)
+![The dashboard of the demo portfolio: the figures of the period, the chart against the same money in IWDA, and the State inspection side panel](docs/screenshots/dashboard.png)
 
 | Share your return, never your amounts | What the next 12 months will pay |
 |---|---|
@@ -25,24 +25,30 @@ The screenshots show the demo portfolio; all names and numbers in it are made up
 
 1. **Import** a broker export (CSV, XLSX, XML or PDF). The file is read in the browser and stored in IndexedDB.
 2. **Prices** are fetched once per day for every product you ever held, together with splits and EUR exchange rates, and cached in the browser.
+The interface reads like a report: numbered sections, thin rules, figures in a tabular monospace font, and grayscale with one colour for the benchmark. Gains and losses are told apart by their sign. Light is the default; dark is the same grayscale inverted, or follows the device. The header shows today's total value, **Hide amounts** (every amount and quantity becomes •••, percentages stay), the offline badge, the theme and the account. Every notice (offline, demo mode, missing price history, a new version) goes in one strip under the navigation. The layout is made for desktop (up to 1440px wide); on a phone everything still works.
+
 3. The **dashboard** rebuilds the portfolio for every calendar day since the first transaction:
-   - a chart of value, invested capital and profit, in euros or percent (the percentage is the time-weighted return of the securities, so a deposit does not move it), with a crosshair, a slider and a date picker that stay in sync, quick ranges (1M, 3M, YTD, 1Y, ALL), and zoom with the mouse wheel or two fingers. The name and value of every line stand next to its point on the day under the pointer. Its style bar (between the legend and the chart, so nothing is covered) turns the fill under the value, the invested capital line, the profit pane and a logarithmic scale on or off, and picks the palette of the chart block (Standard, Colour-blind friendly, High contrast or Neon; the rest of the app keeps its theme). Every benchmark line also has its own pattern and its name next to its point, so the lines can be told apart without colors; the colour-blind palette is checked in the tests with a simulation of red-green and blue-yellow colour blindness;
-   - saved periods: the range shown, up to the selected day, saved under a name ("After the crash") and opened again with one click; a period up to today grows along. They are stored with the settings in this browser;
-   - a filter on the type of asset (ETFs, stocks, crypto, …): the chart, the numbers, the positions and the benchmark then follow only those, as securities without cash;
-   - the profit of the selected day, its month, its year and since the start, in euros and percent, with the best and the worst position and how much more or less the same money made in the benchmark;
-   - cards for value, invested capital, profit/loss, simple return, time-weighted return (TWR) and money-weighted return (XIRR) on the selected day;
-   - the positions and an allocation chart for that day, by position, type, currency or country of the ISIN; click a position for its own chart with its trades;
-   - benchmarks (MSCI World, FTSE All-World, S&P 500 ETF, any stock, fund or index found with the search, or your own mix of them) bought and sold with exactly the same money on the same days. The default is set in Settings; under the chart you compare with something else for a moment. The built-in ones are accumulating ETFs quoted in EUR, so their dividends are reinvested inside the fund and already in the price; other currencies are converted at the ECB rate of the day. Broker fees and taxes (such as TOB) are left out of the benchmark. "How is this compared?" under the chart says the same;
-   - a **Share** button that makes a picture of the time-weighted return over the chosen period (post or story size), optionally against a benchmark, with the mix by type and with your positions (their weight and return, the largest or the best first; a large portfolio sums up the rest in one row), plus a text to paste with it, or a link that opens the card read-only (the card itself is compressed into the part after #, so no server ever sees it). It never shows amounts or quantities, and product names only when you choose to show the positions;
-   - toggles to include or exclude dividends, transaction costs, taxes, FX costs and deposits. Options the export has no data for are disabled, with the reason.
-4. **Analysis**, per year:
-   - **Taxes**: stock exchange tax (TOB) and withheld taxes paid, and an estimate of the tax on capital gains under the rules of a country: Belgium (from 2026), Germany, France, the Netherlands, or your own. Rate, yearly exemption and its carry-over, loss carry-forward, FIFO or average cost and a reference date for gains that are not taxed can all be adjusted;
+   - the figures of the **selected period**: value at its end, invested capital, profit in euros and percent, time-weighted return (TWR), money-weighted return (XIRR) and the same money in the benchmark, with a sentence that sums it up;
+   - a chart of value, invested capital and the benchmark, in euros or as TWR, with markers for deposits, buys, sells and dividends. Its toolbar holds the legend (click **Benchmark** to compare with IWDA, VWCE, SXR8, your own mix or any stock or index found with the search), a **View** menu (fill, invested capital line, log scale, palette: Standard, Colour-blind friendly or High contrast), the profit/loss pane, the side panel and full screen. The line labels stand at their points; zoom with the mouse wheel or two fingers;
+   - the **State inspection** side panel: the figures of one day (value, invested, profit, TWR, XIRR, the benchmark with the same capital and the alpha), the profit of that day, month, year and since the start, the best and worst position, and cash, unrealized and realized results. It follows the mouse over the chart; a click pins the day ("Pinned ×"), and clicking a marker also shows that day's transactions;
+   - a **timeline** like a video editor: the whole history with two handles for the start and end of the period, a draggable window and a playhead for the day shown, From/To dates, quick ranges 1M · 3M · YTD · 1Y · 3Y · ALL, and ←/→ (Shift for a month) to move the playhead. The period is shared with Analysis;
+   - saved periods: the window shown saved under a name ("After the crash") and opened again with one click; a period up to today grows along;
+   - a filter on the type of asset (ETFs, stocks, crypto, …): the chart, the figures, the holdings and the benchmark then follow only those, as securities without cash;
+   - **What counts in the result**, folded into one row: dividends, transaction costs, taxes, FX costs and deposits on or off. Options the export has no data for are disabled, with the reason;
+   - the allocation as one bar, by type, position, currency or country of the ISIN, and the holdings on the playhead day; click a row for its own chart with its trades;
+   - benchmarks are bought and sold with exactly the same money on the same days. The default and a fixed second benchmark are set in Settings. The built-in ones are accumulating ETFs quoted in EUR, so their dividends are reinvested inside the fund and already in the price; other currencies are converted at the ECB rate of the day. Broker fees and taxes (such as TOB) are left out of the benchmark;
+   - a **Share** button that makes a picture of the time-weighted return over the chosen period (post or story size), optionally against a benchmark, with the mix by type and with your positions (their weight and return, the largest or the best first; a large portfolio sums up the rest in one row), plus a text to paste with it, or a link that opens the card read-only (the card itself is compressed into the part after #, so no server ever sees it). It never shows amounts or quantities, and product names only when you choose to show the positions.
+4. **Analysis**:
+   - **Performance**, at three levels that build on each other (the last one chosen is remembered), over the period shared with the dashboard:
+     - *Basic*: key figures with "your return per year", the same money in the benchmark, monthly returns per year, the biggest drop with its dates, total costs split into broker fees, TOB and FX costs, the best and worst three positions, and rules of thumb on how the portfolio is spread;
+     - *Advanced* adds: TWR per year next to XIRR with the effect of your deposit timing, alpha per year and against the benchmark per year, an underwater chart with every drawdown episode against the benchmark, volatility and Sharpe, a cost waterfall from price gains to net profit, the contribution of every position in euros and basis points, and the thresholds of the checks;
+     - *Expert* adds: rolling 12-month alpha, volatility and Sharpe, beta, correlation, Sortino and Omega, the cost of the charges in TWR, the over- or underweight of each stock against MSCI World, and the methodology used;
+   - **Taxes**: stock exchange tax (TOB) and withheld taxes paid, and an estimate of the tax on capital gains under the rules of a country: Belgium (from 2026), Germany, France, the Netherlands, or your own. Rate, yearly exemption and its carry-over, loss carry-forward, FIFO or average cost and a reference date for gains that are not taxed can all be adjusted; a yearly tax report as CSV or PDF;
    - **Dividends**: per month, year, kind and position, gross and net, with the yield on cost, and an estimate of the next 12 months: every dividend of the last 12 months per share, paid again a year later on the shares held today with the same withholding tax, per month and per position with the forward yield;
    - **Realized**: every sale with its cost basis and result;
-   - **Costs**: transaction costs, FX costs and taxes, and how much profit and time-weighted return they cost;
-   - **Risk**: largest fall and recovery, volatility, best and worst month, and the return of every month.
-5. **Settings**: API keys, price proxy, cost basis (average or FIFO), benchmarks and mix, theme, chart colors (the same palettes as in the chart), and deleting all data.
-6. **Demo mode**: "Try the demo" (on the empty dashboard, the Import page or in Settings) opens a made-up portfolio from March 2021 until today, with deposits, ETFs, six stocks and crypto (one stock in USD, one paying dividends), a sale and a withdrawal. Its prices are generated in the browser, so it needs no connection or API key. It lives in its own database with its own settings: your own data is never touched. A banner on every page leads back.
+   - **Planning**: rebalancing with the next deposit, a projection, financial independence, and net worth with savings, pension, real estate and debts.
+5. **Settings**, one page with a table of contents: display (theme, chart palette, 2 or 4 decimals, the period to open on), calculation (currency, average cost or FIFO, alpha as a difference or a ratio, the risk-free rate for Sharpe and Sortino), benchmarks (default, second, own stocks, own mix), price sources, the account, data (what is stored, backup, delete all data) and the demo.
+6. **Demo mode**: "Try the demo" (on the empty dashboard, the Import page or in Settings) opens a made-up portfolio from March 2021 until today, with deposits, ETFs, six stocks and crypto (one stock in USD, one paying dividends), a sale and a withdrawal. Its prices are generated in the browser, so it needs no connection or API key. It lives in its own database with its own settings: your own data is never touched. A notice on every page leads back.
 
 ### Optional account
 
@@ -65,6 +71,17 @@ The app is a PWA: install it from the browser menu ("Install app" or "Add to Hom
 | Simple return | Profit / loss divided by the highest invested capital so far |
 | TWR | Daily returns chain-linked; money coming in counts at the start of the day, money going out at the end, so the timing of your deposits does not affect it |
 | XIRR | The yearly rate at which all flows and the value on the selected day net to zero; it does depend on when you added money. During the first year it is shown over the period instead, because a yearly rate from a few weeks is meaningless |
+| Annualised TWR | `(1 + TWR)^(365 / days) − 1` over the period |
+| Deposit timing | XIRR minus annualised TWR, per year and over the period: what the timing of your deposits added or cost per year |
+| Volatility | Standard deviation of the daily returns on trading days (Monday to Friday; weekend moves count on Monday) × √252 |
+| Sharpe / Sortino | (annualised TWR − risk-free rate) / volatility; Sortino divides by the downside deviation, the returns below the daily risk-free rate. The rate is set in Settings (2% by default) |
+| Omega | The sum of the positive daily returns divided by the absolute sum of the negative ones |
+| Beta, correlation | From the daily returns of the portfolio and of the same money in the benchmark |
+| Alpha | Annualised TWR of the portfolio against that of the benchmark: their difference, or `(1 + p) / (1 + b) − 1` (Settings) |
+| Rolling 12 months | Alpha, volatility and Sharpe over the 252 trading days up to each day |
+| Drawdown episodes | From a peak to the full recovery (the last can still be open), with the benchmark's largest fall over the same days |
+| Contribution | Per position, each day's change of its result over the portfolio's base of that day, linked over the period with Carino's factors so the parts add up to the TWR, apart from interest and fees that belong to no position |
+| Over/underweight | A stock's weight minus its weight in MSCI World, from the holdings of IWDA fetched in the daily snapshot; funds and ETFs are not compared |
 
 Without deposits in the export, the portfolio is the securities alone and every buy, sell and dividend is a flow. With deposits included, cash is part of the portfolio and only deposits and withdrawals are flows. Cost basis (average or FIFO) decides how realized and unrealized results are split. Dividends count net of withholding tax and collection costs; a withholding tax booked as its own row is left out together with the dividends. Securities transferred in or out without a sale count at their market value of that day: received units are money put in, not profit, and the profit on units sent away stays in the result.
 
@@ -110,6 +127,7 @@ Never commit personal broker exports: this repository is public.
 |---|---|---|
 | `fx-rates.json` | ECB reference rates, units per 1 EUR, 14 currencies, from 2010 | Frankfurter |
 | `benchmark-iwda.json`, `benchmark-vwce.json`, `benchmark-sxr8.json` | Daily closes of the benchmark ETFs | Yahoo Finance |
+| `msci-world-weights.json` | Current weights of the MSCI World constituents (equities), replaced daily, for the over/underweight in Analysis | iShares Core MSCI World UCITS ETF holdings, blackrock.com |
 | `meta.json` | Last check, sources, row counts, errors | |
 | `report.json` | Weekly data-quality report: stale files, gaps, large day-to-day moves, missing values | |
 

@@ -50,18 +50,18 @@ describe('palette', () => {
     const heard: unknown[] = []
     const listen = (e: Event) => heard.push((e as CustomEvent).detail)
     window.addEventListener(PALETTE_EVENT, listen)
-    storePalette('neon')
-    expect(readPalette()).toBe('neon')
-    expect(currentPalette()).toBe('neon')
+    storePalette('high-contrast')
+    expect(readPalette()).toBe('high-contrast')
+    expect(currentPalette()).toBe('high-contrast')
     expect(document.documentElement.hasAttribute('data-palette')).toBe(false)
     storePalette('standard')
     expect(localStorage.getItem('palette')).toBeNull()
-    expect(heard).toEqual(['neon', 'standard'])
+    expect(heard).toEqual(['high-contrast', 'standard'])
     window.removeEventListener(PALETTE_EVENT, listen)
   })
 
   it('has a light and a dark value for every color it changes', () => {
-    const css = readFileSync(resolve(__dirname, 'global.css'), 'utf8')
+    const css = readFileSync(resolve(__dirname, 'tokens.css'), 'utf8')
     for (const { id } of PALETTES.filter((p) => p.id !== 'standard')) {
       const tokens = (selector: string) => {
         const start = css.indexOf(`${selector} {`)

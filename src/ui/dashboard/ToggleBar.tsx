@@ -1,37 +1,34 @@
 import { useState } from 'react'
 import type { ToggleKey } from '../../engine/options.ts'
-import { t, tn } from '../../i18n/i18n.ts'
+import { t } from '../../i18n/i18n.ts'
 import { TOGGLE_GROUPS, type ToggleState } from './toggles.ts'
 
-/** On a phone the options start folded, so the chart is in view first. */
-const PHONE = '(max-width: 700px)'
-
 /**
- * What counts in the result, grouped, with a line on what each option does. An option the export
- * has no data for is disabled, with the reason in place of its description.
+ * What counts in the result: one thin row, folded by default, with the count of what is included. Unfolded,
+ * the options by group with a line on what each does; an option the export has no data for is disabled,
+ * with the reason in place of its description.
  */
 export function ToggleBar({ states, onChange }: { states: ToggleState[]; onChange: (key: ToggleKey, value: boolean) => void }) {
-  const [open, setOpen] = useState(() => !(typeof window !== 'undefined' && window.matchMedia?.(PHONE).matches))
-  const off = states.filter((state) => !state.checked && state.disabledReason === undefined).length
+  const [open, setOpen] = useState(false)
+  const included = states.filter((state) => state.checked).length
+  const total = states.length
 
   return (
-    <fieldset className={`toggle-bar${open ? '' : ' folded'}`}>
-      <legend>
-        <button type="button" className="toggle-bar-heading" aria-expanded={open} onClick={() => setOpen(!open)}>
-          {t('What counts in the result')}
-          <span className="toggle-bar-summary muted small">
-            {off === 0 ? t('everything counts') : tn(off, '{count} switched off', '{count} switched off')}
-          </span>
-          <span aria-hidden="true">{open ? '▴' : '▾'}</span>
-        </button>
-      </legend>
+    <div className={`result-toggles${open ? ' open' : ''}`}>
+      <button type="button" className="result-toggles-row" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <span className="label-caps">{t('What counts in the result')}</span>
+        <span className="result-toggles-summary">
+          {included === total ? t('All {total} included', { total }) : t('{included} of {total} included', { included, total })}
+        </span>
+        <span aria-hidden="true">{open ? '▴' : '▾'}</span>
+      </button>
       {open && (
-        <>
-          <p className="muted small toggle-intro">{t('Switch an item off to leave it out of every number, as if it never happened.')}</p>
+        <div className="result-toggles-body">
+          <p className="muted small">{t('Switch an item off to leave it out of every number, as if it never happened.')}</p>
           <div className="toggle-groups">
             {TOGGLE_GROUPS.map((group) => (
-              <div key={group} className="toggle-group">
-                <span className="toggle-group-title">{t(group)}</span>
+              <fieldset key={group} className="toggle-group">
+                <legend className="label-caps">{t(group)}</legend>
                 {states
                   .filter((state) => state.group === group)
                   .map((state) => (
@@ -54,11 +51,11 @@ export function ToggleBar({ states, onChange }: { states: ToggleState[]; onChang
                       </span>
                     </label>
                   ))}
-              </div>
+              </fieldset>
             ))}
           </div>
-        </>
+        </div>
       )}
-    </fieldset>
+    </div>
   )
 }

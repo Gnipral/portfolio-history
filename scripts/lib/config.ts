@@ -25,3 +25,6 @@ export const BENCHMARKS: BenchmarkConfig[] = [
 export const FX_FILE = 'fx-rates.json'
 export const META_FILE = 'meta.json'
 export const benchmarkFile = (id: string) => `benchmark-${id}.json`
+
+/** Constituent weights of the MSCI World ETF, for the over/underweight column in Analysis. */
+export const INDEX_WEIGHTS_FILE = 'msci-world-weights.json'

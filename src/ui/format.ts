@@ -8,7 +8,8 @@ export function formatDate(isoDate: string): string {
 }
 
 let currency = 'EUR'
-let eur = new Intl.NumberFormat(locale(), { style: 'currency', currency, maximumFractionDigits: 2 })
+let decimals = 2
+let eur = new Intl.NumberFormat(locale(), { style: 'currency', currency, minimumFractionDigits: decimals, maximumFractionDigits: decimals })
 let eurCompact = new Intl.NumberFormat(locale(), { style: 'currency', currency, maximumFractionDigits: 0 })
 
 /** The currency amounts are shown in: the base currency of the settings. */
@@ -16,11 +17,15 @@ export function displayCurrency(): string {
   return currency
 }
 
-/** Switches every formatted amount to another currency; called by the app when the base currency changes. */
-export function setDisplayCurrency(code: string): void {
-  if (code === currency) return
+/**
+ * Switches every formatted amount to another currency, or to 2 or 4 decimals; called by the app when the
+ * settings change. Leaving out `places` keeps the decimals.
+ */
+export function setDisplayCurrency(code: string, places: number = decimals): void {
+  if (code === currency && places === decimals) return
   currency = code
-  eur = new Intl.NumberFormat(locale(), { style: 'currency', currency, maximumFractionDigits: 2 })
+  decimals = places
+  eur = new Intl.NumberFormat(locale(), { style: 'currency', currency, minimumFractionDigits: decimals, maximumFractionDigits: decimals })
   eurCompact = new Intl.NumberFormat(locale(), { style: 'currency', currency, maximumFractionDigits: 0 })
 }
 const percent = new Intl.NumberFormat(locale(), { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 })

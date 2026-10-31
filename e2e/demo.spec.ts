@@ -32,10 +32,11 @@ async function openDemo(page: Page) {
   await expect(page.locator('.chart-wrapper canvas').first()).toBeVisible({ timeout: 20_000 })
 }
 
-test('the demo dashboard shows the chart, positions and allocation', async ({ page }) => {
+test('the demo dashboard shows the chart, the side panel, the holdings and the allocation', async ({ page }) => {
   const errors = watchErrors(page)
   await openDemo(page)
-  await expect(page.getByRole('heading', { name: 'Positions' })).toBeVisible()
+  await expect(page.getByRole('complementary', { name: 'State inspection' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Holdings on/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Allocation' })).toBeVisible()
   await expect(page.getByRole('alert')).toHaveCount(0)
   expect(errors).toEqual([])
@@ -45,7 +46,7 @@ test('every analysis tab opens without an error', async ({ page }) => {
   const errors = watchErrors(page)
   await openDemo(page)
   await page.getByRole('link', { name: 'Analysis' }).click()
-  for (const tab of ['Taxes', 'Dividends', 'Realized', 'Costs', 'Risk', 'Planning']) {
+  for (const tab of ['Performance', 'Taxes', 'Dividends', 'Realized', 'Planning']) {
     await page.getByRole('tab', { name: tab }).click()
     await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true')
     await expect(page.getByRole('tabpanel').locator('h3').first()).toBeVisible()
@@ -77,8 +78,8 @@ test.describe('in a Dutch browser', () => {
     await page.addInitScript(() => localStorage.setItem('portfolio-history:language', 'nl'))
     await openDemo(page)
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
-    await expect(page.getByRole('heading', { name: 'Positions' })).toBeVisible()
-    await expect(page.locator('.chart-legend')).toContainText(/\d{1,2} [A-Z][a-z]{2} \d{4}/)
+    await expect(page.getByRole('heading', { name: /Holdings on/ })).toBeVisible()
+    await expect(page.locator('.inspection-day')).toHaveText(/\d{1,2} [A-Z][a-z]{2} \d{4}/)
     expect(errors).toEqual([])
   })
 })
@@ -114,51 +115,52 @@ test('a PDF is read under the Content-Security-Policy', async ({ page }) => {
   expect(errors).toEqual([])
 })
 
-test('the allocation never covers the positions, at any width', async ({ page }) => {
+test('the holdings and the allocation never cover each other, at any width', async ({ page }) => {
   await openDemo(page)
-  for (const width of [390, 1000, 1210, 1450, 1920]) {
+  for (const width of [390, 1000, 1280, 1440, 1920]) {
     await page.setViewportSize({ width, height: 1000 })
-    const [positions, allocation] = await page.locator('.dashboard-grid > *').evaluateAll((panels) =>
-      panels.map((panel) => {
-        const box = panel.getBoundingClientRect()
-        return { left: box.left, right: box.right, top: box.top, bottom: box.bottom }
-      }),
-    )
-    if (!positions || !allocation) throw new Error('Both panels should be shown')
-    const apart = allocation.left >= positions.right - 0.5 || allocation.top >= positions.bottom - 0.5
-    expect(apart, `overlap at ${width}px`).toBe(true)
+    const allocation = await page.locator('.allocation-bar').boundingBox()
+    const holdings = await page.locator('.dash-holdings').boundingBox()
+    if (!allocation || !holdings) throw new Error('Both should be shown')
+    expect(holdings.y >= allocation.y + allocation.height - 0.5, `overlap at ${width}px`).toBe(true)
     // Nothing sticks out of the page sideways either.
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `page wider than the screen at ${width}px`).toBe(true)
   }
 })
 
-test('zooms into the chart with the mouse wheel, and back with one button', async ({ page }) => {
+test('zooms into the chart with the mouse wheel, which trims the period, and back with All', async ({ page }) => {
   const errors = watchErrors(page)
   await openDemo(page)
+  const from = page.getByLabel('From')
+  const first = await from.inputValue()
   const chart = page.locator('.chart-wrapper canvas').first()
   await chart.scrollIntoViewIfNeeded()
   const box = await chart.boundingBox()
   if (!box) throw new Error('The chart should be drawn')
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
   await page.mouse.wheel(0, -600)
-  const reset = page.getByRole('button', { name: 'Show everything' })
-  await expect(reset).toBeVisible()
-  await reset.click()
-  await expect(reset).toHaveCount(0)
+  await expect(from).not.toHaveValue(first)
+  await page.locator('.timeline-presets').getByRole('button', { name: 'All', exact: true }).click()
+  await expect(from).toHaveValue(first)
   expect(errors).toEqual([])
 })
 
-test('the profit of the shown period follows the day under the pointer', async ({ page }) => {
+test('the side panel follows the day under the pointer, and pins a clicked day', async ({ page }) => {
   await openDemo(page)
-  const summary = page.locator('.chart-block > p.muted.small').first()
-  const atEnd = await summary.textContent()
+  const day = page.locator('.inspection-day')
+  const atEnd = await day.textContent()
   const chart = page.locator('.chart-wrapper canvas').first()
   await chart.scrollIntoViewIfNeeded()
   const box = await chart.boundingBox()
   if (!box) throw new Error('The chart should be drawn')
   await page.mouse.move(box.x + box.width * 0.3, box.y + box.height / 2)
-  await expect(summary).toContainText('up to')
-  expect(await summary.textContent()).not.toBe(atEnd)
+  await expect(day).not.toHaveText(atEnd ?? '')
+  const hovered = await day.textContent()
+  await page.mouse.click(box.x + box.width * 0.3, box.y + box.height / 2)
+  await page.mouse.move(box.x + box.width * 0.3, box.y - 120)
+  await expect(day).toHaveText(hovered ?? '')
+  await page.getByRole('button', { name: /Unpin/ }).click()
+  await expect(day).toHaveText(atEnd ?? '')
 })
 
 test('finds a stock and compares with it for now', async ({ page }) => {
@@ -172,6 +174,7 @@ test('finds a stock and compares with it for now', async ({ page }) => {
     }),
   )
   await openDemo(page)
+  await page.getByRole('button', { name: /Benchmark/ }).click()
   await page.getByRole('button', { name: '+ Other stock' }).click()
   await page.getByRole('searchbox', { name: 'Search a stock, fund or index' }).fill('apple')
   await page.getByRole('button', { name: /AAPL Apple Inc\./ }).click()
@@ -179,7 +182,7 @@ test('finds a stock and compares with it for now', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Back to the default' })).toBeVisible()
   // In the list to choose a default from, in Settings.
   await page.getByRole('link', { name: 'Settings' }).click()
-  await expect(page.getByRole('option', { name: /Apple Inc\. \(AAPL\)/ })).toHaveCount(1)
+  await expect(page.getByLabel('Compare the portfolio with').getByRole('option', { name: /Apple Inc\. \(AAPL\)/ })).toHaveCount(1)
   expect(errors).toEqual([])
 })
 
@@ -188,11 +191,12 @@ test('hiding amounts leaves only percentages on the dashboard', async ({ page })
   await openDemo(page)
   await page.getByRole('button', { name: 'Hide amounts' }).click()
   await expect(page.locator('.chart-wrapper canvas').first()).toBeVisible({ timeout: 20_000 })
-  await expect(page.locator('.card.hero .card-value')).toHaveText('€•••')
-  await expect(page.locator('.cards')).toContainText('%')
-  await expect(page.locator('.cards')).not.toContainText(/€\s?\d/)
+  const figures = page.locator('.dash-figures')
+  await expect(figures.locator('.figure').first()).toHaveText('€•••')
+  await expect(figures).toContainText('%')
+  await expect(figures).not.toContainText(/€\s?\d/)
   await page.getByRole('button', { name: 'Show amounts' }).click()
-  await expect(page.locator('.card.hero .card-value')).toContainText(/\d/)
+  await expect(figures.locator('.figure').first()).toContainText(/\d/)
   expect(errors).toEqual([])
 })
 
@@ -206,13 +210,18 @@ test('the data check opens from the dashboard and checks the demo', async ({ pag
   expect(errors).toEqual([])
 })
 
-test('the risk tab checks how the demo is spread', async ({ page }) => {
+test('every level of Performance opens, with the checks of the demo', async ({ page }) => {
   const errors = watchErrors(page)
   await openDemo(page)
   await page.getByRole('link', { name: 'Analysis' }).click()
-  await page.getByRole('tab', { name: 'Risk' }).click()
-  await expect(page.getByRole('heading', { name: 'Risk checks' })).toBeVisible()
-  await expect(page.locator('.check')).toHaveCount(7)
+  for (const level of ['Basic', 'Advanced', 'Expert']) {
+    await page.getByRole('button', { name: level, exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Key figures' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Checks' })).toBeVisible()
+    await expect(page.getByText('could not be shown')).toHaveCount(0)
+  }
+  await expect(page.getByRole('heading', { name: 'Methodology' })).toBeVisible()
+  await expect(page.locator('.rc-row')).toHaveCount(7)
   await expect(page.getByText('No single stock above 10%')).toBeVisible()
   expect(errors).toEqual([])
 })

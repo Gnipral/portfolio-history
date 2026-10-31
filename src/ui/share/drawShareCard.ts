@@ -10,26 +10,27 @@ export const SIZES: Record<ShareFormat, { width: number; height: number }> = {
 }
 
 /**
- * The card always uses the dark palette of the app, whatever the theme of the person sharing it:
- * it is a picture of the brand, and dark images stand out in most feeds.
+ * The card always uses the dark grayscale of the app, whatever the theme of the person sharing it: dark
+ * images stand out in most feeds. As in the app, the benchmark is the one colour, and gains and losses are
+ * told apart by their sign.
  */
 const INK = {
-  bg: '#0b0e12',
-  surface: '#14181d',
-  border: '#252b33',
-  text: '#dfe2eb',
-  muted: '#8d9a93',
-  accent: '#00f59b',
-  positive: '#3ddc97',
-  negative: '#ff7b7b',
-  value: '#5cc8f0',
-  benchmark: '#ffb95f',
-  zero: '#4a5561',
-  // Allocation slots: no amber, which is the benchmark line.
-  series: ['#5b6670', '#00d68f', '#8b8dff', '#f472b6', '#a3e635', '#c084fc', '#22d3ee', '#e6eaef'],
+  bg: '#0e0e0e',
+  surface: '#161616',
+  border: '#2e2e2e',
+  text: '#ececea',
+  muted: '#9a9a97',
+  accent: '#ececea',
+  positive: '#ececea',
+  negative: '#bdbdba',
+  value: '#ececea',
+  benchmark: '#ff4d5e',
+  zero: '#4d4d4b',
+  // Allocation slots: grays apart enough to read next to each other.
+  series: ['#ececea', '#a3a3a0', '#6b6b69', '#c6c6c3', '#8e8e8b', '#4d4d4b', '#dcdcda', '#333333'],
 }
 
-const DISPLAY = "'Space Grotesk', 'Manrope', system-ui, sans-serif"
+const DISPLAY = "'Inter', system-ui, sans-serif"
 const MONO = "'JetBrains Mono', ui-monospace, Consolas, monospace"
 
 /** Loads the web fonts the card uses, so the first drawing does not fall back to system fonts. */
@@ -74,11 +75,8 @@ function drawCurve(ctx: CanvasRenderingContext2D, card: ShareCard, box: Box) {
   ctx.lineTo(box.x + box.width, scale.y(0))
   ctx.stroke()
 
-  // Soft fill under the portfolio line, towards the 0 % line.
-  const gradient = ctx.createLinearGradient(0, box.y, 0, box.y + box.height)
-  gradient.addColorStop(0, 'rgba(92, 200, 240, 0.28)')
-  gradient.addColorStop(1, 'rgba(92, 200, 240, 0)')
-  ctx.fillStyle = gradient
+  // A flat fill under the portfolio line, towards the 0 % line: no gradients in the design.
+  ctx.fillStyle = 'rgba(236, 236, 234, 0.08)'
   ctx.beginPath()
   ctx.moveTo(scale.x(0), scale.y(0))
   card.curve.forEach((v, i) => {
@@ -221,11 +219,6 @@ export function drawShareCard(canvas: HTMLCanvasElement, card: ShareCard, format
   const inner = width - pad * 2
 
   ctx.fillStyle = INK.bg
-  ctx.fillRect(0, 0, width, height)
-  const glow = ctx.createRadialGradient(width, 0, 0, width, 0, width * 0.9)
-  glow.addColorStop(0, 'rgba(0, 245, 155, 0.10)')
-  glow.addColorStop(1, 'rgba(0, 245, 155, 0)')
-  ctx.fillStyle = glow
   ctx.fillRect(0, 0, width, height)
 
   // Header: brand and period.

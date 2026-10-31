@@ -8,10 +8,25 @@ import { localToday, addDays } from '../../market/dates.ts'
 import { syncMarketData } from '../../market/sync.ts'
 import { loadSettings, saveSettings } from '../../settings/settings.ts'
 import { resetSyncSession } from '../dashboard/usePortfolio.ts'
+import { formatDate } from '../format.ts'
 import { DashboardPage } from './DashboardPage.tsx'
 
-// Canvas charts do not run in jsdom; PortfolioChart has its own test with a mocked library.
-vi.mock('../dashboard/PortfolioChart.tsx', () => ({ PortfolioChart: () => null }))
+// Canvas charts do not run in jsdom: a stand-in with buttons that hover, leave and click a day.
+vi.mock('../dashboard/PortfolioChart.tsx', () => ({
+  PortfolioChart: ({ onHover, onPick }: { onHover: (index: number | null) => void; onPick?: (index: number) => void }) => (
+    <div>
+      <button type="button" onClick={() => onHover(0)}>
+        hover first day
+      </button>
+      <button type="button" onClick={() => onHover(null)}>
+        leave chart
+      </button>
+      <button type="button" onClick={() => onPick?.(0)}>
+        click first day
+      </button>
+    </div>
+  ),
+}))
 
 vi.mock('../../market/sync.ts', () => ({
   syncMarketData: vi.fn(async ({ onProgress }: { onProgress?: (p: unknown) => void }) => {
@@ -26,13 +41,14 @@ const start = addDays(today, -10)
 
 beforeEach(async () => {
   resetSyncSession()
+  localStorage.clear()
   vi.mocked(syncMarketData).mockClear()
   await Promise.all([db.transactions.clear(), db.symbols.clear(), db.prices.clear(), db.coverage.clear(), db.kv.clear(), db.imports.clear()])
 })
 afterEach(cleanup)
 
 function renderPage() {
-  render(
+  return render(
     <MemoryRouter>
       <DashboardPage />
     </MemoryRouter>,
@@ -49,13 +65,18 @@ async function seed() {
   ])
 }
 
+/** The figure in the row of key figures with this label. */
+const figure = async (label: string) => (await screen.findByText(label, { selector: '.figure-cell .label-caps' })).closest('.figure-cell') as HTMLElement
+const panel = () => within(screen.getByRole('complementary', { name: 'State inspection' }))
+/** The portfolio value in the side panel. */
+const panelValue = () => panel().getByText('Portfolio value').nextElementSibling?.textContent
+
 describe('DashboardPage', () => {
   it('shows stored prices offline and syncs once the connection is back', async () => {
     const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
     await seed()
     renderPage()
-    const card = (await screen.findByText('Value', { selector: '.card-label' })).closest('.card') as HTMLElement
-    expect(within(card).getByText('€1,100.00')).toBeTruthy()
+    expect(within(await figure('Portfolio value')).getByText('€1,100.00')).toBeTruthy()
     expect(syncMarketData).not.toHaveBeenCalled()
 
     onLine.mockReturnValue(true)
@@ -70,23 +91,24 @@ describe('DashboardPage', () => {
     expect(await screen.findByText(/No portfolio loaded yet/)).toBeTruthy()
   })
 
-  it('shows the cards for the last day and links to missing prices', async () => {
+  it('shows the figures of the period and links to missing prices', async () => {
     await seed()
     renderPage()
-    const value = await screen.findByText('Value', { selector: '.card-label' })
-    const card = value.closest('.card') as HTMLElement
-    expect(within(card).getByText('€1,100.00')).toBeTruthy()
-    const pnl = screen.getByText('Profit / loss').closest('.card') as HTMLElement
-    expect(within(pnl).getByText('+€100.00').className).toContain('positive')
+    expect(within(await figure('Portfolio value')).getByText('€1,100.00')).toBeTruthy()
+    expect(within(await figure('Invested capital')).getByText('€1,000.00')).toBeTruthy()
+    expect(within(await figure('Total profit')).getByText('+€100.00')).toBeTruthy()
+    expect(within(await figure('Time-weighted return')).getByText('+10.00%')).toBeTruthy()
     expect(await screen.findByText(/1 product has no price yet/)).toBeTruthy()
   })
 
-  it('lists the positions of the selected day', async () => {
+  it('lists the holdings on the playhead day, with a totals row', async () => {
     await seed()
     renderPage()
+    expect(await screen.findByRole('heading', { name: `Holdings on ${formatDate(today)}` })).toBeTruthy()
     const table = (await screen.findByRole('columnheader', { name: /Quantity/ })).closest('table') as HTMLElement
-    expect(within(table).getByText(A)).toBeTruthy()
-    expect(within(table).getByText('100.00%')).toBeTruthy()
+    expect(within(table).getAllByText(A).length).toBeGreaterThan(0)
+    expect(within(table).getByText('Total')).toBeTruthy()
+    expect(within(table).getAllByText('100.00%').length).toBe(2)
   })
 
   it('leaves out a product switched off on the Prices page', async () => {
@@ -96,21 +118,43 @@ describe('DashboardPage', () => {
     await saveSettings({ excludedInstruments: [B] })
     renderPage()
     const table = (await screen.findByRole('columnheader', { name: /Quantity/ })).closest('table') as HTMLElement
-    expect(within(table).getByText(A)).toBeTruthy()
+    expect(within(table).getAllByText(A).length).toBeGreaterThan(0)
     expect(within(table).queryByText(B)).toBeNull()
-    expect(within(table).getByText('100.00%')).toBeTruthy()
   })
 
-  it('moves the selection with the date picker and the slider', async () => {
+  it('follows the pointer in the side panel, pins a clicked day and unpins it', async () => {
     await seed()
     renderPage()
-    await screen.findByText('Value', { selector: '.card-label' })
-    fireEvent.change(screen.getByLabelText('Date'), { target: { value: start } })
-    const card = screen.getByText('Value', { selector: '.card-label' }).closest('.card') as HTMLElement
-    expect(within(card).getByText('€1,000.00')).toBeTruthy()
+    await screen.findByRole('complementary', { name: 'State inspection' })
+    expect(panelValue()).toBe('€1,100.00')
+    expect(panel().queryByRole('button', { name: /Unpin/ })).toBeNull()
 
-    fireEvent.change(screen.getByLabelText('Timeline'), { target: { value: '10' } })
-    expect(within(screen.getByText('Value', { selector: '.card-label' }).closest('.card') as HTMLElement).getByText('€1,100.00')).toBeTruthy()
+    // Hover: the panel follows the day under the pointer, and returns to the playhead when it leaves.
+    fireEvent.click(screen.getByRole('button', { name: 'hover first day' }))
+    expect(panelValue()).toBe('€1,000.00')
+    fireEvent.click(screen.getByRole('button', { name: 'leave chart' }))
+    expect(panelValue()).toBe('€1,100.00')
+
+    // Click: the day is pinned, also after the pointer leaves; × puts the playhead back at the end.
+    fireEvent.click(screen.getByRole('button', { name: 'click first day' }))
+    fireEvent.click(screen.getByRole('button', { name: 'leave chart' }))
+    expect(panelValue()).toBe('€1,000.00')
+    expect(screen.getByRole('heading', { name: `Holdings on ${formatDate(start)}` })).toBeTruthy()
+    fireEvent.click(panel().getByRole('button', { name: /Unpin/ }))
+    expect(panelValue()).toBe('€1,100.00')
+  })
+
+  it('remembers whether the side panel is open', async () => {
+    await seed()
+    const { unmount } = renderPage()
+    await screen.findByRole('complementary', { name: 'State inspection' })
+    fireEvent.click(screen.getByRole('button', { name: 'Side panel' }))
+    expect(screen.queryByRole('complementary', { name: 'State inspection' })).toBeNull()
+    unmount()
+    renderPage()
+    await figure('Portfolio value')
+    expect(screen.queryByRole('complementary', { name: 'State inspection' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Side panel' }).getAttribute('aria-pressed')).toBe('false')
   })
 
   it('compares with the benchmark bought with the same money', async () => {
@@ -122,8 +166,9 @@ describe('DashboardPage', () => {
     renderPage()
     // 1000 into IWDA at 50 = 20 units, worth 1050 today: +50, +5%
     expect((await screen.findByText(/The same money in IWDA/)).textContent).toContain('+€50.00')
-    // The profit overview puts the gap in euros next to it.
-    expect(screen.getByText('Versus IWDA')).toBeTruthy()
+    expect(within(await figure('IWDA, same money')).getByText('+5.00%')).toBeTruthy()
+    // The side panel puts the gap next to it: 100 - 50.
+    expect(panel().getByText('Alpha / outperformance').nextElementSibling?.textContent).toContain('+€50.00')
   })
 
   it('compares with another benchmark for now, without changing the default', async () => {
@@ -136,6 +181,7 @@ describe('DashboardPage', () => {
     ])
     renderPage()
     await screen.findByText(/The same money in IWDA/)
+    fireEvent.click(screen.getByRole('button', { name: /Benchmark/ }))
     fireEvent.click(screen.getByRole('button', { name: /VWCE/ }))
     expect((await screen.findByText(/The same money in VWCE/)).textContent).toContain('+€100.00')
     // Only the chart changed: the default in the settings stays IWDA alone.
@@ -158,12 +204,14 @@ describe('DashboardPage', () => {
       issues: [],
     })
     renderPage()
-    await screen.findByText('Profit / loss')
-    const pnl = () => within(screen.getByText('Profit / loss').closest('.card') as HTMLElement)
     // 1100 - (1000 + 5)
-    expect(await pnl().findByText('+€95.00')).toBeTruthy()
+    expect(within(await figure('Total profit')).getByText('+€95.00')).toBeTruthy()
+    // Folded by default, with the count of what is included.
+    const row = screen.getByRole('button', { name: /What counts in the result/ })
+    expect(row.textContent).toContain('2 of 5 included')
+    fireEvent.click(row)
     fireEvent.click(screen.getByLabelText('Transaction costs'))
-    expect(await pnl().findByText('+€100.00')).toBeTruthy()
+    await waitFor(async () => expect(within(await figure('Total profit')).getByText('+€100.00')).toBeTruthy())
     expect((screen.getByLabelText('Dividends') as HTMLInputElement).disabled).toBe(true)
     expect(screen.getByText(/No dividends in this export/)).toBeTruthy()
   })
@@ -171,15 +219,15 @@ describe('DashboardPage', () => {
   it('switches the chart unit', async () => {
     await seed()
     renderPage()
-    await screen.findByText('Value', { selector: '.card-label' })
-    fireEvent.click(screen.getByRole('button', { name: '%' }))
-    expect(screen.getByRole('button', { name: '%' }).getAttribute('aria-pressed')).toBe('true')
+    await figure('Portfolio value')
+    fireEvent.click(screen.getByRole('button', { name: '% TWR' }))
+    expect(screen.getByRole('button', { name: '% TWR' }).getAttribute('aria-pressed')).toBe('true')
   })
 
-  it('switches the quick range', async () => {
+  it('switches the quick range of the timeline', async () => {
     await seed()
     renderPage()
-    await screen.findByText('Value', { selector: '.card-label' })
+    await figure('Portfolio value')
     fireEvent.click(screen.getByRole('button', { name: '1M' }))
     expect(screen.getByRole('button', { name: '1M' }).getAttribute('aria-pressed')).toBe('true')
   })

@@ -20,6 +20,6 @@ describe('ConnectionNotice', () => {
 
   it('names no connection at all', () => {
     render(<ConnectionNotice offline weak={false} pricesFrom={undefined} />)
-    expect(screen.getByRole('status').textContent).toMatch(/^No internet connection.*the last prices found\./)
+    expect(screen.getByRole('status').textContent).toMatch(/No internet connection.*the last prices found\./)
   })
 })

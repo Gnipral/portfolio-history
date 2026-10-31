@@ -45,7 +45,16 @@ export interface PlanningSettings {
 
 export const DEFAULT_PLANNING: PlanningSettings = { targets: {}, deposit: 500, monthly: 500, yearlyReturn: 6, years: 20, inflation: 2, yearlySpending: 0 }
 
-export const DEFAULT_CHART_STYLE: ChartStyle = { fill: true, invested: true, profitPane: true, log: false }
+export const DEFAULT_CHART_STYLE: ChartStyle = { fill: true, invested: true, profitPane: false, log: false }
+
+/** Quick ranges the app can open on. */
+export type LaunchRange = 'ALL' | 'YTD' | '1Y' | '3Y'
+
+/** How alpha compares the yearly returns: their difference, or their ratio. */
+export type AlphaMethod = 'arithmetic' | 'geometric'
+
+/** How much Analysis > Performance shows; each level adds to the one before. */
+export type AnalysisLevel = 'basic' | 'advanced' | 'expert'
 
 /** Stored only in this browser's IndexedDB. */
 export interface Settings {
@@ -78,6 +87,17 @@ export interface Settings {
   excludedInstruments: string[]
   /** Stocks, funds or indices found with the search, to compare with besides the built-in benchmarks. */
   customBenchmarks: Benchmark[]
+  /** A fixed second benchmark, shown as a second line and column wherever a benchmark is; empty: none. */
+  secondBenchmarkId: string
+  /** Decimals of amounts on screen. */
+  decimals: 2 | 4
+  /** The quick range the dashboard and the analysis open on. */
+  launchRange: LaunchRange
+  alphaMethod: AlphaMethod
+  /** Yearly risk-free rate for Sharpe and Sortino, in percent: 2 for 2%. */
+  riskFreeRate: number
+  /** The level of Analysis > Performance chosen last. */
+  analysisLevel: AnalysisLevel
 }
 
 /** Settings edited as text in the settings form. */
@@ -106,6 +126,12 @@ export const DEFAULT_SETTINGS: Settings = {
   otherAssets: [],
   excludedInstruments: [],
   customBenchmarks: [],
+  secondBenchmarkId: '',
+  decimals: 2,
+  launchRange: 'ALL',
+  alphaMethod: 'arithmetic',
+  riskFreeRate: 2,
+  analysisLevel: 'basic',
 }
 
 const SETTINGS_KEY = 'settings'

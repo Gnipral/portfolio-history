@@ -1,0 +1,250 @@
+/*
+ * The design tokens: every colour of the app is a variable here, so the palette can be swapped in one place.
+ * For now the app is grayscale, with one accent used only for the benchmark line and benchmark figures.
+ * Gains and losses are told apart by their sign, not by colour. Light is the default; dark is the same
+ * grayscale inverted, set by the device ("System") or chosen in Settings. Chart code reads these variables,
+ * so colours stay hex.
+ */
+:root {
+  --bg: #f6f6f5;
+  --surface: #ffffff;
+  --surface-2: #f0f0ef;
+  --border: #d9d9d7;
+  --border-strong: #1a1a1a;
+  --text: #141414;
+  --text-muted: #6b6b69;
+  --text-faint: #9b9b98;
+  /* Interface emphasis (active tab, primary button): black on light, white on dark. */
+  --accent: #141414;
+  --on-accent: #ffffff;
+  /* The only colour: the benchmark line and benchmark figures. */
+  --benchmark: #c8102e;
+  --benchmark-soft: #fbeaec;
+  --positive: var(--text);
+  --negative: var(--text);
+  --warning: #141414;
+  --highlight: #ececea;
+  --radius: 0;
+  --radius-sm: 0;
+  --series-1: #141414;
+  --series-2: #4d4d4b;
+  --series-3: #7a7a77;
+  --series-4: #a3a3a0;
+  --series-5: #c6c6c3;
+  --series-6: #5f5f5c;
+  --series-7: #8e8e8b;
+  --series-other: #dcdcda;
+  --chart-value: #141414;
+  --chart-invested: #8a8a87;
+  --chart-positive: #3a3a38;
+  --chart-negative: #a8a8a5;
+  --chart-zero: #141414;
+  --chart-grid: #ececea;
+  --chart-separator: #bdbdba;
+  --shadow: none;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: var(--font);
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --content-width: 1440px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --surface-2: #1d1d1d;
+    --border: #2e2e2e;
+    --border-strong: #e8e8e6;
+    --text: #ececea;
+    --text-muted: #9a9a97;
+    --text-faint: #6b6b69;
+    --accent: #ececea;
+    --on-accent: #0e0e0e;
+    --benchmark: #ff4d5e;
+    --benchmark-soft: #2a1417;
+    --warning: #ececea;
+    --highlight: #232323;
+    --series-1: #ececea;
+    --series-2: #bdbdba;
+    --series-3: #8e8e8b;
+    --series-4: #6b6b69;
+    --series-5: #4d4d4b;
+    --series-6: #a3a3a0;
+    --series-7: #7a7a77;
+    --series-other: #333333;
+    --chart-value: #ececea;
+    --chart-invested: #8a8a87;
+    --chart-positive: #c6c6c3;
+    --chart-negative: #6b6b69;
+    --chart-zero: #ececea;
+    --chart-grid: #222222;
+    --chart-separator: #4d4d4b;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0e0e0e;
+  --surface: #161616;
+  --surface-2: #1d1d1d;
+  --border: #2e2e2e;
+  --border-strong: #e8e8e6;
+  --text: #ececea;
+  --text-muted: #9a9a97;
+  --text-faint: #6b6b69;
+  --accent: #ececea;
+  --on-accent: #0e0e0e;
+  --benchmark: #ff4d5e;
+  --benchmark-soft: #2a1417;
+  --warning: #ececea;
+  --highlight: #232323;
+  --series-1: #ececea;
+  --series-2: #bdbdba;
+  --series-3: #8e8e8b;
+  --series-4: #6b6b69;
+  --series-5: #4d4d4b;
+  --series-6: #a3a3a0;
+  --series-7: #7a7a77;
+  --series-other: #333333;
+  --chart-value: #ececea;
+  --chart-invested: #8a8a87;
+  --chart-positive: #c6c6c3;
+  --chart-negative: #6b6b69;
+  --chart-zero: #ececea;
+  --chart-grid: #222222;
+  --chart-separator: #4d4d4b;
+  color-scheme: dark;
+}
+
+/*
+ * Palettes of the chart block on the dashboard (its own bar, or Settings): set on that block only,
+ * so the rest of the app keeps the theme. Each has light and dark values; the dark ones are
+ * repeated for the system dark mode and for a chosen dark theme, like the theme itself.
+ */
+
+/* Okabe-Ito based: blue gains, orange losses, purple value; apart with red-green colour blindness. */
+[data-palette='colorblind'] {
+  --surface: #ffffff;
+  --border: #d5d8de;
+  --text: #1a1c1e;
+  --text-muted: #555b63;
+  --positive: #0072b2;
+  --negative: #e66100;
+  --chart-value: #000000;
+  --chart-invested: #555555;
+  --chart-positive: #0072b2;
+  --chart-negative: #e66100;
+  --chart-zero: #999999;
+  --chart-grid: #e6e6e6;
+  --chart-separator: #999999;
+  --series-2: #56b4e9;
+  --series-5: #7b2cbf;
+  --series-6: #ccbb44;
+  --series-7: #aa3377;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) [data-palette='colorblind'] {
+    --surface: #10131a;
+    --border: #2a303b;
+    --text: #e6e8ee;
+    --text-muted: #a0a7b4;
+    --positive: #4fb3ff;
+    --negative: #ff9f1c;
+    --chart-value: #eedd88;
+    --chart-invested: #a0a7b4;
+    --chart-positive: #4fb3ff;
+    --chart-negative: #ff9f1c;
+    --chart-zero: #f0f0f0;
+    --chart-grid: #232833;
+    --chart-separator: #59606c;
+    --series-2: #66ccee;
+    --series-5: #ee3377;
+    --series-6: #ff9f1c;
+    --series-7: #aa66ff;
+  }
+}
+
+:root[data-theme='dark'] [data-palette='colorblind'] {
+  --surface: #10131a;
+  --border: #2a303b;
+  --text: #e6e8ee;
+  --text-muted: #a0a7b4;
+  --positive: #4fb3ff;
+  --negative: #ff9f1c;
+  --chart-value: #eedd88;
+  --chart-invested: #a0a7b4;
+  --chart-positive: #4fb3ff;
+  --chart-negative: #ff9f1c;
+  --chart-zero: #f0f0f0;
+  --chart-grid: #232833;
+  --chart-separator: #59606c;
+  --series-2: #66ccee;
+  --series-5: #ee3377;
+  --series-6: #ff9f1c;
+  --series-7: #aa66ff;
+}
+
+/* Pure black or white with thick, bright colors. */
+[data-palette='high-contrast'] {
+  --surface: #ffffff;
+  --border: #000000;
+  --text: #000000;
+  --text-muted: #000000;
+  --positive: #007a1f;
+  --negative: #d10000;
+  --chart-value: #0000ee;
+  --chart-invested: #000000;
+  --chart-positive: #007a1f;
+  --chart-negative: #d10000;
+  --chart-zero: #000000;
+  --chart-grid: #bdbdbd;
+  --chart-separator: #000000;
+  --series-2: #ff8c00;
+  --series-5: #ff00aa;
+  --series-6: #00a3a3;
+  --series-7: #8b00ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) [data-palette='high-contrast'] {
+    --surface: #000000;
+    --border: #ffffff;
+    --text: #ffffff;
+    --text-muted: #ffffff;
+    --positive: #00ff66;
+    --negative: #ff3355;
+    --chart-value: #00e5ff;
+    --chart-invested: #ffffff;
+    --chart-positive: #00ff66;
+    --chart-negative: #ff3355;
+    --chart-zero: #ffffff;
+    --chart-grid: #3a3a3a;
+    --chart-separator: #ffffff;
+    --series-2: #ffb000;
+    --series-5: #ff4fd8;
+    --series-6: #b6ff00;
+    --series-7: #c77dff;
+  }
+}
+
+:root[data-theme='dark'] [data-palette='high-contrast'] {
+  --surface: #000000;
+  --border: #ffffff;
+  --text: #ffffff;
+  --text-muted: #ffffff;
+  --positive: #00ff66;
+  --negative: #ff3355;
+  --chart-value: #00e5ff;
+  --chart-invested: #ffffff;
+  --chart-positive: #00ff66;
+  --chart-negative: #ff3355;
+  --chart-zero: #ffffff;
+  --chart-grid: #3a3a3a;
+  --chart-separator: #ffffff;
+  --series-2: #ffb000;
+  --series-5: #ff4fd8;
+  --series-6: #b6ff00;
+  --series-7: #c77dff;
+}

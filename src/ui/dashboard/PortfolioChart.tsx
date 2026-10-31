@@ -7,40 +7,50 @@ import {
   LineStyle,
   PriceScaleMode,
   createChart,
+  createSeriesMarkers,
   type AutoscaleInfo,
   type IChartApi,
   type IPriceLine,
   type ISeriesApi,
+  type ISeriesMarkersPluginApi,
   type LogicalRange,
   type MouseEventParams,
+  type SeriesMarker,
   type Time,
 } from 'lightweight-charts'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { BenchmarkLine } from './benchmarkLines.ts'
 import type { DailyPoint } from '../../engine/series.ts'
 import { DEFAULT_CHART_STYLE, type ChartStyle } from '../../settings/settings.ts'
-import { PALETTES, storePalette } from '../../theme/theme.ts'
 import { usePalette } from '../usePalette.ts'
 import { locale, t } from '../../i18n/i18n.ts'
-import { displayCurrency, formatDate, formatEur, formatPercent } from '../format.ts'
+import { formatEur } from '../format.ts'
 import { chartData, type ChartMode } from './chartData.ts'
 import { ZOOM_OPTIONS, ZOOM_TIME_SCALE } from './chartZoom.ts'
-import { fullHex, useThemeColors } from './useThemeColors.ts'
+import { benchmarkPattern } from './benchmarkPatterns.ts'
+import type { DayMarker, MarkerKind } from './markers.ts'
+import { windowFromRange, type DayWindow } from './timeline.ts'
+import { fullHex, useThemeColors, type ThemeColors } from './useThemeColors.ts'
 
 interface Props {
   points: DailyPoint[]
-  from: number
-  to: number
-  selected: number
+  /** The days of the period: what the chart shows, as indices into `points`. */
+  window: DayWindow
+  /** The day the labels and the crosshair are on: under the pointer, or the playhead. */
+  inspected: number
   mode: ChartMode
-  onHover: (index: number) => void
   benchmarks?: BenchmarkLine[]
-  /** How the chart is drawn; changed in the chart's own menu. */
   chartStyle?: ChartStyle
-  onStyleChange?: (change: Partial<ChartStyle>) => void
+  markers?: DayMarker[]
+  /** The day under the pointer; null when the pointer leaves the chart. */
+  onHover: (index: number | null) => void
+  /** A click on the chart or one of its markers: that day becomes the playhead. */
+  onPick?: (index: number) => void
+  /** Zoomed or moved with the wheel, two fingers or a drag: the new window. */
+  onZoom?: (window: DayWindow) => void
 }
 
-/** A name and value next to a line, at the selected day. */
+/** A name and value next to a line, at the inspected day. */
 interface PointLabel {
   key: string
   /** Pixels from the top of the chart. */
@@ -95,13 +105,14 @@ interface ChartRefs {
   main: ISeriesApi<'Area'>
   secondary: ISeriesApi<'Line'>
   benchmarks: ISeriesApi<'Line'>[]
+  markers: ISeriesMarkersPluginApi<Time> | null
   /** Only in EUR mode; removing it also removes its pane. */
   pnl: ISeriesApi<'Baseline'> | null
   /** The 0 line: on the profit in EUR, on the return in percent; none in EUR without the profit pane. */
   zero: { line: IPriceLine; on: ISeriesApi<'Area'> | ISeriesApi<'Baseline'> } | null
 }
 
-function pnlColors({ chart }: ReturnType<typeof useThemeColors>) {
+function pnlColors({ chart }: ThemeColors) {
   return {
     topLineColor: chart.positive,
     topFillColor1: `${chart.positive}40`,
@@ -113,8 +124,8 @@ function pnlColors({ chart }: ReturnType<typeof useThemeColors>) {
 }
 
 /** The 0 line, without a box on the axis: a dark "0" there moved with the scale and looked like a stray label. */
-function zeroLine({ chart }: ReturnType<typeof useThemeColors>) {
-  return { price: 0, color: chart.zero, lineWidth: 2 as const, lineStyle: LineStyle.Solid, axisLabelVisible: false, title: '' }
+function zeroLine({ chart }: ThemeColors) {
+  return { price: 0, color: chart.zero, lineWidth: 1 as const, lineStyle: LineStyle.Solid, axisLabelVisible: false, title: '' }
 }
 
 /** Keeps 0 in view on the profit scale, so the 0 line never sits on the edge or out of sight. */
@@ -125,51 +136,38 @@ function withZero(base: () => AutoscaleInfo | null): AutoscaleInfo | null {
   return { ...info, priceRange: { minValue: Math.min(0, minValue), maxValue: Math.max(0, maxValue) } }
 }
 
-/**
- * Every benchmark line has its own pattern besides its color, and its name on the price axis, so
- * the lines can be told apart without seeing colors. `css` draws the same pattern in the legend.
- */
-const BENCHMARK_PATTERNS = [
-  { lineStyle: LineStyle.LargeDashed, lineWidth: 2, css: 'repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 9px)' },
-  { lineStyle: LineStyle.Dotted, lineWidth: 2, css: 'repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 4px)' },
-  { lineStyle: LineStyle.SparseDotted, lineWidth: 2, css: 'repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 6px)' },
-  { lineStyle: LineStyle.Solid, lineWidth: 1, css: 'linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat' },
-] as const
-
-function benchmarkPattern(index: number) {
-  return BENCHMARK_PATTERNS[index % BENCHMARK_PATTERNS.length]!
-}
-
-/** The profit pane: about a quarter of the chart, never smaller than 130px. */
+/** The profit pane: about a quarter of the chart, never smaller than 110px. */
 function profitHeight(chartHeight: number): number {
-  return Math.max(130, Math.round(chartHeight * 0.28))
-}
-
-/** Element full screen where the browser has it (not on iPhone); otherwise the chart fills the window. */
-function canFullscreen(element: HTMLElement | null): boolean {
-  return Boolean(element?.requestFullscreen && document.fullscreenEnabled)
+  return Math.max(110, Math.round(chartHeight * 0.26))
 }
 
 /**
- * The value of a CSS color variable such as `--series-2` as the chart sees it (with the palette of
- * its block); lightweight-charts needs the color itself.
+ * The value of a CSS colour variable such as `--series-2` as the chart sees it (with the palette of
+ * its block); lightweight-charts needs the colour itself.
  */
 function cssColor(variable: string | undefined, element: Element | null): string {
   return variable ? fullHex(getComputedStyle(element ?? document.documentElement).getPropertyValue(variable).trim()) || '#888' : '#888'
 }
 
-/** Value and profit over time with a crosshair that follows, and drives, the selected day. */
-export function PortfolioChart({
-  points,
-  from,
-  to,
-  selected,
-  mode,
-  onHover,
-  benchmarks = [],
-  chartStyle = DEFAULT_CHART_STYLE,
-  onStyleChange,
-}: Props) {
+/** How each kind of day is marked: deposits and sales in the text colour, buys and dividends muted. */
+const MARKER_STYLE: Record<MarkerKind, { shape: SeriesMarker<Time>['shape']; position: 'belowBar' | 'aboveBar'; muted: boolean }> = {
+  deposit: { shape: 'square', position: 'belowBar', muted: false },
+  buy: { shape: 'arrowUp', position: 'belowBar', muted: true },
+  sell: { shape: 'arrowDown', position: 'aboveBar', muted: false },
+  dividend: { shape: 'circle', position: 'aboveBar', muted: true },
+}
+
+function seriesMarkers(markers: DayMarker[], colors: ThemeColors): SeriesMarker<Time>[] {
+  return markers.flatMap((day) =>
+    day.kinds.map((kind) => {
+      const style = MARKER_STYLE[kind]
+      return { time: day.date, position: style.position, shape: style.shape, color: style.muted ? colors.textMuted : colors.text, size: 0.4, id: `${day.date}:${kind}` }
+    }),
+  )
+}
+
+/** Value and profit over the period, with markers for the transactions; hover inspects a day, a click pins it. */
+export function PortfolioChart({ points, window, inspected, mode, benchmarks = [], chartStyle = DEFAULT_CHART_STYLE, markers = [], onHover, onPick, onZoom }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const refs = useRef<ChartRefs | null>(null)
   const wrapper = useRef<HTMLDivElement>(null)
@@ -177,25 +175,26 @@ export function PortfolioChart({
   const colors = useThemeColors(wrapper, palette)
   const colorsRef = useRef(colors)
   colorsRef.current = colors
+  const count = points.length
   const benchmarkPoints = useMemo(() => benchmarks.map((b) => b.points), [benchmarks])
-  const data = useMemo(() => chartData(points, from, to, mode, benchmarkPoints), [points, from, to, mode, benchmarkPoints])
+  // In percent the lines start at 0 on the first day of the window; in the currency they do not depend on it.
+  const base = mode === 'percent' ? window.from : 0
+  const data = useMemo(() => chartData(points, 0, count - 1, mode, benchmarkPoints, base), [points, count, mode, benchmarkPoints, base])
   const hoverRef = useRef(onHover)
   hoverRef.current = onHover
-  const fromRef = useRef(from)
-  fromRef.current = from
+  const pickRef = useRef(onPick)
+  pickRef.current = onPick
+  const zoomRef = useRef(onZoom)
+  zoomRef.current = onZoom
+  const countRef = useRef(count)
+  countRef.current = count
   const benchmarksRef = useRef(benchmarks)
   benchmarksRef.current = benchmarks
+  // The window last set from outside: a range change that matches it is ours, not a zoom by the user.
+  const requested = useRef<DayWindow | null>(null)
   // The divider between the value and the profit pane: over the plot area only, never over the
   // price axis and its labels. Null without the profit pane.
   const [divider, setDivider] = useState<{ top: number; left: number; width: number } | null>(null)
-  const [expanded, setExpanded] = useState(false)
-  const [styleOpen, setStyleOpen] = useState(false)
-  const [zoomed, setZoomed] = useState(false)
-  // The bar above the chart moves it down: the divider over the panes moves along.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: opening the style bar moves the panes, so they are measured again; measurePanes only reads refs
-  useEffect(() => {
-    requestAnimationFrame(measurePanes)
-  }, [styleOpen])
 
   function measurePanes() {
     const r = refs.current
@@ -205,99 +204,102 @@ export function PortfolioChart({
       setDivider(null)
       return
     }
-    // Relative to the wrapper: the legend bar above the chart is part of the offset.
+    // Relative to the wrapper: anything above the chart is part of the offset.
     const width = Math.max(0, element.clientWidth - r.pnl.priceScale().width())
     setDivider({ top: element.offsetTop + top, left: element.offsetLeft, width })
   }
 
-  function toggleExpanded() {
-    const element = wrapper.current
-    if (expanded && !document.fullscreenElement) {
-      setExpanded(false)
-    } else if (canFullscreen(element)) {
-      if (document.fullscreenElement) void document.exitFullscreen()
-      // Refused (no user gesture, an iframe without permission): fill the window instead.
-      else element?.requestFullscreen().catch(() => setExpanded(true))
-    } else {
-      setExpanded((value) => !value)
-    }
+  function showWindow() {
+    const r = refs.current
+    const w = requested.current
+    if (!r || !w) return
+    r.chart.timeScale().setVisibleLogicalRange({ from: w.from, to: w.to })
   }
-  const toggleRef = useRef(toggleExpanded)
-  toggleRef.current = toggleExpanded
-
-  // Full screen as in a video player: the button, F to toggle, Esc to leave.
-  useEffect(() => {
-    const onChange = () => setExpanded(document.fullscreenElement === wrapper.current && wrapper.current !== null)
-    const onKey = (e: KeyboardEvent) => {
-      const typing = e.target instanceof Element && e.target.closest('input, select, textarea, [contenteditable="true"]')
-      if (e.key.toLowerCase() === 'f' && !e.ctrlKey && !e.metaKey && !e.altKey && !typing) toggleRef.current()
-      else if (e.key === 'Escape' && !document.fullscreenElement) setExpanded(false)
-    }
-    document.addEventListener('fullscreenchange', onChange)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('fullscreenchange', onChange)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [])
 
   // Create the chart once.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the chart is created once; measurePanes only reads refs
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the chart is created once; measurePanes and showWindow only read refs
   useEffect(() => {
     if (!container.current) return
     const chart = createChart(container.current, {
       autoSize: true,
       // The app is in English, whatever the browser language.
       localization: { locale: locale() },
-      // Only the vertical line: the values stand next to the points, a horizontal line and price box would repeat them.
+      // Only the vertical line, with the date on the time axis: the values stand next to the points.
       crosshair: { mode: CrosshairMode.Magnet, horzLine: { visible: false, labelVisible: false } },
       // The TradingView credit is at the bottom of Settings; in the chart it sat over the profit line.
-      layout: { fontSize: 13, attributionLogo: false, panes: { enableResize: false } },
+      layout: { fontSize: 11, attributionLogo: false, panes: { enableResize: false } },
       rightPriceScale: { borderVisible: false },
-      timeScale: { borderVisible: false, ...ZOOM_TIME_SCALE },
+      // A small least bar spacing, so years of days still fit the width in one window.
+      timeScale: { borderVisible: false, minBarSpacing: 0.05, ...ZOOM_TIME_SCALE },
       ...ZOOM_OPTIONS,
     })
-    // No labels of the last value on the axis: the point labels next to the lines show the selected day.
-    const main = chart.addSeries(AreaSeries, { lineWidth: 3, priceLineVisible: false, lastValueVisible: false })
-    // Room under the value for the divider label.
+    // No labels of the last value on the axis: the point labels next to the lines show the inspected day.
+    const main = chart.addSeries(AreaSeries, { lineWidth: 2, priceLineVisible: false, lastValueVisible: false })
     main.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.12 } })
-    const secondary = chart.addSeries(LineSeries, { lineWidth: 2, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
-    refs.current = { chart, main, secondary, benchmarks: [], pnl: null, zero: null }
-    // A new size (full screen, rotation): refit the days to the width and grow the profit pane along.
+    const secondary = chart.addSeries(LineSeries, { lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
+    refs.current = { chart, main, secondary, benchmarks: [], markers: null, pnl: null, zero: null }
+    // A new size (full screen, the side panel): keep the window and grow the profit pane along.
     const resize =
       typeof ResizeObserver === 'undefined'
         ? null
         : new ResizeObserver(() => {
             const r = refs.current
             if (r?.pnl) r.chart.panes()[1]?.setHeight(profitHeight(container.current?.clientHeight ?? 0))
-            chart.timeScale().fitContent()
+            showWindow()
             requestAnimationFrame(measurePanes)
             requestAnimationFrame(() => placeLabels.current())
           })
     resize?.observe(container.current)
 
+    const last = () => Math.max(0, countRef.current - 1)
     const handleMove = (param: MouseEventParams<Time>) => {
-      if (param.time === undefined || param.logical === undefined) return
-      hoverRef.current(fromRef.current + Math.round(param.logical))
+      if (!param.point || param.logical === undefined) {
+        hoverRef.current(null)
+        return
+      }
+      hoverRef.current(Math.min(last(), Math.max(0, Math.round(param.logical))))
     }
     chart.subscribeCrosshairMove(handleMove)
-    // Zoomed in when fewer days show than there are: then a button brings everything back.
+    const handleClick = (param: MouseEventParams<Time>) => {
+      if (param.logical === undefined) return
+      pickRef.current?.(Math.min(last(), Math.max(0, Math.round(param.logical))))
+    }
+    chart.subscribeClick(handleClick)
+    // A zoom or drag by the user moves the window of the period. Only right after a wheel, a drag or a touch:
+    // the chart also moves its range by itself, when it gets new data or a new size.
+    let gestureAt = 0
+    const gesture = (event: Event) => {
+      if (event.type !== 'pointermove' || (event as PointerEvent).buttons > 0) gestureAt = Date.now()
+    }
+    const element = container.current
+    for (const type of ['wheel', 'pointerdown', 'pointermove', 'touchmove'] as const) element.addEventListener(type, gesture, { capture: true, passive: true })
+    let zoomTimer: ReturnType<typeof setTimeout> | undefined
     const handleRange = (range: LogicalRange | null) => {
-      const days = refs.current?.main.data().length ?? 0
-      setZoomed(range !== null && days > 1 && (range.from > 0.5 || range.to < days - 1.5))
       requestAnimationFrame(() => placeLabels.current())
+      const w = requested.current
+      if (!range || !w || Date.now() - gestureAt > 400) return
+      if (Math.abs(range.from - w.from) < 0.75 && Math.abs(range.to - w.to) < 0.75) return
+      clearTimeout(zoomTimer)
+      zoomTimer = setTimeout(() => {
+        const next = windowFromRange(range.from, range.to, countRef.current)
+        requested.current = next
+        zoomRef.current?.(next)
+      }, 150)
     }
     chart.timeScale().subscribeVisibleLogicalRangeChange(handleRange)
     return () => {
+      clearTimeout(zoomTimer)
+      for (const type of ['wheel', 'pointerdown', 'pointermove', 'touchmove'] as const) element.removeEventListener(type, gesture, { capture: true })
       resize?.disconnect()
       chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleRange)
+      chart.unsubscribeClick(handleClick)
       chart.unsubscribeCrosshairMove(handleMove)
       chart.remove()
       refs.current = null
     }
   }, [])
 
-  // Theme colors.
+  // Theme colours.
   useEffect(() => {
     const r = refs.current
     if (!r) return
@@ -310,13 +312,13 @@ export function PortfolioChart({
         panes: { separatorColor: colors.chart.grid, separatorHoverColor: colors.chart.grid },
       },
       grid: { vertLines: { visible: false }, horzLines: { color: colors.chart.grid } },
-      crosshair: { vertLine: { color: colors.textMuted, labelBackgroundColor: colors.chart.value } },
+      crosshair: { vertLine: { color: colors.textMuted, labelBackgroundColor: colors.text, style: LineStyle.Dashed, width: 1 } },
     })
     const fill = chartStyle.fill
     r.main.applyOptions({
       lineColor: colors.chart.value,
-      topColor: fill ? `${colors.chart.value}40` : 'transparent',
-      bottomColor: fill ? `${colors.chart.value}04` : 'transparent',
+      topColor: fill ? `${colors.chart.value}26` : 'transparent',
+      bottomColor: fill ? `${colors.chart.value}03` : 'transparent',
     })
     r.secondary.applyOptions({ color: colors.chart.invested })
     r.pnl?.applyOptions(pnlColors(colors))
@@ -324,7 +326,7 @@ export function PortfolioChart({
   }, [colors, chartStyle.fill])
 
   // Data and mode.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: colors restyle the series, which is redone here; measurePanes only reads refs
+  // biome-ignore lint/correctness/useExhaustiveDependencies: colours restyle the series, which is redone here; measurePanes and showWindow only read refs
   useEffect(() => {
     const r = refs.current
     if (!r) return
@@ -357,7 +359,7 @@ export function PortfolioChart({
       if (!r.pnl) {
         const options = {
           baseValue: { type: 'price' as const, price: 0 },
-          lineWidth: 3 as const,
+          lineWidth: 2 as const,
           priceLineVisible: false,
           lastValueVisible: false,
           autoscaleInfoProvider: withZero,
@@ -372,31 +374,47 @@ export function PortfolioChart({
       r.zero = { line: r.pnl.createPriceLine(zeroLine(colorsRef.current)), on: r.pnl }
     }
     if (percent) r.zero = { line: r.main.createPriceLine(zeroLine(colorsRef.current)), on: r.main }
-    r.chart.timeScale().fitContent()
+    showWindow()
     requestAnimationFrame(measurePanes)
   }, [data, mode, colors, chartStyle.invested, chartStyle.log, chartStyle.profitPane])
 
-  // Show the crosshair on the selected day when it is chosen with the slider or date picker.
+  // The markers of the transactions, on the value line.
   useEffect(() => {
     const r = refs.current
-    const point = data.main[selected - from]
-    if (r && point) r.chart.setCrosshairPosition(point.value, point.time, r.main)
-  }, [data, selected, from])
+    if (!r) return
+    const list = seriesMarkers(markers, colors)
+    if (r.markers) r.markers.setMarkers(list)
+    else r.markers = createSeriesMarkers(r.main, list)
+  }, [markers, colors])
 
-  // Next to each line, at the day under the pointer (the last day without one): its name and value, so the
-  // figures move along with the point. Placed from the chart's own coordinates, again whenever they change.
+  // The window of the period, set with the timeline or a quick range.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: showWindow only reads refs
+  useEffect(() => {
+    requested.current = { from: window.from, to: window.to }
+    showWindow()
+  }, [window.from, window.to])
+
+  // The crosshair on the inspected day when it is chosen with the timeline or the keyboard.
+  useEffect(() => {
+    const r = refs.current
+    const point = data.main[inspected]
+    if (r && point) r.chart.setCrosshairPosition(point.value, point.time, r.main)
+  }, [data, inspected])
+
+  // Next to each line, at the inspected day: its name and value, so the figures move along with the point.
+  // Placed from the chart's own coordinates, again whenever they change.
   const [pointLabels, setPointLabels] = useState<PointLabel[]>([])
   const placeLabels = useRef<() => void>(() => {})
   placeLabels.current = () => {
     const r = refs.current
     const element = container.current
-    const time = data.main[selected - from]?.time
+    const time = data.main[inspected]?.time
     const x = r && element && time !== undefined ? r.chart.timeScale().timeToCoordinate(time) : null
     if (!r || !element || x === null) {
       setPointLabels([])
       return
     }
-    const i = selected - from
+    const i = inspected
     const format = mode === 'percent' ? (v: number) => `${v.toFixed(1)}%` : (v: number) => formatEur(v, true)
     // The profit pane sits under the value pane and the 1px separator between them.
     const profitTop = (r.chart.panes()[0]?.getHeight() ?? 0) + 1
@@ -417,6 +435,10 @@ export function PortfolioChart({
       add(r.pnl, profit, (profit ?? 0) < 0 ? colors.chart.negative : colors.chart.positive, t('Profit'), 1)
     }
     const plot = element.clientWidth - r.main.priceScale().width()
+    if (x < 0 || x > plot) {
+      setPointLabels([])
+      return
+    }
     setPointLabels(spreadLabels(labels, x > plot * 0.62, { left: x, right: plot - x }).map((l) => ({ ...l, x, left: element.offsetLeft, top: element.offsetTop })))
   }
   // biome-ignore lint/correctness/useExhaustiveDependencies: placed again when anything that moves the lines changes
@@ -424,94 +446,10 @@ export function PortfolioChart({
     // After the chart has drawn the new data: its coordinates are ready on the next frame.
     const frame = requestAnimationFrame(() => placeLabels.current())
     return () => cancelAnimationFrame(frame)
-  }, [data, selected, from, mode, colors, chartStyle.invested, chartStyle.profitPane, chartStyle.log, expanded])
+  }, [data, inspected, window.from, window.to, mode, colors, chartStyle.invested, chartStyle.profitPane, chartStyle.log])
 
-  const point = points[selected]
-  const benchmarkLegend = benchmarks.map((b, i) => ({
-    label: b.label,
-    color: b.color,
-    pattern: benchmarkPattern(i).css,
-    text: mode === 'eur' ? formatEur(b.points[selected]?.value ?? 0) : formatPercent((data.benchmarks[i]?.[selected - from]?.value ?? 0) / 100),
-  }))
   return (
-    <div ref={wrapper} className={`chart-wrapper${expanded ? ' expanded' : ''}`}>
-      <div className="chart-top">
-        {point && (
-          <div className="chart-legend" aria-live="polite">
-            <strong>{formatDate(point.date)}</strong>
-            {mode === 'eur' ? (
-              <>
-                <span>
-                  <i className="swatch main" /> {t('Value')} {formatEur(point.value)}
-                </span>
-                {chartStyle.invested && (
-                  <span>
-                    <i className="swatch secondary" /> {t('Invested')} {formatEur(point.invested)}
-                  </span>
-                )}
-                {benchmarkLegend.map((b) => (
-                  <span key={b.label}>
-                    <i className="swatch" style={{ color: `var(${b.color})`, background: b.pattern }} /> {b.label} {b.text}
-                  </span>
-                ))}
-                {chartStyle.profitPane && (
-                  <span>
-                    <i className="swatch pnl" /> {t('Profit')} {formatEur(point.pnl)}
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                <span>
-                  <i className="swatch main" /> {t('Time-weighted')} {formatPercent((data.main[selected - from]?.value ?? 0) / 100)}
-                </span>
-                {benchmarkLegend.map((b) => (
-                  <span key={b.label}>
-                    <i className="swatch" style={{ color: `var(${b.color})`, background: b.pattern }} /> {b.label} {b.text}
-                  </span>
-                ))}
-              </>
-            )}
-          </div>
-        )}
-        {zoomed && (
-          <button type="button" className="chart-zoom-reset" onClick={() => refs.current?.chart.timeScale().fitContent()}>
-            {t('Show everything')}
-          </button>
-        )}
-        {onStyleChange && (
-          <button
-            type="button"
-            className="chart-expand chart-style-button"
-            aria-expanded={styleOpen}
-            aria-label={t('Chart style')}
-            title={t('Chart style and colors')}
-            onClick={() => setStyleOpen((open) => !open)}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
-              <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
-              <circle cx="16" cy="6" r="2" />
-              <circle cx="10" cy="12" r="2" />
-              <circle cx="18" cy="18" r="2" />
-            </svg>
-          </button>
-        )}
-        <button
-          type="button"
-          className="chart-expand"
-          onClick={toggleExpanded}
-          aria-pressed={expanded}
-          aria-label={expanded ? t('Exit full screen') : t('Full screen')}
-          title={expanded ? t('Exit full screen (F)') : t('Full screen (F)')}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d={expanded ? 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5' : 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5'} />
-          </svg>
-        </button>
-      </div>
-      {onStyleChange && styleOpen && (
-        <StylePanel chartStyle={chartStyle} percent={mode === 'percent'} onChange={onStyleChange} onClose={() => setStyleOpen(false)} />
-      )}
+    <div ref={wrapper} className="chart-wrapper">
       {mode === 'eur' && divider !== null && (
         <div className="pane-divider" style={{ top: divider.top, left: divider.left, width: divider.width }}>
           <span className="pane-label">{t('Profit / loss')}</span>
@@ -528,78 +466,6 @@ export function PortfolioChart({
           {label.text}
         </span>
       ))}
-    </div>
-  )
-}
-
-/**
- * The ways to draw the chart, in a bar between the legend and the chart: it covers nothing, so every
- * change shows at once. The colors are the app's palette, the same as in Settings.
- */
-function StylePanel({
-  chartStyle,
-  percent,
-  onChange,
-  onClose,
-}: {
-  chartStyle: ChartStyle
-  percent: boolean
-  onChange: (change: Partial<ChartStyle>) => void
-  onClose: () => void
-}) {
-  const palette = usePalette()
-  const option = (key: keyof ChartStyle, label: string, eurOnly = false) => (
-    <button
-      type="button"
-      className="chip"
-      aria-pressed={chartStyle[key]}
-      disabled={eurOnly && percent}
-      title={eurOnly && percent ? t('Only in {currency}', { currency: displayCurrency() }) : undefined}
-      onClick={() => onChange({ [key]: !chartStyle[key] })}
-    >
-      {label}
-    </button>
-  )
-  return (
-    <div className="chart-style-panel" role="group" aria-label={t('Chart style')}>
-      <div className="chart-style-row">
-        <span className="label-caps">{t('Show')}</span>
-        <div className="chips">
-          {option('fill', t('Fill under the value'))}
-          {option('invested', t('Invested capital'), true)}
-          {option('profitPane', t('Profit / loss pane'), true)}
-          {option('log', t('Logarithmic scale'), true)}
-        </div>
-      </div>
-      <div className="chart-style-row">
-        <span className="label-caps">{t('Colors')}</span>
-        <div className="chips" role="radiogroup" aria-label={t('Colors')}>
-          {PALETTES.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              role="radio"
-              className="chip"
-              aria-checked={palette === p.id}
-              aria-pressed={palette === p.id}
-              title={t(p.description)}
-              onClick={() => {
-                storePalette(p.id)
-              }}
-            >
-              <span className="palette-swatches" aria-hidden="true">
-                {p.swatches.slice(0, 3).map((color) => (
-                  <i key={color} style={{ background: color }} />
-                ))}
-              </span>
-              {t(p.label)}
-            </button>
-          ))}
-        </div>
-      </div>
-      <button type="button" className="chart-style-close" onClick={onClose}>
-        {t('Done')}
-      </button>
     </div>
   )
 }

@@ -1,0 +1,127 @@
+/* Settings: one long page, a narrow table of contents on the left that stays in view. */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+}
+
+.settings-toc {
+  position: sticky;
+  top: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settings-toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--border);
+}
+
+.settings-toc a {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.4rem 0 0.4rem 0.9rem;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--text-muted);
+}
+
+.settings-toc a:hover {
+  color: var(--text);
+}
+
+.settings-toc a[aria-current='true'] {
+  color: var(--text);
+  border-left-color: var(--border-strong);
+}
+
+.settings-toc p {
+  margin: 0;
+}
+
+.settings-sections {
+  min-width: 0;
+}
+
+.settings-sections .section {
+  scroll-margin-top: 88px;
+}
+
+.settings-sections .section > .field + .field,
+.settings-sections .section > .form-grid + .field {
+  margin-top: 0.5rem;
+}
+
+.settings-segmented {
+  align-self: flex-start;
+}
+
+.settings-segmented button {
+  padding: 0.45rem 0.9rem;
+}
+
+.check-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+
+.check-row .radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.mix-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.settings-page .figures {
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .settings-toc {
+    position: static;
+  }
+}
+
+/* Backup: the password above its field, aligned with the button. */
+.settings-page .backup .actions {
+  align-items: flex-end;
+}
+
+.settings-page .backup .inline-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.settings-page .backup .inline-label input {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.settings-page .backup p {
+  margin: 0 0 0.75rem;
+}
