@@ -96,20 +96,6 @@
   gap: 0.5rem;
 }
 
-.card.hero::after {
-  content: '';
-  position: absolute;
-  top: -4rem;
-  right: -4rem;
-  width: 12rem;
-  height: 12rem;
-  border-radius: 50%;
-  background: var(--accent);
-  opacity: var(--glow, 0);
-  filter: blur(40px);
-  pointer-events: none;
-}
-
 /* Wide screens: the value card takes three of five columns, the seven figures fill the rest. */
 @media (min-width: 1024px) {
   .cards:has(> .hero) {
@@ -144,49 +130,6 @@ details summary {
   cursor: pointer;
   font-weight: 600;
   margin-bottom: 0.5rem;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  font-size: 0.9rem;
-  display: block;
-  overflow-x: auto;
-}
-
-.table th,
-.table td {
-  padding: 0.6rem 0.85rem;
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-}
-
-.table tr:last-child td {
-  border-bottom: none;
-}
-
-.table th {
-  color: var(--text-muted);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  background: var(--surface-2);
-}
-
-.table tbody tr:hover td {
-  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
-}
-
-.table .num {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-variant-numeric: tabular-nums;
 }
 
 .badge {
