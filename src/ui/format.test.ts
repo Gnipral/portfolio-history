@@ -26,3 +26,15 @@ describe('hidden amounts', () => {
     expect(formatQuantity(1.5)).toBe('1.5')
   })
 })
+
+describe('stored euro amounts', () => {
+  it('stay in euros whatever the display currency, and hide like any amount', async () => {
+    const { formatStoredEur, setDisplayCurrency } = await import('./format.ts')
+    setDisplayCurrency('USD')
+    expect(formatStoredEur(12.5)).toBe('€12.50')
+    expect(formatEur(12.5)).not.toContain('€')
+    setAmountsHidden(true)
+    expect(formatStoredEur(12.5)).toBe(`€${HIDDEN}`)
+    setDisplayCurrency('EUR')
+  })
+})

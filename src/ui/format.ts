@@ -50,6 +50,13 @@ export function formatEur(value: number, compact = false): string {
   return hidden ? `${currencySymbol()}${HIDDEN}` : formatEurExact(value, compact)
 }
 
+const euros = new Intl.NumberFormat(locale(), { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 })
+
+/** An amount that is in euros whatever the display currency, such as a transaction as it was stored. */
+export function formatStoredEur(value: number): string {
+  return hidden ? `€${HIDDEN}` : euros.format(value)
+}
+
 function currencySymbol(): string {
   return eurCompact.formatToParts(0).find((part) => part.type === 'currency')?.value ?? ''
 }
