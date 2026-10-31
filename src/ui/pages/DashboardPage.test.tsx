@@ -64,7 +64,8 @@ describe('DashboardPage', () => {
     onLine.mockRestore()
   })
 
-  it('asks for an import when there is no data', async () => {
+  it('asks for an import when there is no data and the welcome flow was seen', async () => {
+    localStorage.setItem('portfolio-history:onboarded', '1')
     renderPage()
     expect(await screen.findByText(/No portfolio loaded yet/)).toBeTruthy()
   })

@@ -2243,3 +2243,126 @@ progress {
   padding-left: 1.1rem;
   overflow-wrap: anywhere;
 }
+
+/* Onboarding: the welcome flow of a first visit without data. */
+.onboarding {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 0;
+}
+
+.onboarding-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 34rem;
+  padding: 1.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.onboarding-card h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.onboarding-card h2:focus {
+  outline: none;
+}
+
+.onboarding-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.onboarding-dots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.onboarding-dots span {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.onboarding-dots span.active {
+  background: var(--accent);
+}
+
+.onboarding-lead {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.onboarding-points {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.onboarding-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.onboarding-field .muted,
+.onboarding-field select {
+  font-weight: 400;
+}
+
+.onboarding-field .segmented {
+  align-self: flex-start;
+}
+
+.onboarding-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.onboarding-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  border-radius: var(--radius-sm);
+}
+
+.onboarding-choice.primary-choice {
+  border-color: var(--accent);
+}
+
+.onboarding-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .onboarding {
+    padding: 0.5rem 0;
+  }
+
+  .onboarding-card {
+    padding: 1.25rem;
+  }
+
+  .onboarding-card h2 {
+    font-size: 1.35rem;
+  }
+}

@@ -2,6 +2,9 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { DemoButton } from '../components/DemoBanner.tsx'
+import { isDemo } from '../../demo/demoMode.ts'
+import { isOnboarded } from '../onboarding/onboarded.ts'
+import { Onboarding } from '../onboarding/Onboarding.tsx'
 import { usePalette } from '../usePalette.ts'
 import { positionSeries } from '../../engine/analysis/positionSeries.ts'
 import { db } from '../../data/db.ts'
@@ -52,6 +55,8 @@ export function DashboardPage() {
     assetClasses,
   )
   const classes = useMemo(() => assetClassesOf(allInputs?.transactions ?? []), [allInputs])
+  // The first visit without data gets the welcome flow; after that, the plain empty state.
+  const [onboarded, setOnboarded] = useState(isOnboarded)
   const [range, setRange] = useState<RangeKey>('ALL')
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [mode, setMode] = useState<ChartMode>('eur')
@@ -119,6 +124,7 @@ export function DashboardPage() {
 
   if (transactionCount === undefined) return null
   if (transactionCount === 0) {
+    if (!onboarded && !isDemo()) return <Onboarding onDone={() => setOnboarded(true)} />
     return (
       <section>
         <h2>{t('Dashboard')}</h2>
