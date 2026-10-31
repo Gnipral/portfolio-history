@@ -6,6 +6,7 @@ import { CostsSection } from '../analysis/CostsSection.tsx'
 import { DividendsSection } from '../analysis/DividendsSection.tsx'
 import { PlanningSection } from '../analysis/PlanningSection.tsx'
 import { RealizedSection } from '../analysis/RealizedSection.tsx'
+import { RiskChecksPanel } from '../analysis/RiskChecksPanel.tsx'
 import { RiskSection } from '../analysis/RiskSection.tsx'
 import { TaxesSection } from '../analysis/TaxesSection.tsx'
 import { engineOptions } from '../dashboard/toggles.ts'
@@ -71,7 +72,12 @@ export function AnalysisPage() {
             {tab === 'dividends' && <DividendsSection inputs={inputs} options={options} />}
             {tab === 'realized' && <RealizedSection inputs={inputs} options={options} />}
             {tab === 'costs' && <CostsSection inputs={inputs} options={options} series={series} />}
-            {tab === 'risk' && <RiskSection series={series} />}
+            {tab === 'risk' && (
+              <>
+                <RiskChecksPanel inputs={inputs} options={options} series={series} otherAssets={settings.otherAssets} yearlySpending={settings.planning.yearlySpending} />
+                <RiskSection series={series} />
+              </>
+            )}
             {tab === 'planning' && <PlanningSection inputs={inputs} options={options} series={series} planning={settings.planning} otherAssets={settings.otherAssets} />}
           </ErrorBoundary>
         </div>

@@ -203,3 +203,14 @@ test('the data check opens from the dashboard and checks the demo', async ({ pag
   await expect(page.getByText('could not be shown')).toHaveCount(0)
   expect(errors).toEqual([])
 })
+
+test('the risk tab checks how the demo is spread', async ({ page }) => {
+  const errors = watchErrors(page)
+  await openDemo(page)
+  await page.getByRole('link', { name: 'Analysis' }).click()
+  await page.getByRole('tab', { name: 'Risk' }).click()
+  await expect(page.getByRole('heading', { name: 'Risk checks' })).toBeVisible()
+  await expect(page.locator('.check')).toHaveCount(7)
+  await expect(page.getByText('No single stock above 10%')).toBeVisible()
+  expect(errors).toEqual([])
+})
