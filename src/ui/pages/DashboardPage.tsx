@@ -5,6 +5,7 @@ import { DemoButton } from '../components/DemoBanner.tsx'
 import { usePalette } from '../usePalette.ts'
 import { positionSeries } from '../../engine/analysis/positionSeries.ts'
 import { db } from '../../data/db.ts'
+import { checkData, problemCount } from '../../engine/dataCheck.ts'
 import { positionsOn } from '../../engine/positions.ts'
 import { allocationSlices, colorSlots, DIMENSIONS, groupedSlices, instrumentFacts, type AllocationDimension } from '../dashboard/allocation.ts'
 import { AssetFilter } from '../dashboard/AssetFilter.tsx'
@@ -109,6 +110,12 @@ export function DashboardPage() {
       .sort()
       .at(-1)
   }, [noConnection, inputs, options, lastDate])
+  // Over everything held, whatever the filter: the same count as on the Data check page.
+  const checkProblems = useMemo(() => {
+    if (!allInputs || !series) return undefined
+    const check = checkData({ transactions: allInputs.transactions, prices: allInputs.prices, options: baseOptions, issues: series.issues, today: localToday() })
+    return problemCount(check) + (currencyFallback ? 1 : 0)
+  }, [allInputs, series, baseOptions, currencyFallback])
 
   if (transactionCount === undefined) return null
   if (transactionCount === 0) {
@@ -149,6 +156,11 @@ export function DashboardPage() {
         {!syncing && syncProblems > 0 && (
           <Link to="/prices" className="small">
             {tn(syncProblems, '{count} product has no price yet', '{count} products have no price yet')}
+          </Link>
+        )}
+        {!syncing && checkProblems !== undefined && (
+          <Link to="/check" className={`small data-check-link${checkProblems > 0 ? ' warning' : ''}`}>
+            {checkProblems > 0 ? tn(checkProblems, 'Data check: {count} to look at', 'Data check: {count} to look at') : t('Data check ✓')}
           </Link>
         )}
         {point && (
