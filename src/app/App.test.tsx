@@ -45,4 +45,16 @@ describe('App shell', () => {
     expect(screen.queryByText('Offline')).toBeNull()
     onLine.mockRestore()
   })
+
+  it('hides amounts until they are shown again, and remembers the choice', async () => {
+    renderAt('/')
+    const hide = await screen.findByRole('button', { name: 'Hide amounts' })
+    act(() => hide.click())
+    expect(screen.getByRole('button', { name: 'Show amounts' }).getAttribute('aria-pressed')).toBe('true')
+    expect(localStorage.getItem('portfolio-history:hide-amounts')).toBe('1')
+
+    act(() => screen.getByRole('button', { name: 'Show amounts' }).click())
+    expect(screen.getByRole('button', { name: 'Hide amounts' }).getAttribute('aria-pressed')).toBe('false')
+    expect(localStorage.getItem('portfolio-history:hide-amounts')).toBeNull()
+  })
 })

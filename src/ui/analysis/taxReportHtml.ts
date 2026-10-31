@@ -1,5 +1,5 @@
 import { incomeSummary, type TaxReport } from '../../engine/analysis/taxReport.ts'
-import { displayCurrency, formatDate, formatEur } from '../format.ts'
+import { displayCurrency, formatDate, formatEurExact } from '../format.ts'
 import { language, msg, t } from '../../i18n/i18n.ts'
 
 const KIND_LABELS = { dividend: msg('Dividends'), interest: msg('Interest'), bonus: msg('Bonuses and rewards') } as const
@@ -24,7 +24,7 @@ export function taxReportHtml(report: TaxReport, rulesLabel: string, generatedOn
       `<h2>${escapeHtml(t('Capital gains (estimate, {rules})', { rules: rulesLabel }))}</h2>`,
       table(
         [t('Gains'), t('Losses'), t('Net'), t('Earlier losses used'), t('Exemption'), t('Taxable'), t('Estimated tax')],
-        [[g.gains, g.losses, g.net, g.lossesCarriedIn, g.exemption, g.taxable, g.tax].map((v) => formatEur(v))],
+        [[g.gains, g.losses, g.net, g.lossesCarriedIn, g.exemption, g.taxable, g.tax].map((v) => formatEurExact(v))],
         0,
       ),
     )
@@ -35,7 +35,7 @@ export function taxReportHtml(report: TaxReport, rulesLabel: string, generatedOn
       `<h2>${t('Income')}</h2>`,
       table(
         [t('Kind'), t('Payments'), t('Gross'), t('Withheld tax'), t('Net')],
-        income.map((s) => [t(KIND_LABELS[s.kind]), String(s.count), formatEur(s.gross), formatEur(s.taxes), formatEur(s.net)]),
+        income.map((s) => [t(KIND_LABELS[s.kind]), String(s.count), formatEurExact(s.gross), formatEurExact(s.taxes), formatEurExact(s.net)]),
         1,
       ),
     )
@@ -46,7 +46,7 @@ export function taxReportHtml(report: TaxReport, rulesLabel: string, generatedOn
       `<h2>${t('Costs and taxes paid')}</h2>`,
       table(
         [t('Transaction costs'), t('Currency costs'), t('Stock exchange tax (TOB)'), t('Withheld on income'), t('Other taxes')],
-        [[c.transactionCosts, c.fxCosts, c.tradeTaxes, c.incomeTaxes, c.otherTaxes].map((v) => formatEur(v))],
+        [[c.transactionCosts, c.fxCosts, c.tradeTaxes, c.incomeTaxes, c.otherTaxes].map((v) => formatEurExact(v))],
         0,
       ),
     )
@@ -56,7 +56,7 @@ export function taxReportHtml(report: TaxReport, rulesLabel: string, generatedOn
       `<h2>${t('Sales')}</h2>`,
       table(
         [t('Date'), t('Product'), 'ISIN', t('Quantity'), t('Proceeds'), t('Cost basis'), t('Result')],
-        report.sales.map((s) => [formatDate(s.date), s.product, s.isin ?? '', String(s.quantity), formatEur(s.proceeds), formatEur(s.cost), formatEur(s.gain)]),
+        report.sales.map((s) => [formatDate(s.date), s.product, s.isin ?? '', String(s.quantity), formatEurExact(s.proceeds), formatEurExact(s.cost), formatEurExact(s.gain)]),
         3,
       ),
     )
@@ -66,7 +66,7 @@ export function taxReportHtml(report: TaxReport, rulesLabel: string, generatedOn
       `<h2>${t('Dividends and interest')}</h2>`,
       table(
         [t('Date'), t('Product'), 'ISIN', t('Gross'), t('Withheld tax'), t('Net')],
-        report.income.map((r) => [formatDate(r.date), r.product, r.isin ?? '', formatEur(r.gross), formatEur(r.taxes), formatEur(r.net)]),
+        report.income.map((r) => [formatDate(r.date), r.product, r.isin ?? '', formatEurExact(r.gross), formatEurExact(r.taxes), formatEurExact(r.net)]),
         3,
       ),
     )

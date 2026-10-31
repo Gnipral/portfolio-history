@@ -1,6 +1,6 @@
 import { summarize } from '../../import/summary.ts'
 import type { Capabilities, ImportResult } from '../../import/types.ts'
-import { formatDate } from '../format.ts'
+import { formatDate, formatQuantity } from '../format.ts'
 import { t } from '../../i18n/i18n.ts'
 
 const CAPABILITY_LABELS: Record<keyof Capabilities, string> = {
@@ -80,7 +80,7 @@ export function ImportPreview({ result, files }: { result: ImportResult; files: 
                 <tr key={p.isin || p.product}>
                   <td>{p.product}</td>
                   <td>{p.isin}</td>
-                  <td className="num">{p.quantity}</td>
+                  <td className="num">{formatQuantity(p.quantity)}</td>
                 </tr>
               ))}
             </tbody>

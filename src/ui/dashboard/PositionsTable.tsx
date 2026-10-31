@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { Position } from '../../engine/positions.ts'
-import { locale, t } from '../../i18n/i18n.ts'
-import { formatDate, formatEur, formatPercent, formatSignedEur, trendClass } from '../format.ts'
+import { t } from '../../i18n/i18n.ts'
+import { formatDate, formatEur, formatPercent, formatQuantity, formatSignedEur, trendClass } from '../format.ts'
 import { nextSort, sortPositions, withWeights, type PositionColumn, type SortState } from './positionSort.ts'
 
 const COLUMNS: { key: PositionColumn; label: string; numeric: boolean }[] = [
@@ -15,7 +15,6 @@ const COLUMNS: { key: PositionColumn; label: string; numeric: boolean }[] = [
   { key: 'weight', label: t('Weight'), numeric: true },
 ]
 
-const quantityFormat = new Intl.NumberFormat(locale(), { maximumFractionDigits: 6 })
 
 interface Props {
   positions: Position[]
@@ -62,7 +61,7 @@ export function PositionsTable({ positions, date, selectedKey = null, onSelect }
               )}
               <div className="muted small">{[row.symbol, row.isin].filter(Boolean).join(' · ')}</div>
             </td>
-            <td className="num">{quantityFormat.format(row.quantity)}</td>
+            <td className="num">{formatQuantity(row.quantity)}</td>
             <td className="num">{formatEur(row.averageCost)}</td>
             <td className="num">
               {row.price === undefined ? '–' : formatEur(row.price)}

@@ -24,15 +24,45 @@ export function setDisplayCurrency(code: string): void {
   eurCompact = new Intl.NumberFormat(locale(), { style: 'currency', currency, maximumFractionDigits: 0 })
 }
 const percent = new Intl.NumberFormat(locale(), { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const quantity = new Intl.NumberFormat(locale(), { maximumFractionDigits: 6 })
 
-/** `€1,234.56` in the display currency; whole units with `compact`. */
-export function formatEur(value: number, compact = false): string {
+/** Shown in place of an amount or a quantity while amounts are hidden; percentages stay. */
+export const HIDDEN = '•••'
+
+let hidden = false
+
+/** Hides every amount and quantity on screen; called by the app when the choice changes. */
+export function setAmountsHidden(on: boolean): void {
+  hidden = on
+}
+
+export function amountsHidden(): boolean {
+  return hidden
+}
+
+/** `€1,234.56` in the display currency, also while amounts are hidden: for files the user downloads. */
+export function formatEurExact(value: number, compact = false): string {
   return (compact ? eurCompact : eur).format(value)
 }
 
-/** Like formatEur, with an explicit + for gains. */
+/** `€1,234.56` in the display currency; whole units with `compact`. */
+export function formatEur(value: number, compact = false): string {
+  return hidden ? `${currencySymbol()}${HIDDEN}` : formatEurExact(value, compact)
+}
+
+function currencySymbol(): string {
+  return eurCompact.formatToParts(0).find((part) => part.type === 'currency')?.value ?? ''
+}
+
+/** Like formatEur, with an explicit + for gains. While hidden, the sign still tells a gain from a loss. */
 export function formatSignedEur(value: number): string {
+  if (hidden) return `${value > 0 ? '+' : value < 0 ? '−' : ''}${formatEur(value)}`
   return value > 0 ? `+${formatEur(value)}` : formatEur(value)
+}
+
+/** A number of units, up to 6 decimals. */
+export function formatQuantity(value: number): string {
+  return hidden ? HIDDEN : quantity.format(value)
 }
 
 /** `+12.34%` from a fraction (0.1234). */

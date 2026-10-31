@@ -5,11 +5,13 @@ import { useSettings } from '../settings/settings.ts'
 import { DemoBanner } from '../ui/components/DemoBanner.tsx'
 import { NavIcon } from '../ui/components/NavIcon.tsx'
 import { OfflineBadge } from '../ui/components/OfflineBadge.tsx'
+import { HideAmountsToggle } from '../ui/components/HideAmountsToggle.tsx'
 import { ThemeToggle } from '../ui/components/ThemeToggle.tsx'
 import { UpdateBanner } from '../ui/components/UpdateBanner.tsx'
 import { ErrorBoundary } from '../ui/errors/ErrorBoundary.tsx'
-import { setDisplayCurrency } from '../ui/format.ts'
+import { setAmountsHidden, setDisplayCurrency } from '../ui/format.ts'
 import { DashboardPage } from '../ui/pages/DashboardPage.tsx'
+import { useHideAmounts } from '../ui/privacy.ts'
 
 // The dashboard comes first; every other page loads when it is opened.
 const AnalysisPage = lazy(() => import('../ui/pages/AnalysisPage.tsx').then((m) => ({ default: m.AnalysisPage })))
@@ -23,6 +25,8 @@ const TransactionsPage = lazy(() => import('../ui/pages/TransactionsPage.tsx').t
 export function App() {
   // Set while rendering, before any page below formats an amount.
   setDisplayCurrency(useSettings()?.baseCurrency ?? 'EUR')
+  const [hidden, setHidden] = useHideAmounts()
+  setAmountsHidden(hidden)
   const { pathname } = useLocation()
   return (
     <>
@@ -56,9 +60,11 @@ export function App() {
           </NavLink>
         </nav>
         <OfflineBadge />
+        <HideAmountsToggle hidden={hidden} onChange={setHidden} />
         <ThemeToggle />
       </header>
-      <main className="app-main">
+      {/* Drawn again from scratch when amounts are hidden or shown, so the charts pick up the change too. */}
+      <main className="app-main" key={hidden ? 'hidden' : 'shown'}>
         <ErrorBoundary resetKey={pathname}>
           <Suspense fallback={null}>
             <Routes>

@@ -468,6 +468,17 @@ button:active:not(:disabled) {
   }
 }
 
+.hide-amounts {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.hide-amounts[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 /* Phones: the navigation moves to a tab bar in the thumb zone. */
 @media (max-width: 640px) {
   .app-header,
@@ -485,6 +496,16 @@ button:active:not(:disabled) {
 
   .app-header h1 {
     flex: 1;
+  }
+
+  /* The eye alone; its label is still read out. */
+  .hide-amounts-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .app-main {
