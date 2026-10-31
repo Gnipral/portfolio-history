@@ -1,6 +1,7 @@
 /**
- * The timeline under the chart works like a video editor: a window over the whole history with a trim handle at
- * each end, a body that pans, and a playhead inside it. These are its moves, on day indices.
+ * The timeline under the chart works like a video editor: the whole history, a window with a trim handle at
+ * each end (the period), and a playhead inside it (the day shown). The window itself does not move: only its
+ * ends do. These are its moves, on day indices.
  */
 
 export interface DayWindow {
@@ -25,12 +26,6 @@ export function trimEnd(window: DayWindow, index: number, count: number): DayWin
   return { from: window.from, to: clamp(index, Math.min(window.from + 1, count - 1), count - 1) }
 }
 
-/** The window moved by `delta` days as a whole, keeping its length, within the history. */
-export function panWindow(window: DayWindow, delta: number, count: number): DayWindow {
-  const length = window.to - window.from
-  const from = clamp(window.from + delta, 0, Math.max(0, count - 1 - length))
-  return { from, to: from + length }
-}
 
 /** The window the chart shows after a zoom, as whole days within the history. */
 export function windowFromRange(from: number, to: number, count: number): DayWindow {
@@ -53,4 +48,30 @@ function monthStep(dates: readonly string[], index: number, direction: 1 | -1): 
 export function stepPlayhead(dates: readonly string[], index: number, direction: 1 | -1, month: boolean, window: DayWindow): number {
   const next = month ? monthStep(dates, index, direction) : index + direction
   return clamp(next, window.from, window.to)
+}
+
+/** What a press on the strip takes hold of. */
+export type Grab = 'start' | 'end' | 'playhead'
+
+/** Pixels on either side of the playhead that still take hold of it, so it need not be hit exactly. */
+export const PLAYHEAD_REACH = 12
+
+/** Pixels the handles reach into the window, where the playhead is not near. */
+const HANDLE_REACH = 6
+
+/**
+ * What a press at `x` pixels on a strip `width` wide takes hold of. Left of the window it is the start handle
+ * and right of it the end handle (they sit just outside the window); inside it is the playhead, which also
+ * comes to the pressed day when it was not within reach, except right at an edge, where the handle is.
+ */
+export function grabAt(x: number, width: number, count: number, window: DayWindow, playhead: number): Grab {
+  const at = (index: number) => (count > 1 ? (index / (count - 1)) * width : 0)
+  const from = at(window.from)
+  const to = at(window.to)
+  if (x < from) return 'start'
+  if (x > to) return 'end'
+  if (Math.abs(x - at(playhead)) <= PLAYHEAD_REACH) return 'playhead'
+  if (x - from <= HANDLE_REACH) return 'start'
+  if (to - x <= HANDLE_REACH) return 'end'
+  return 'playhead'
 }

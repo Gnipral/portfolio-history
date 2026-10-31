@@ -626,17 +626,14 @@
   pointer-events: none;
 }
 
+/* The window, its handles and the playhead are drawn only: every press goes to the strip (see grabAt). */
 .timeline-window {
   position: absolute;
   top: -1px;
   bottom: -1px;
   min-width: 2px;
   border: 1px solid var(--border-strong);
-  cursor: grab;
-}
-
-.timeline-window:active {
-  cursor: grabbing;
+  pointer-events: none;
 }
 
 .timeline-days {
@@ -675,32 +672,35 @@
   background: var(--surface);
 }
 
+/* Just outside the window, so the inside belongs to the playhead. */
 .timeline-handle.start {
-  left: -4px;
+  left: -8px;
 }
 
 .timeline-handle.end {
-  right: -4px;
+  right: -8px;
 }
 
 .timeline-playhead {
   position: absolute;
-  top: -5px;
-  bottom: -5px;
+  top: -6px;
+  bottom: -6px;
   width: 2px;
   margin-left: -1px;
   background: var(--text);
-  cursor: ew-resize;
+  pointer-events: none;
 }
 
+/* A grip on top, wider than the line, to see where to take hold of it. */
 .timeline-playhead::before {
   content: '';
   position: absolute;
   top: 0;
-  left: -4px;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 6px solid var(--text);
+  left: -5px;
+  width: 12px;
+  height: 8px;
+  background: var(--text);
+  clip-path: polygon(0 0, 100% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
 /* Saved periods, as chips under the timeline. */

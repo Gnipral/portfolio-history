@@ -241,3 +241,37 @@ test('a first visit is welcomed and can start the demo from there', async ({ pag
   await expect(page.getByText(/No portfolio loaded yet/)).toBeVisible()
   expect(errors).toEqual([])
 })
+
+test('the timeline: the playhead is taken a little next to it, and the window itself never moves', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'dragging with a mouse')
+  const errors = watchErrors(page)
+  await openDemo(page)
+  const strip = page.getByRole('slider', { name: 'Playhead' })
+  await strip.scrollIntoViewIfNeeded()
+  const box = await strip.boundingBox()
+  if (!box) throw new Error('The timeline should be drawn')
+  const window = page.getByTestId('timeline-window')
+  const before = await window.boundingBox()
+  const last = Number(await strip.getAttribute('aria-valuemax'))
+  expect(Number(await strip.getAttribute('aria-valuenow'))).toBe(last)
+
+  // The playhead stands on the end of the window: take it 8px to its left and drag it to the middle.
+  const y = box.y + box.height / 2
+  await page.mouse.move(box.x + box.width - 8, y)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width / 2, y, { steps: 8 })
+  await page.mouse.up()
+  const middle = Number(await strip.getAttribute('aria-valuenow'))
+  expect(middle).toBeLessThan(last)
+  expect(Math.abs(middle - last / 2)).toBeLessThan(last * 0.05)
+  expect(await window.boundingBox()).toEqual(before)
+
+  // Dragging inside the window moves the playhead with it, never the window.
+  await page.mouse.move(box.x + box.width * 0.3, y)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width * 0.2, y, { steps: 5 })
+  await page.mouse.up()
+  expect(Number(await strip.getAttribute('aria-valuenow'))).toBeLessThan(middle)
+  expect(await window.boundingBox()).toEqual(before)
+  expect(errors).toEqual([])
+})

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react'
 import { t } from '../../i18n/i18n.ts'
-import { indexAtRatio, panWindow, stepPlayhead, trimEnd, trimStart, type DayWindow } from './timeline.ts'
+import { grabAt, indexAtRatio, PLAYHEAD_REACH, stepPlayhead, trimEnd, trimStart, type DayWindow, type Grab } from './timeline.ts'
 import { RANGES, rangeDescription, type RangeKey } from './timeRange.ts'
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
   onRange: (range: RangeKey) => void
 }
 
-type Drag = { kind: 'start' | 'end' | 'body' | 'playhead'; x: number; window: DayWindow; moved: boolean }
+const CURSORS: Record<Grab, string> = { start: 'ew-resize', end: 'ew-resize', playhead: 'col-resize' }
 
 /** Days of the window as a share of the strip, in percent. */
 const pct = (index: number, count: number) => (count > 1 ? (index / (count - 1)) * 100 : 0)
@@ -38,11 +38,13 @@ function overview(points: readonly { value: number }[]): string {
 
 /**
  * The timeline under the chart, as in a video editor: the whole history with a window of two trim handles
- * (the period) that also pans as a whole, and a playhead inside it (the day the side panel shows).
+ * (the period, which does not move as a whole) and a playhead inside it (the day the side panel shows).
+ * Every press goes to the strip, which decides what it takes hold of (see grabAt): the playhead has a
+ * margin on either side, and a press elsewhere in the window brings it there.
  */
 export function Timeline({ points, window, playhead, range, onWindow, onPlayhead, onRange }: Props) {
   const strip = useRef<HTMLDivElement>(null)
-  const drag = useRef<Drag | null>(null)
+  const drag = useRef<Grab | null>(null)
   const count = points.length
   const dates = useMemo(() => points.map((p) => p.date), [points])
   const line = useMemo(() => overview(points), [points])
@@ -54,34 +56,46 @@ export function Timeline({ points, window, playhead, range, onWindow, onPlayhead
     return box && box.width > 0 ? (clientX - box.left) / box.width : 0
   }
 
-  function begin(kind: Drag['kind']) {
-    return (event: ReactPointerEvent) => {
-      event.preventDefault()
-      event.stopPropagation()
-      ;(event.currentTarget as Element).setPointerCapture?.(event.pointerId)
-      drag.current = { kind, x: event.clientX, window, moved: false }
-    }
-  }
-
-  function move(event: ReactPointerEvent) {
-    const d = drag.current
+  /** What a press at `clientX` would take hold of. */
+  const grabbing = (clientX: number): Grab | null => {
     const box = strip.current?.getBoundingClientRect()
-    if (!d || !box || box.width === 0) return
-    const days = Math.round(((event.clientX - d.x) / box.width) * (count - 1))
-    if (Math.abs(event.clientX - d.x) > 3) d.moved = true
-    if (!d.moved) return
-    const index = indexAtRatio(ratioAt(event.clientX), count)
-    if (d.kind === 'start') onWindow(trimStart(window, index))
-    else if (d.kind === 'end') onWindow(trimEnd(window, index, count))
-    else if (d.kind === 'body') onWindow(panWindow(d.window, days, count))
-    else onPlayhead(Math.min(window.to, Math.max(window.from, index)))
+    return box && box.width > 0 ? grabAt(clientX - box.left, box.width, count, window, playhead) : null
   }
 
-  function end(event: ReactPointerEvent) {
-    const d = drag.current
+  /** Moves what is held to the day under `clientX`. */
+  function follow(kind: Grab, clientX: number) {
+    const index = indexAtRatio(ratioAt(clientX), count)
+    if (kind === 'start') onWindow(trimStart(window, index))
+    else if (kind === 'end') onWindow(trimEnd(window, index, count))
+    else if (index !== playhead) onPlayhead(Math.min(window.to, Math.max(window.from, index)))
+  }
+
+  function press(event: ReactPointerEvent<HTMLDivElement>) {
+    const kind = grabbing(event.clientX)
+    if (!kind) return
+    event.preventDefault()
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    drag.current = kind
+    // A handle pressed outside the window jumps there; the playhead comes to a press that was not within reach.
+    const index = indexAtRatio(ratioAt(event.clientX), count)
+    const box = strip.current?.getBoundingClientRect()
+    const headOff = box ? Math.abs(event.clientX - box.left - (pct(playhead, count) / 100) * box.width) : 0
+    if ((kind === 'start' && index < window.from) || (kind === 'end' && index > window.to)) follow(kind, event.clientX)
+    else if (kind === 'playhead' && headOff > PLAYHEAD_REACH) follow(kind, event.clientX)
+  }
+
+  function move(event: ReactPointerEvent<HTMLDivElement>) {
+    if (drag.current) {
+      follow(drag.current, event.clientX)
+      return
+    }
+    // Not dragging: the cursor says what a press would take hold of.
+    const kind = grabbing(event.clientX)
+    event.currentTarget.style.cursor = kind ? CURSORS[kind] : ''
+  }
+
+  function release() {
     drag.current = null
-    // A click on the window, without dragging it: the playhead goes there.
-    if (d && d.kind === 'body' && !d.moved) onPlayhead(Math.min(window.to, Math.max(window.from, indexAtRatio(ratioAt(event.clientX), count))))
   }
 
   // ←/→ move the playhead a day, with Shift a month; on the page itself, not while typing.
@@ -138,17 +152,10 @@ export function Timeline({ points, window, playhead, range, onWindow, onPlayhead
         aria-valuemax={window.to}
         aria-valuenow={playhead}
         aria-valuetext={dates[playhead]}
+        onPointerDown={press}
         onPointerMove={move}
-        onPointerUp={end}
-        onPointerCancel={() => {
-          drag.current = null
-        }}
-        onPointerDown={(event) => {
-          // On the history outside the window: the nearest handle goes there.
-          const index = indexAtRatio(ratioAt(event.clientX), count)
-          if (index < window.from) onWindow(trimStart(window, index))
-          else if (index > window.to) onWindow(trimEnd(window, index, count))
-        }}
+        onPointerUp={release}
+        onPointerCancel={release}
       >
         <svg className="timeline-line" viewBox="0 0 1000 40" preserveAspectRatio="none" aria-hidden="true">
           <polyline points={line} />
@@ -159,13 +166,12 @@ export function Timeline({ points, window, playhead, range, onWindow, onPlayhead
           className="timeline-window"
           data-testid="timeline-window"
           style={{ left: `${pct(window.from, count)}%`, width: `${pct(window.to, count) - pct(window.from, count)}%` }}
-          onPointerDown={begin('body')}
         >
           <span className="timeline-days">{t('{days} days', { days: days.toLocaleString() })}</span>
-          <button type="button" className="timeline-handle start" aria-label={t('Start of the period')} onPointerDown={begin('start')} />
-          <button type="button" className="timeline-handle end" aria-label={t('End of the period')} onPointerDown={begin('end')} />
+          <span className="timeline-handle start" aria-hidden="true" />
+          <span className="timeline-handle end" aria-hidden="true" />
         </div>
-        <div className="timeline-playhead" data-testid="timeline-playhead" style={{ left: `${pct(playhead, count)}%` }} onPointerDown={begin('playhead')} aria-hidden="true" />
+        <div className="timeline-playhead" data-testid="timeline-playhead" style={{ left: `${pct(playhead, count)}%` }} aria-hidden="true" />
       </div>
       <div className="segmented segmented-small timeline-presets" role="group" aria-label={t('Period')}>
         {RANGES.map((key) => (
