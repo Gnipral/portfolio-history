@@ -1,16 +1,21 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router'
 import { t } from '../i18n/i18n.ts'
 import { useSettings } from '../settings/settings.ts'
+import { AccountButton } from '../ui/components/AccountButton.tsx'
 import { DemoBanner } from '../ui/components/DemoBanner.tsx'
-import { NavIcon } from '../ui/components/NavIcon.tsx'
-import { OfflineBadge } from '../ui/components/OfflineBadge.tsx'
+import { HeaderValue } from '../ui/components/HeaderValue.tsx'
 import { HideAmountsToggle } from '../ui/components/HideAmountsToggle.tsx'
+import { NavIcon, type NavIconName } from '../ui/components/NavIcon.tsx'
+import { OfflineBadge } from '../ui/components/OfflineBadge.tsx'
 import { ThemeToggle } from '../ui/components/ThemeToggle.tsx'
 import { UpdateBanner } from '../ui/components/UpdateBanner.tsx'
+import { PortfolioProvider } from '../ui/dashboard/PortfolioProvider.tsx'
 import { ErrorBoundary } from '../ui/errors/ErrorBoundary.tsx'
 import { setAmountsHidden, setDisplayCurrency } from '../ui/format.ts'
+import { NoticeHostProvider, NoticeStrip } from '../ui/notices/Notices.tsx'
 import { DashboardPage } from '../ui/pages/DashboardPage.tsx'
+import { PeriodProvider } from '../ui/period/PeriodProvider.tsx'
 import { useHideAmounts } from '../ui/privacy.ts'
 
 // The dashboard comes first; every other page loads when it is opened.
@@ -23,66 +28,79 @@ const SettingsPage = lazy(() => import('../ui/pages/SettingsPage.tsx').then((m) 
 const SharedCardPage = lazy(() => import('../ui/pages/SharedCardPage.tsx').then((m) => ({ default: m.SharedCardPage })))
 const TransactionsPage = lazy(() => import('../ui/pages/TransactionsPage.tsx').then((m) => ({ default: m.TransactionsPage })))
 
+const NAV: { to: string; label: string; icon: NavIconName }[] = [
+  { to: '/', label: t('Dashboard'), icon: 'dashboard' },
+  { to: '/analysis', label: t('Analysis'), icon: 'analysis' },
+  { to: '/import', label: t('Import'), icon: 'import' },
+  { to: '/transactions', label: t('Transactions'), icon: 'transactions' },
+  { to: '/prices', label: t('Prices'), icon: 'prices' },
+  { to: '/settings', label: t('Settings'), icon: 'settings' },
+]
+
 export function App() {
+  const settings = useSettings()
   // Set while rendering, before any page below formats an amount.
-  setDisplayCurrency(useSettings()?.baseCurrency ?? 'EUR')
+  setDisplayCurrency(settings?.baseCurrency ?? 'EUR', settings?.decimals ?? 2)
   const [hidden, setHidden] = useHideAmounts()
   setAmountsHidden(hidden)
   const { pathname } = useLocation()
+  const [noticeHost, setNoticeHost] = useState<HTMLElement | null>(null)
+
   return (
-    <>
-      <UpdateBanner />
-      <DemoBanner />
-      <header className="app-header">
-        <h1 className="brand">
-          <img src={`${import.meta.env.BASE_URL}brand/gnipral-mark.svg`} alt="Gnipral" width={28} height={28} />
-          Portfolio History
-        </h1>
-        <nav className="app-nav">
-          <NavLink to="/" end>
-            <NavIcon name="dashboard" />
-            {t('Dashboard')}
-          </NavLink>
-          <NavLink to="/analysis">
-            <NavIcon name="analysis" />
-            {t('Analysis')}
-          </NavLink>
-          <NavLink to="/import">
-            <NavIcon name="import" />
-            {t('Import')}
-          </NavLink>
-          <NavLink to="/prices">
-            <NavIcon name="prices" />
-            {t('Prices')}
-          </NavLink>
-          <NavLink to="/settings">
-            <NavIcon name="settings" />
-            {t('Settings')}
-          </NavLink>
-        </nav>
-        <OfflineBadge />
-        <HideAmountsToggle hidden={hidden} onChange={setHidden} />
-        <ThemeToggle />
-      </header>
-      {/* Drawn again from scratch when amounts are hidden or shown, so the charts pick up the change too. */}
-      <main className="app-main" key={hidden ? 'hidden' : 'shown'}>
-        <ErrorBoundary resetKey={pathname}>
-          <Suspense fallback={null}>
-            <Routes>
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/analysis" element={<AnalysisPage />} />
-              <Route path="/import" element={<ImportPage />} />
-              <Route path="/transactions" element={<TransactionsPage />} />
-              <Route path="/prices" element={<PricesPage />} />
-              <Route path="/check" element={<DataCheckPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/s/:data" element={<SharedCardPage />} />
-              <Route path="/c/:data" element={<ComparePage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </ErrorBoundary>
-      </main>
-    </>
+    <PortfolioProvider>
+      <PeriodProvider>
+        <NoticeHostProvider element={noticeHost}>
+          <header className="shell-header">
+            <div className="shell-bar">
+              <NavLink to="/" end className="shell-brand" aria-label={t('Portfolio History, dashboard')}>
+                <img src={`${import.meta.env.BASE_URL}brand/gnipral-mark.svg`} alt="" width={28} height={28} />
+                <span className="shell-brand-name">
+                  <strong>Gnipral</strong>
+                  <span>{t('Portfolio History')}</span>
+                </span>
+              </NavLink>
+              <nav className="app-nav" aria-label={t('Pages')}>
+                {NAV.map((item) => (
+                  <NavLink key={item.to} to={item.to} end={item.to === '/'}>
+                    <NavIcon name={item.icon} />
+                    {item.label}
+                  </NavLink>
+                ))}
+              </nav>
+              <div className="shell-tools">
+                <HeaderValue />
+                <HideAmountsToggle hidden={hidden} onChange={setHidden} />
+                <OfflineBadge />
+                <ThemeToggle />
+                <AccountButton />
+              </div>
+            </div>
+          </header>
+          <NoticeStrip host={setNoticeHost}>
+            <UpdateBanner />
+            <DemoBanner />
+          </NoticeStrip>
+          {/* Drawn again from scratch when amounts are hidden or shown, so the charts pick up the change too. */}
+          <main className="app-main" key={hidden ? 'hidden' : 'shown'}>
+            <ErrorBoundary resetKey={pathname}>
+              <Suspense fallback={null}>
+                <Routes>
+                  <Route path="/" element={<DashboardPage />} />
+                  <Route path="/analysis" element={<AnalysisPage />} />
+                  <Route path="/import" element={<ImportPage />} />
+                  <Route path="/transactions" element={<TransactionsPage />} />
+                  <Route path="/prices" element={<PricesPage />} />
+                  <Route path="/check" element={<DataCheckPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/s/:data" element={<SharedCardPage />} />
+                  <Route path="/c/:data" element={<ComparePage />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
+          </main>
+        </NoticeHostProvider>
+      </PeriodProvider>
+    </PortfolioProvider>
   )
 }

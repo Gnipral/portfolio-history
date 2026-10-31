@@ -35,9 +35,10 @@ describe('SettingsPage', () => {
 
   it('changes the theme and keeps the header toggle in sync', async () => {
     renderPage()
-    fireEvent.change(await screen.findByLabelText('Theme'), { target: { value: 'dark' } })
+    const select = (await screen.findAllByLabelText('Theme')).find((element) => element.tagName === 'SELECT') as HTMLElement
+    fireEvent.change(select, { target: { value: 'dark' } })
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
-    expect(screen.getByRole('button', { name: 'Theme: Dark' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Dark' }).getAttribute('aria-pressed')).toBe('true')
   })
 
   it('deletes all data only after confirmation', async () => {

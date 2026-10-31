@@ -142,9 +142,9 @@ describe('PortfolioChart', () => {
   })
 
   it('names the profit pane in EUR only', async () => {
-    const { rerender } = render(<PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} />)
+    const { rerender } = render(<PortfolioChart points={points} from={0} to={2} selected={2} mode="eur" onHover={() => {}} chartStyle={{ fill: true, invested: true, profitPane: true, log: false }} />)
     expect(await screen.findByText('Profit / loss')).toBeTruthy()
-    rerender(<PortfolioChart points={points} from={0} to={2} selected={2} mode="percent" onHover={() => {}} />)
+    rerender(<PortfolioChart points={points} from={0} to={2} selected={2} mode="percent" onHover={() => {}} chartStyle={{ fill: true, invested: true, profitPane: true, log: false }} />)
     expect(screen.queryByText('Profit / loss')).toBeNull()
   })
 

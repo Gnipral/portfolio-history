@@ -9,7 +9,9 @@ import { localToday } from './market/dates.ts'
 import { language } from './i18n/i18n.ts'
 import { applyStoredTheme } from './theme/theme.ts'
 import './theme/fonts.ts'
+import './theme/tokens.css'
 import './theme/global.css'
+import './theme/base.css'
 
 applyStoredTheme()
 document.documentElement.lang = language()

@@ -43,11 +43,11 @@ export function nextThemePreference(current: ThemePreference): ThemePreference {
 }
 
 /** Color palettes of the chart block on the dashboard; the rest of the app keeps the theme's colors. */
-export type Palette = 'standard' | 'colorblind' | 'high-contrast' | 'neon'
+export type Palette = 'standard' | 'colorblind' | 'high-contrast'
 
 /** `swatches`: background, value line, gain, loss and a benchmark color, to show in the pickers. */
 export const PALETTES: { id: Palette; label: string; description: string; swatches: string[] }[] = [
-  { id: 'standard', label: msg('Standard'), description: msg('The colors of the app: green for gains, red for losses.'), swatches: ['#14181d', '#5cc8f0', '#3ddc97', '#ff7b7b', '#ffb95f'] },
+  { id: 'standard', label: msg('Standard'), description: msg('Grayscale, with the benchmark in red.'), swatches: ['#ffffff', '#141414', '#3a3a38', '#a8a8a5', '#c8102e'] },
   {
     id: 'colorblind',
     label: msg('Colour-blind friendly'),
@@ -60,7 +60,6 @@ export const PALETTES: { id: Palette; label: string; description: string; swatch
     description: msg('Pure black or white, thick bright colors: as readable as it gets.'),
     swatches: ['#000000', '#00e5ff', '#00ff66', '#ff3355', '#ffb000'],
   },
-  { id: 'neon', label: msg('Neon'), description: msg('Glowing colors on deep black, in light and dark.'), swatches: ['#07060f', '#00f0ff', '#39ff14', '#ff2079', '#ffe600'] },
 ]
 
 const PALETTE_KEY = 'palette'

@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { db } from '../../data/db.ts'
 import { loadEngineInputs, type EngineInputs } from '../../engine/loadInputs.ts'
 import type { EngineOptions } from '../../engine/options.ts'
@@ -7,16 +7,17 @@ import { computeDailySeries, type SeriesResult } from '../../engine/series.ts'
 import { localToday } from '../../market/dates.ts'
 import { syncMarketData, type SyncProgress } from '../../market/sync.ts'
 import { benchmarkCatalog, DEFAULT_BENCHMARK_ID, type Benchmark } from '../../market/benchmarks.ts'
-import { loadSettings, useSettings } from '../../settings/settings.ts'
+import { DEFAULT_SETTINGS, loadSettings, useSettings } from '../../settings/settings.ts'
 import { setDisplayCurrency } from '../format.ts'
 import { useOnline } from '../useOnline.ts'
 import { instrumentKey } from '../../market/instruments.ts'
 import { filterByAssetClass } from './assetClasses.ts'
+import { engineOptions } from './toggles.ts'
 
 /** Prices are brought up to date once per day, import and benchmark per session, not on every visit of the page. */
 let lastSyncKey: string | null = null
 
-/** After a failure of the connection, the prices are tried again this often while the dashboard is open. */
+/** After a failure of the connection, the prices are tried again this often while the app is open. */
 export const RETRY_MS = 60_000
 
 export interface PortfolioState {
@@ -24,7 +25,7 @@ export interface PortfolioState {
   transactionCount: number | undefined
   /** Everything loaded, whatever the filter: for what must not change with it, such as colors. */
   allInputs: EngineInputs | null
-  /** What the dashboard shows: only the chosen types of asset when filtered. */
+  /** What the page shows: only the chosen types of asset when filtered. */
   inputs: EngineInputs | null
   /** The engine options for `inputs`: securities only when filtered. */
   options: EngineOptions
@@ -39,9 +40,25 @@ export interface PortfolioState {
   currencyFallback: string | null
 }
 
-/** `assetClasses`: the types of asset to show, e.g. ETFs; empty shows everything. */
-export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly string[] = []): PortfolioState {
-  const transactionCount = useLiveQuery(() => db.transactions.count())
+/** What is loaded and synced once for the whole app, plus the series with the options of the settings. */
+interface LoadedPortfolio {
+  transactionCount: number | undefined
+  /** The inputs without the products switched off on the Prices page. */
+  counted: EngineInputs | null
+  sync: SyncProgress | null
+  syncProblems: number
+  slowConnection: boolean
+  online: boolean
+  currencyFallback: string | null
+  /** The options of the settings and the export, and the series with them: what most pages show. */
+  baseOptions: EngineOptions
+  baseSeries: SeriesResult | null
+}
+
+/** Loads the inputs, keeps the prices up to date and computes the series; nothing happens while `enabled` is false. */
+function useLoadedPortfolio(enabled: boolean): LoadedPortfolio {
+  const transactionCount = useLiveQuery(async (): Promise<number | undefined> => (enabled ? db.transactions.count() : undefined), [enabled])
+  const importRecord = useLiveQuery(() => (enabled ? db.imports.get('current') : undefined), [enabled])
   const settings = useSettings()
   const benchmarkId = settings?.benchmarkId
   const baseCurrency = settings?.baseCurrency ?? 'EUR'
@@ -57,6 +74,7 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is raised to try the prices again
   useEffect(() => {
+    if (!enabled) return
     // benchmarkId is undefined while the settings load, and empty when every benchmark is off.
     if (!transactionCount || benchmarkId === undefined) {
       if (transactionCount === 0) setInputs(null)
@@ -103,7 +121,7 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
       cancelled = true
       clearTimeout(retry)
     }
-  }, [transactionCount, benchmarkId, customKey, baseCurrency, online, attempt])
+  }, [enabled, transactionCount, benchmarkId, customKey, baseCurrency, online, attempt])
 
   // Products switched off on the Prices page count nowhere: not in the figures, the chart or the analysis.
   const excludedKey = (settings?.excludedInstruments ?? []).join('|')
@@ -113,6 +131,41 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
     return { ...loaded, transactions: loaded.transactions.filter((t) => !excluded.has(instrumentKey(t))) }
   }, [loaded, excludedKey])
 
+  const capabilities = importRecord?.capabilities
+  const baseOptions = useMemo(() => engineOptions(settings ?? DEFAULT_SETTINGS, capabilities), [settings, capabilities])
+  const baseSeries = useMemo(
+    () => (enabled && counted && counted.transactions.length > 0 ? computeDailySeries(counted.transactions, counted.prices, baseOptions, localToday()) : null),
+    [enabled, counted, baseOptions],
+  )
+
+  // The amounts are in the currency the inputs were converted to, which can still be EUR.
+  if (loaded) setDisplayCurrency(loaded.currency)
+  const currencyFallback = loaded && loaded.currency !== baseCurrency ? baseCurrency : null
+
+  return { transactionCount, counted, sync, syncProblems, slowConnection, online, currencyFallback, baseOptions, baseSeries }
+}
+
+/** The portfolio loaded once for the whole app; null outside the provider, where a page loads it itself. */
+export const PortfolioContext = createContext<LoadedPortfolio | null>(null)
+
+/** Loads the portfolio for the provider; used by PortfolioProvider only. */
+export function useSharedPortfolio(): LoadedPortfolio {
+  return useLoadedPortfolio(true)
+}
+
+const sameOptions = (a: EngineOptions, b: EngineOptions) => JSON.stringify(a) === JSON.stringify(b)
+
+/**
+ * The portfolio with `baseOptions`, filtered to `assetClasses` (empty shows everything). Inside the app it
+ * reuses what the provider loaded, and its series when nothing differs; a page rendered on its own, as in a
+ * test, loads the portfolio itself.
+ */
+export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly string[] = []): PortfolioState {
+  const shared = useContext(PortfolioContext)
+  const own = useLoadedPortfolio(shared === null)
+  const state = shared ?? own
+  const { counted } = state
+
   const filterKey = assetClasses.join('|')
   const filtered = filterKey !== ''
   // Cash belongs to no type of asset: a filtered view is securities only.
@@ -121,16 +174,24 @@ export function usePortfolio(baseOptions: EngineOptions, assetClasses: readonly 
     () => (counted && filtered ? { ...counted, transactions: filterByAssetClass(counted.transactions, filterKey.split('|')) } : counted),
     [counted, filtered, filterKey],
   )
+  const reuse = !filtered && sameOptions(options, state.baseOptions) && state.baseSeries !== null
   const series = useMemo(
-    () => (view && view.transactions.length > 0 ? computeDailySeries(view.transactions, view.prices, options, localToday()) : null),
-    [view, options],
+    () => (reuse ? state.baseSeries : view && view.transactions.length > 0 ? computeDailySeries(view.transactions, view.prices, options, localToday()) : null),
+    [reuse, state.baseSeries, view, options],
   )
 
-  // The amounts are in the currency the inputs were converted to, which can still be EUR.
-  if (loaded) setDisplayCurrency(loaded.currency)
-  const currencyFallback = loaded && loaded.currency !== baseCurrency ? baseCurrency : null
-
-  return { transactionCount, allInputs: counted, inputs: view, options, series, sync, syncProblems, slowConnection, online, currencyFallback }
+  return {
+    transactionCount: state.transactionCount,
+    allInputs: counted,
+    inputs: view,
+    options,
+    series,
+    sync: state.sync,
+    syncProblems: state.syncProblems,
+    slowConnection: state.slowConnection,
+    online: state.online,
+    currencyFallback: state.currencyFallback,
+  }
 }
 
 /** Lets tests start from a clean state. */

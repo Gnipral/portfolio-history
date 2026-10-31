@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { leastDifference } from './colorVision.ts'
 
-const css = readFileSync(resolve(__dirname, 'global.css'), 'utf8')
+const css = readFileSync(resolve(__dirname, 'tokens.css'), 'utf8')
 
 function tokens(selector: string): Record<string, string> {
   const start = css.indexOf(`${selector} {`)

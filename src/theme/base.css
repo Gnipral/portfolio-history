@@ -1,0 +1,686 @@
+/*
+ * The base of the report-like design: square 1px lines, no shadows or gradients, small uppercase labels,
+ * figures in a tabular monospace font, numbered sections. Loaded after global.css, so these primitives win
+ * over the older page styles that are still there.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font);
+  font-weight: 600;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+h2 {
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: 0.95rem;
+}
+
+a {
+  color: var(--text);
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--text-muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Figures: tabular monospace, so columns of numbers line up. */
+.figure,
+.num,
+.card-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.label-caps,
+.card-label {
+  font-family: var(--font);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.small {
+  font-size: 0.8125rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* The benchmark is the one colour of the app. */
+.benchmark {
+  color: var(--benchmark);
+}
+
+/* Gains and losses are told apart by their sign: the trend classes keep the text colour. */
+.positive,
+.negative {
+  color: inherit;
+}
+
+/* Controls */
+
+button,
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+button:hover,
+.button:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+button.primary,
+.button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+button.primary:hover {
+  background: var(--text-muted);
+  border-color: var(--text-muted);
+}
+
+button.link {
+  border: none;
+  background: none;
+  padding: 0;
+  text-decoration: underline;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: inherit;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0.4rem 0.6rem;
+}
+
+input[type='date'],
+input[type='number'] {
+  font-family: var(--font-mono);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--border-strong);
+}
+
+input[type='checkbox'],
+input[type='radio'],
+input[type='range'] {
+  accent-color: var(--accent);
+}
+
+/* A row of buttons where one is chosen: the chosen one is filled. */
+.segmented {
+  display: inline-flex;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+
+.segmented button {
+  flex: none;
+  border: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0.35rem 0.75rem;
+  background: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+
+.segmented button:last-child {
+  border-right: none;
+}
+
+.segmented button:hover {
+  color: var(--text);
+}
+
+.segmented button[aria-pressed='true'],
+.segmented button[aria-selected='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.segmented-small button {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.65rem;
+}
+
+/* The shell: header, notice strip and the page, at most 1440px wide. */
+
+.shell-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.shell-bar,
+.notice-strip,
+.app-main {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.shell-bar {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  min-height: 64px;
+}
+
+.shell-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.shell-brand img {
+  filter: grayscale(1);
+}
+
+.shell-brand-name {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.shell-brand-name strong {
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.shell-brand-name span {
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.app-nav {
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.app-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 2px solid transparent;
+}
+
+.app-nav a:hover {
+  color: var(--text);
+}
+
+.app-nav a.active {
+  color: var(--text);
+  border-bottom-color: var(--border-strong);
+}
+
+/* Icons only in the tab bar of a phone. */
+.app-nav svg {
+  display: none;
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.shell-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  padding-right: 0.75rem;
+  border-right: 1px solid var(--border);
+}
+
+.header-value .label-caps {
+  font-size: 0.6rem;
+}
+
+.header-value .figure {
+  font-size: 0.85rem;
+}
+
+.header-button {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.7rem;
+}
+
+.hide-amounts[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.offline-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--border-strong);
+  padding: 0.2rem 0.5rem;
+}
+
+/* One strip under the navigation for every notice, one per line. */
+.notice-strip:empty {
+  display: none;
+}
+
+.notice-strip {
+  border-bottom: 1px solid var(--border);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8125rem;
+}
+
+.notice:last-child {
+  border-bottom: none;
+}
+
+.notice-label {
+  flex: none;
+  width: 3.5rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.notice-warning .notice-label {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.notice-text {
+  flex: 1;
+}
+
+.notice-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.notice-actions button {
+  padding: 0.25rem 0.6rem;
+}
+
+.notice-dismiss {
+  border: none;
+  background: none;
+  font-size: 1rem;
+  padding: 0 0.25rem;
+  color: var(--text-muted);
+}
+
+.app-main {
+  padding-top: 1.5rem;
+  padding-bottom: 4rem;
+}
+
+/* Numbered sections: "01  Title", a rule, and a note on the right. */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.section:first-child {
+  margin-top: 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.section-number {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.section-aside {
+  margin-left: auto;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* A row of key figures, each a cell between thin rules. */
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.figure-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+
+.figure-cell:last-child {
+  border-right: none;
+}
+
+.figure-cell .figure {
+  font-size: 1.35rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.figure-cell .figure-note {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.figure-cell.is-benchmark .figure,
+.figure-cell.is-benchmark .label-caps {
+  color: var(--benchmark);
+}
+
+/* A plain list of label and number, as in the side panel. */
+
+.kv {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  margin: 0;
+}
+
+.kv dt,
+.kv dd {
+  margin: 0;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.kv dt {
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.kv dd {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tables: thin rules, small uppercase headers, figures right-aligned. */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  overflow: visible;
+}
+
+.table th,
+.table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.table td.num,
+.table th.num {
+  text-align: right;
+}
+
+.table tfoot td {
+  font-weight: 600;
+  border-top: 1px solid var(--border-strong);
+}
+
+.table tbody tr:hover td {
+  background: var(--highlight);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+/* A panel: a surface with a thin border, no rounding or shadow. */
+.panel,
+.card,
+.callout {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.panel {
+  padding: 1.25rem;
+}
+
+/* Phones: not designed yet, but nothing may break: the navigation moves to a tab bar. */
+@media (max-width: 640px) {
+  .shell-bar,
+  .notice-strip,
+  .app-main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .shell-bar {
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    min-height: 56px;
+  }
+
+  .shell-tools {
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+
+  .header-value {
+    display: none;
+  }
+
+  .hide-amounts-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .app-main {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  .app-nav {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 20;
+    justify-content: space-around;
+    gap: 0;
+    padding: 0.3rem 0.25rem calc(0.3rem + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .app-nav a {
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.15rem;
+    min-height: 44px;
+    font-size: 0.55rem;
+    border-bottom: none;
+  }
+
+  .app-nav svg {
+    display: block;
+  }
+
+  .figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .figure-cell {
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
