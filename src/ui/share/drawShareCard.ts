@@ -75,11 +75,8 @@ function drawCurve(ctx: CanvasRenderingContext2D, card: ShareCard, box: Box) {
   ctx.lineTo(box.x + box.width, scale.y(0))
   ctx.stroke()
 
-  // Soft fill under the portfolio line, towards the 0 % line.
-  const gradient = ctx.createLinearGradient(0, box.y, 0, box.y + box.height)
-  gradient.addColorStop(0, 'rgba(92, 200, 240, 0.28)')
-  gradient.addColorStop(1, 'rgba(92, 200, 240, 0)')
-  ctx.fillStyle = gradient
+  // A flat fill under the portfolio line, towards the 0 % line: no gradients in the design.
+  ctx.fillStyle = 'rgba(236, 236, 234, 0.08)'
   ctx.beginPath()
   ctx.moveTo(scale.x(0), scale.y(0))
   card.curve.forEach((v, i) => {
@@ -222,11 +219,6 @@ export function drawShareCard(canvas: HTMLCanvasElement, card: ShareCard, format
   const inner = width - pad * 2
 
   ctx.fillStyle = INK.bg
-  ctx.fillRect(0, 0, width, height)
-  const glow = ctx.createRadialGradient(width, 0, 0, width, 0, width * 0.9)
-  glow.addColorStop(0, 'rgba(0, 245, 155, 0.10)')
-  glow.addColorStop(1, 'rgba(0, 245, 155, 0)')
-  ctx.fillStyle = glow
   ctx.fillRect(0, 0, width, height)
 
   // Header: brand and period.

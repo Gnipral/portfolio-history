@@ -13,7 +13,7 @@ Live app: https://gnipral.github.io/portfolio-history/
 
 No broker export at hand? Open the app and press **Try the demo**: a made-up portfolio that needs no connection, no account and no file. Feedback and ideas are welcome in the [issues](https://github.com/Gnipral/portfolio-history/issues).
 
-![The dashboard of the demo portfolio: value, invested capital and profit since 2021, compared with the same money in IWDA](docs/screenshots/dashboard.png)
+![The dashboard of the demo portfolio: the figures of the period, the chart against the same money in IWDA, and the State inspection side panel](docs/screenshots/dashboard.png)
 
 | Share your return, never your amounts | What the next 12 months will pay |
 |---|---|
