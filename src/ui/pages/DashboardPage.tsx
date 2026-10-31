@@ -5,6 +5,8 @@ import { DemoButton } from '../components/DemoBanner.tsx'
 import { isDemo } from '../../demo/demoMode.ts'
 import { isOnboarded } from '../onboarding/onboarded.ts'
 import { Onboarding } from '../onboarding/Onboarding.tsx'
+import { DownloadCsvButton } from '../components/DownloadCsvButton.tsx'
+import { positionsRows } from '../csvTables.ts'
 import { usePalette } from '../usePalette.ts'
 import { positionSeries } from '../../engine/analysis/positionSeries.ts'
 import { db } from '../../data/db.ts'
@@ -287,7 +289,12 @@ export function DashboardPage() {
           <SummaryCards point={point} cashMode={series?.cashMode ?? false} otherAssets={settings.otherAssets} />
           <div className="dashboard-grid">
             <div className="panel">
-              <h3>{t('Positions')}</h3>
+              <div className="panel-header">
+                <h3>{t('Positions')}</h3>
+                {positions.length > 0 && (
+                  <DownloadCsvButton rows={() => positionsRows(positions, inputs?.currency ?? displayCurrency())} name={`positions-${point.date}`} what={t('the positions')} />
+                )}
+              </div>
               {/* Wider than its column on smaller screens: it scrolls instead of running under the allocation. */}
               <div className="table-scroll">
                 <PositionsTable

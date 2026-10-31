@@ -7,6 +7,8 @@ import { positionsOn, type Position } from '../../engine/positions.ts'
 import { addDays, localToday } from '../../market/dates.ts'
 import { formatDate, formatEur, formatPercent } from '../format.ts'
 import { t } from '../../i18n/i18n.ts'
+import { DownloadCsvButton } from '../components/DownloadCsvButton.tsx'
+import { incomeCsvRows } from '../csvTables.ts'
 import { Rich } from '../../i18n/Rich.tsx'
 
 // recharts is large; it is already split off for the allocation chart.
@@ -73,7 +75,10 @@ export function DividendsSection({ inputs, options }: Props) {
       <ForecastPanel forecast={forecast} positions={positions} today={today} />
 
       <div className="panel">
-        <h3>{t('Net income per month')}</h3>
+        <div className="panel-header">
+          <h3>{t('Net income per month')}</h3>
+          <DownloadCsvButton rows={() => incomeCsvRows(rows, inputs.currency)} name={`dividends-${today}`} what={t('every payment')} />
+        </div>
         <Suspense fallback={<div className="income-chart" />}>
           <MonthlyIncomeChart data={monthly} />
         </Suspense>

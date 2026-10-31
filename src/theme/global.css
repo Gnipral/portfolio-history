@@ -2366,3 +2366,25 @@ progress {
     font-size: 1.35rem;
   }
 }
+
+/* CSV export */
+.csv-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+}
+
+.csv-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.csv-row .transactions-search {
+  flex: 1 1 14rem;
+  min-width: 0;
+}

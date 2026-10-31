@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BOM, downloadFile } from '../../data/csv.ts'
 import { t } from '../../i18n/i18n.ts'
 import type { CapitalGainsResult } from '../../engine/analysis/capitalGains.ts'
 import type { ChargesYear } from '../../engine/analysis/charges.ts'
@@ -15,15 +16,6 @@ interface Props {
   rulesLabel: string
 }
 
-function save(content: string, type: string, name: string) {
-  const url = URL.createObjectURL(new Blob([content], { type }))
-  const link = document.createElement('a')
-  link.href = url
-  link.download = name
-  link.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
-}
-
 /** Downloads one year of sales, income and charges, as CSV or as a page to print or save as PDF. */
 export function TaxReportPanel({ gains, income, charges, rulesLabel }: Props) {
   const years = reportYears(gains, income, charges)
@@ -38,7 +30,7 @@ export function TaxReportPanel({ gains, income, charges, rulesLabel }: Props) {
     const page = window.open(url)
     // Without a window (pop-ups blocked), download the page instead; it prints from any browser.
     if (page) page.addEventListener('load', () => page.print(), { once: true })
-    else save(taxReportHtml(report(), rulesLabel, localToday()), 'text/html', `${t('tax-report')}-${year}.html`)
+    else downloadFile(taxReportHtml(report(), rulesLabel, localToday()), 'text/html', `${t('tax-report')}-${year}.html`)
     setTimeout(() => URL.revokeObjectURL(url), 60_000)
   }
 
@@ -55,7 +47,7 @@ export function TaxReportPanel({ gains, income, charges, rulesLabel }: Props) {
             ))}
           </select>
         </label>
-        <button type="button" onClick={() => save(`﻿${taxReportCsv(report(), displayCurrency())}`, 'text/csv;charset=utf-8', `${t('tax-report')}-${year}.csv`)}>
+        <button type="button" onClick={() => downloadFile(`${BOM}${taxReportCsv(report(), displayCurrency())}`, 'text/csv;charset=utf-8', `${t('tax-report')}-${year}.csv`)}>
           {t('Download CSV')}
         </button>
         <button type="button" onClick={print}>

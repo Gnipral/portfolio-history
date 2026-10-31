@@ -4,6 +4,9 @@ import type { EngineInputs } from '../../engine/loadInputs.ts'
 import type { EngineOptions } from '../../engine/options.ts'
 import { formatEur, formatSignedEur, trendClass } from '../format.ts'
 import { SalesTable } from './SalesTable.tsx'
+import { DownloadCsvButton } from '../components/DownloadCsvButton.tsx'
+import { salesRows } from '../csvTables.ts'
+import { localToday } from '../../market/dates.ts'
 import { t } from '../../i18n/i18n.ts'
 
 interface Props {
@@ -56,7 +59,10 @@ export function RealizedSection({ inputs, options }: Props) {
         </p>
       </div>
       <div className="panel">
-        <h3>{t('Every sale')}</h3>
+        <div className="panel-header">
+          <h3>{t('Every sale')}</h3>
+          <DownloadCsvButton rows={() => salesRows(sales, inputs.currency)} name={`sales-${localToday()}`} what={t('every sale')} />
+        </div>
         <SalesTable sales={sales} />
       </div>
     </>
