@@ -860,12 +860,6 @@ button.danger:hover {
   overflow-x: auto;
 }
 
-.returns-table td,
-.returns-table th {
-  white-space: nowrap;
-  font-size: 0.85rem;
-}
-
 .mix-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));

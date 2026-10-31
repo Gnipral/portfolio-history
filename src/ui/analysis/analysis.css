@@ -1,0 +1,454 @@
+/* Analysis: tabs, the Performance view at its three levels, and the other tabs in the same report style. */
+
+.analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.analysis-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.analysis-head h2 {
+  padding-bottom: 0.6rem;
+}
+
+.analysis-tabs {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+}
+
+.analysis-tabs button {
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  padding: 0.6rem 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.analysis-tabs button[aria-selected='true'] {
+  color: var(--text);
+  border-bottom-color: var(--border-strong);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The control bar: level on the left, the shared period on the right. */
+
+.perf-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.perf-controls-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.perf-date input {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.perf-note,
+.perf-sentence {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.perf-sentence {
+  font-size: 0.95rem;
+}
+
+.perf .figures + .figures {
+  margin-top: -1px;
+}
+
+.perf-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.perf-split .table {
+  margin-top: 0.4rem;
+}
+
+.perf-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.perf-block .kv dd .benchmark {
+  margin-left: 0.6rem;
+}
+
+.perf-big {
+  font-size: 2.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.perf-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.perf-method {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.5rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.perf-method ul,
+.perf-method p {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.perf-method p {
+  padding-left: 0;
+}
+
+/* Charts */
+
+.perf-chart {
+  margin: 0;
+  padding: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.perf-chart svg {
+  display: block;
+  width: 100%;
+  height: 220px;
+}
+
+.perf-grid-3 .perf-chart svg {
+  height: 170px;
+}
+
+.perf-grid {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.perf-zero {
+  stroke: var(--chart-zero);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.perf-axis {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.perf-fill {
+  fill: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.perf-legend {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.4rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.perf-legend i {
+  display: inline-block;
+  width: 1.2rem;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+  border-top-width: 2px;
+}
+
+/* Waterfall */
+
+.waterfall {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.waterfall-row {
+  display: grid;
+  grid-template-columns: 14rem 1fr 8rem;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.25rem 0;
+  font-size: 0.75rem;
+}
+
+.waterfall-track {
+  position: relative;
+  height: 14px;
+}
+
+.waterfall-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--chart-value);
+}
+
+.waterfall-bar.is-down {
+  background: var(--chart-negative);
+}
+
+.waterfall-row.is-total {
+  border-top: 1px solid var(--border-strong);
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  font-weight: 600;
+}
+
+.waterfall-row.is-muted {
+  opacity: 0.45;
+}
+
+.waterfall-amount {
+  text-align: right;
+}
+
+/* Heatmap */
+
+.heatmap th,
+.heatmap td {
+  padding: 0.45rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.heatmap tbody th {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.heatmap .heatmap-total {
+  border-left: 1px solid var(--border-strong);
+  font-weight: 600;
+}
+
+.heatmap tbody tr:hover td {
+  outline: 1px solid var(--border-strong);
+  outline-offset: -1px;
+}
+
+/* Checks: pass / look list */
+
+.rc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.rc-row {
+  display: flex;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.rc-row:last-child {
+  border-bottom: none;
+}
+
+.rc-status {
+  flex: none;
+  width: 4.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-top: 0.15rem;
+}
+
+.rc-warn .rc-status {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.rc-body p {
+  margin: 0.2rem 0 0;
+}
+
+/* The other tabs: their panels become numbered sections, their cards a row of figures. */
+
+.analysis-legacy {
+  counter-reset: legacy;
+  display: flex;
+  flex-direction: column;
+}
+
+.analysis-legacy > div > .panel,
+.analysis-legacy .panel {
+  margin-top: 2.5rem;
+  padding: 0;
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.analysis-legacy .panel:first-child {
+  margin-top: 0;
+}
+
+.analysis-legacy .panel > h3,
+.analysis-legacy .panel > .panel-header {
+  counter-increment: legacy;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.analysis-legacy .panel > h3,
+.analysis-legacy .panel > .panel-header h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.analysis-legacy .panel > h3::before,
+.analysis-legacy .panel > .panel-header::before {
+  content: counter(legacy, decimal-leading-zero);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--text-muted);
+}
+
+.analysis-legacy .panel > .panel-header h3 {
+  margin: 0;
+  flex: 1;
+}
+
+.analysis-legacy h4 {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.analysis-legacy .cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.analysis-legacy .cards .card {
+  border: none;
+  border-right: 1px solid var(--border);
+  padding: 1rem 1.1rem;
+  background: none;
+}
+
+.analysis-legacy .cards .card:last-child {
+  border-right: none;
+}
+
+.analysis-legacy .card-value {
+  font-size: 1.25rem;
+}
+
+.analysis-legacy .callout {
+  padding: 0.6rem 0.9rem;
+}
+
+.analysis-legacy .income-chart {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .perf-split,
+  .perf-grid-3,
+  .perf-method {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .waterfall-row {
+    grid-template-columns: 9rem 1fr 6rem;
+  }
+
+  .analysis-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* The older global .table is a scrolling block; here the wrappers scroll, so the tables fill their width. */
+.analysis .table {
+  display: table;
+  font-size: 0.8125rem;
+}
+
+/* Narrow screens: the tabs wrap instead of scrolling, so every tab stays in view. */
+@media (max-width: 900px) {
+  .analysis-tabs {
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    overflow-x: visible;
+  }
+}
