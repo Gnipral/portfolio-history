@@ -179,7 +179,7 @@ test('finds a stock and compares with it for now', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Back to the default' })).toBeVisible()
   // In the list to choose a default from, in Settings.
   await page.getByRole('link', { name: 'Settings' }).click()
-  await expect(page.getByRole('option', { name: /Apple Inc\. \(AAPL\)/ })).toHaveCount(1)
+  await expect(page.getByLabel('Compare the portfolio with').getByRole('option', { name: /Apple Inc\. \(AAPL\)/ })).toHaveCount(1)
   expect(errors).toEqual([])
 })
 

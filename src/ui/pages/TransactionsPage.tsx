@@ -22,23 +22,14 @@ import { formatDate, formatQuantity, formatStoredEur } from '../format.ts'
 import { t } from '../../i18n/i18n.ts'
 import { Rich } from '../../i18n/Rich.tsx'
 import { useAccountSync } from '../components/AccountSync.tsx'
+import { Section } from '../components/Section.tsx'
+import { TYPE_LABELS } from '../components/transactionLabels.ts'
+import './pages.css'
 
 const PAGE = 50
 
-const TYPE_LABELS: Record<string, string> = {
-  buy: t('Buy'),
-  sell: t('Sell'),
-  dividend: t('Dividend'),
-  deposit: t('Deposit'),
-  withdrawal: t('Withdrawal'),
-  fee: t('Fee'),
-  tax: t('Tax'),
-  fx: t('Currency exchange'),
-  split: t('Split'),
-  transferIn: t('Transfer in'),
-  transferOut: t('Transfer out'),
-  other: t('Other'),
-}
+const typeLabel = (type: string) => t(TYPE_LABELS[type] ?? type)
+
 
 const ASSET_CLASSES: [AssetClass, string][] = [
   ['etf', 'ETF'],
@@ -69,35 +60,45 @@ export function TransactionsPage() {
     const q = query.trim().toLowerCase()
     if (!transactions || !q) return transactions ?? []
     return transactions.filter((t) =>
-      [t.product, t.isin, t.ticker, TYPE_LABELS[t.type], t.source.broker, t.date].some((v) => v?.toLowerCase().includes(q)),
+      [t.product, t.isin, t.ticker, typeLabel(t.type), t.source.broker, t.date].some((v) => v?.toLowerCase().includes(q)),
     )
   }, [transactions, query])
 
   if (!transactions) return <p role="status">{t('Loading…')}</p>
 
   return (
-    <section className="stack">
-      <h2>{t('Transactions')}</h2>
-      <p className="muted">
-        {t('Add a transaction by hand, for a broker without an export or a row that is missing, or correct an imported one.')}
-      </p>
-      {account.notice}
-
-      {editing ? (
-        <TransactionForm key={editing.base?.id ?? 'new'} editing={editing} onSaved={account.sync} onDone={() => setEditing(null)} />
-      ) : (
-        <div className="actions">
-          <button type="button" className="primary" onClick={() => setEditing({ input: emptyInput() })}>
-            {t('Add transaction')}
-          </button>
-          {transactions.length === 0 && (
-            <span className="muted">
-              <Rich text={t('or <link>import a broker export</link>')} tags={{ link: (s) => <Link to="/import">{s}</Link> }} />
-            </span>
+    <div className="page transactions-page">
+      <header className="page-head">
+        <div className="page-head-row">
+          <h2>{t('Transactions')}</h2>
+          {!editing && (
+            <button type="button" className="primary" onClick={() => setEditing({ input: emptyInput() })}>
+              {t('Add transaction')}
+            </button>
           )}
         </div>
+        <p className="muted">
+          {t('Add a transaction by hand, for a broker without an export or a row that is missing, or correct an imported one.')}
+        </p>
+      </header>
+      {account.notice}
+
+      {editing && (
+        <Section number={1} title={editing.base ? t('Edit transaction') : t('Add transaction')}>
+          <TransactionForm key={editing.base?.id ?? 'new'} editing={editing} onSaved={account.sync} onDone={() => setEditing(null)} />
+        </Section>
       )}
 
+      <Section
+        number={editing ? 2 : 1}
+        title={t('All transactions')}
+        aside={transactions.length > 0 ? t('{shown} of {total}', { shown: filtered.length, total: transactions.length }) : undefined}
+      >
+      {transactions.length === 0 && (
+        <p className="muted">
+          {t('No transactions yet.')} <Rich text={t('Add one by hand, or <link>import a broker export</link>.')} tags={{ link: (s) => <Link to="/import">{s}</Link> }} />
+        </p>
+      )}
       {transactions.length > 0 && (
         <>
           <div className="csv-row">
@@ -133,9 +134,12 @@ export function TransactionsPage() {
               <tbody>
                 {filtered.slice(0, shown).map((tx) => (
                   <tr key={tx.id}>
-                    <td>{formatDate(tx.date)}</td>
-                    <td>{TYPE_LABELS[tx.type] ?? tx.type}</td>
-                    <td>{tx.product}</td>
+                    <td className="date">{tx.date}</td>
+                    <td>{typeLabel(tx.type)}</td>
+                    <td>
+                      {tx.product}
+                      {tx.isin && <span className="cell-note">{tx.isin}</span>}
+                    </td>
                     <td className="num">{tx.quantity ? formatQuantity(tx.quantity) : ''}</td>
                     <td className="num">{formatStoredEur(tx.totalEur)}</td>
                     <td className="muted small">{tx.source.broker}</td>
@@ -167,7 +171,7 @@ export function TransactionsPage() {
                           <button
                             type="button"
                             className="link-button"
-                            aria-label={t('Delete {type} {product} of {date}', { type: TYPE_LABELS[tx.type] ?? tx.type, product: tx.product, date: formatDate(tx.date) })}
+                            aria-label={t('Delete {type} {product} of {date}', { type: typeLabel(tx.type), product: tx.product, date: formatDate(tx.date) })}
                             onClick={() => setConfirmDelete(tx.id)}
                           >
                             {t('Delete')}
@@ -193,7 +197,8 @@ export function TransactionsPage() {
           </p>
         </>
       )}
-    </section>
+      </Section>
+    </div>
   )
 }
 
@@ -245,7 +250,7 @@ function TransactionForm({ editing, onSaved, onDone }: { editing: Editing; onSav
             >
               {EDITABLE_TYPES.map((type) => (
                 <option key={type} value={type}>
-                  {TYPE_LABELS[type]}
+                  {typeLabel(type)}
                 </option>
               ))}
             </select>

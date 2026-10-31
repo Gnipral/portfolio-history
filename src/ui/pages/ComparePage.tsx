@@ -11,6 +11,9 @@ import { annualized, compareLink, comparePath, curvePoints, linkData, MAX_COMPAR
 import { shareCard, type ShareCard } from '../share/shareCard.ts'
 import { readShareLink } from '../share/shareLink.ts'
 import { t, tn } from '../../i18n/i18n.ts'
+import { Section } from '../components/Section.tsx'
+import './pages.css'
+import '../share/share.css'
 
 interface Line {
   label: string
@@ -63,12 +66,15 @@ export function ComparePage() {
   const from = valid[0]?.card.from
 
   return (
-    <section className="stack">
-      <h2>{t('Compare portfolios')}</h2>
-      <p className="muted">
-        {t('Time-weighted returns of shared portfolios side by side. Only percentages are in the links, never amounts.')}
-        {valid.some((l) => l.card.from !== from) && ` ${t('The periods differ: every line starts at 0% on its own first day.')}`}
-      </p>
+    <div className="page compare-page">
+      <header className="page-head">
+        <h2>{t('Compare portfolios')}</h2>
+        <p className="muted">
+          {t('Time-weighted returns of shared portfolios side by side. Only percentages are in the links, never amounts.')}
+          {valid.some((l) => l.card.from !== from) && ` ${t('The periods differ: every line starts at 0% on its own first day.')}`}
+        </p>
+      </header>
+      <Section number={1} title={t('Returns')} aside={tn(lines.length, '{count} portfolio', '{count} portfolios')}>
       {invalid > 0 && <p className="callout warning small">{tn(invalid, 'One link is not valid and left out.', '{count} links are not valid and left out.')}</p>}
 
       {lines.length > 0 && <CompareChart lines={lines} />}
@@ -107,6 +113,8 @@ export function ComparePage() {
         </div>
       )}
 
+      </Section>
+      <Section number={2} title={t('Add to the comparison')}>
       <div className="actions">
         {hasOwn && from && (
           <button type="button" aria-pressed={withOwn} onClick={() => setWithOwn(!withOwn)}>
@@ -151,7 +159,8 @@ export function ComparePage() {
           </div>
         </div>
       )}
-    </section>
+      </Section>
+    </div>
   )
 }
 

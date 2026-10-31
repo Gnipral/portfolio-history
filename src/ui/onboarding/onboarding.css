@@ -1,0 +1,138 @@
+/* The welcome flow of a first visit without data: one square card, a step bar, plain choices. */
+
+.onboarding {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.onboarding-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  width: 100%;
+  max-width: 36rem;
+  padding: 1.75rem 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+}
+
+.onboarding-card h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.onboarding-card h2:focus {
+  outline: none;
+}
+
+.onboarding-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.onboarding-dots {
+  display: flex;
+  gap: 2px;
+}
+
+.onboarding-dots span {
+  flex: 1;
+  height: 3px;
+  background: var(--border);
+}
+
+.onboarding-dots span.active {
+  background: var(--accent);
+}
+
+.onboarding-lead {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.onboarding-points {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.onboarding-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.onboarding-field .muted,
+.onboarding-field select {
+  font-size: 0.8125rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.onboarding-field .segmented {
+  align-self: flex-start;
+}
+
+.onboarding-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border);
+}
+
+.onboarding-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.875rem;
+  border: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.onboarding-choice:last-child {
+  border-bottom: none;
+}
+
+.onboarding-choice:hover {
+  background: var(--highlight);
+}
+
+.onboarding-choice.primary-choice {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.onboarding-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .onboarding {
+    padding: 0.5rem 0;
+  }
+
+  .onboarding-card {
+    padding: 1.25rem;
+  }
+
+  .onboarding-card h2 {
+    font-size: 1.35rem;
+  }
+}

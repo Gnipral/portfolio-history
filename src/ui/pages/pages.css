@@ -1,0 +1,294 @@
+/*
+ * Shared by the pages outside the dashboard and the analysis: the page heading, notes in table cells, choice
+ * lists, the bottom bar and forms, in the report-like style of base.css.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.page-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 2rem;
+}
+
+.page-head h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.page-head p {
+  margin: 0;
+  max-width: 90ch;
+}
+
+.page-head-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* The older .table in global.css is a block for scrolling; here the scroll is on .table-scroll. */
+.page .table {
+  display: table;
+  font-size: 0.8125rem;
+}
+
+.page .table tr:last-child td {
+  border-bottom: none;
+}
+
+.page .table td.num,
+.page .table th.num {
+  font-size: 0.8rem;
+}
+
+.cell-note {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.row-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row-actions button + button {
+  margin-left: 0.5rem;
+}
+
+.table-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.page h4.label-caps {
+  margin: 0;
+}
+
+/* Callouts: a thin rule, the kind told by its first line, not by colour. */
+.page .callout {
+  padding: 0.75rem 1rem;
+}
+
+.page .callout.error,
+.page .callout.warning {
+  border-color: var(--border-strong);
+}
+
+.page .callout ul {
+  margin: 0.4rem 0;
+  padding-left: 1.1rem;
+}
+
+.page .callout p {
+  margin: 0 0 0.5rem;
+}
+
+.page .callout p:last-child {
+  margin-bottom: 0;
+}
+
+/* A button that reads as a link, inside a sentence or a row. */
+.link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  text-transform: none;
+  letter-spacing: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+button.danger {
+  border-color: var(--border-strong);
+}
+
+/* A list of choices, each a row with a radio, its name and a line on what it does. */
+.choice-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.choice {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1rem 1.1rem;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.choice:last-child {
+  border-right: none;
+}
+
+.choice.chosen {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+.choice input {
+  margin-top: 0.2rem;
+}
+
+.choice > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* A bar at the bottom of the window with the page's main action. */
+.bottom-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+  padding: 0.85rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+}
+
+/* Forms: a label above its control, a note under it. */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem 2rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.field > .label-caps {
+  color: var(--text);
+}
+
+.field .note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.field input:not([type='radio']):not([type='checkbox']),
+.field select {
+  width: 100%;
+}
+
+/* Radios and checkboxes keep their own size; base.css pads every input. */
+.page input[type='radio'],
+.page input[type='checkbox'] {
+  width: auto;
+  padding: 0;
+  margin: 0.2rem 0 0;
+  flex: none;
+}
+
+.page fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.page fieldset legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.page fieldset label:not(.choice):not(.radio) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+@media (max-width: 640px) {
+  .choice {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .choice:last-child {
+    border-bottom: none;
+  }
+
+  .page-head h2 {
+    font-size: 1.4rem;
+  }
+}
+
+/* Data check: square marks, the problems filled. */
+.data-check-page .checks {
+  padding: 0 1.1rem;
+}
+
+.data-check-page .check-icon {
+  border-radius: 0;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.data-check-page .check-problem .check-icon {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.data-check-page .check-ok .check-icon {
+  background: none;
+  color: var(--text);
+}
+
+.data-check-page .check-count {
+  color: var(--text-muted);
+}
+
+/* Headers stay in the label font; dates are figures but read from the left. */
+.page .table th.num {
+  font-family: var(--font);
+}
+
+.page .table td.date {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Buttons that read as links, side by side in a cell. */
+.page td .link-button + .link-button {
+  margin-left: 0.6rem;
+}
+
+.page .panel > p:first-child {
+  margin-top: 0;
+}
