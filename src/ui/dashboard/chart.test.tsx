@@ -64,7 +64,7 @@ describe('chartData', () => {
 
 // Minimal stand-in for lightweight-charts: records calls and lets the test move the crosshair and click.
 const chartMock = vi.hoisted(() => {
-  type Handler = (param: { time?: string; logical?: number; point?: { x: number; y: number } }) => void
+  type Handler = (param: { time?: string; logical?: number; point?: { x: number; y: number }; sourceEvent?: { clientX: number; clientY: number } }) => void
   const state: { move: Handler | undefined; click: Handler | undefined; crosshair: unknown[][]; data: unknown[][]; ranges: unknown[]; markers: unknown[][] } = {
     move: undefined,
     click: undefined,
@@ -133,10 +133,18 @@ describe('PortfolioChart', () => {
   it('reports the day under the pointer, and null when the pointer leaves', () => {
     const onHover = vi.fn()
     render(<PortfolioChart points={points} window={all} inspected={2} mode="eur" onHover={onHover} />)
-    act(() => chartMock.state.move?.({ time: '2026-10-16', logical: 1, point: { x: 10, y: 10 } }))
+    act(() => chartMock.state.move?.({ time: '2026-10-16', logical: 1, point: { x: 10, y: 10 }, sourceEvent: { clientX: 10, clientY: 10 } }))
     expect(onHover).toHaveBeenLastCalledWith(1)
     act(() => chartMock.state.move?.({}))
     expect(onHover).toHaveBeenLastCalledWith(null)
+  })
+
+  it('does not take the crosshair set to the playhead for a hover', () => {
+    const onHover = vi.fn()
+    render(<PortfolioChart points={points} window={all} inspected={2} mode="eur" onHover={onHover} />)
+    // setCrosshairPosition reports a move to a point, but without a pointer event behind it.
+    act(() => chartMock.state.move?.({ time: '2026-10-17', logical: 2, point: { x: 20, y: 10 } }))
+    expect(onHover).not.toHaveBeenCalled()
   })
 
   it('pins the clicked day', () => {

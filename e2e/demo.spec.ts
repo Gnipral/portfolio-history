@@ -251,7 +251,12 @@ test('the timeline: the playhead is taken a little next to it, and the window it
   const box = await strip.boundingBox()
   if (!box) throw new Error('The timeline should be drawn')
   const window = page.getByTestId('timeline-window')
-  const before = await window.boundingBox()
+  // Only where it sits on the strip counts: the page can shift up or down when the panel changes.
+  const across = async () => {
+    const b = await window.boundingBox()
+    return b ? { x: Math.round(b.x), width: Math.round(b.width) } : null
+  }
+  const before = await across()
   const last = Number(await strip.getAttribute('aria-valuemax'))
   expect(Number(await strip.getAttribute('aria-valuenow'))).toBe(last)
 
@@ -264,7 +269,7 @@ test('the timeline: the playhead is taken a little next to it, and the window it
   const middle = Number(await strip.getAttribute('aria-valuenow'))
   expect(middle).toBeLessThan(last)
   expect(Math.abs(middle - last / 2)).toBeLessThan(last * 0.05)
-  expect(await window.boundingBox()).toEqual(before)
+  expect(await across()).toEqual(before)
 
   // Dragging inside the window moves the playhead with it, never the window.
   await page.mouse.move(box.x + box.width * 0.3, y)
@@ -272,6 +277,34 @@ test('the timeline: the playhead is taken a little next to it, and the window it
   await page.mouse.move(box.x + box.width * 0.2, y, { steps: 5 })
   await page.mouse.up()
   expect(Number(await strip.getAttribute('aria-valuenow'))).toBeLessThan(middle)
-  expect(await window.boundingBox()).toEqual(before)
+  expect(await across()).toEqual(before)
+  expect(errors).toEqual([])
+})
+
+test('the side panel and the chart labels follow the playhead of the timeline, every time', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'dragging with a mouse')
+  const errors = watchErrors(page)
+  await openDemo(page)
+  const strip = page.getByRole('slider', { name: 'Playhead' })
+  await strip.scrollIntoViewIfNeeded()
+  const box = await strip.boundingBox()
+  if (!box) throw new Error('The timeline should be drawn')
+  const day = page.locator('.inspection-day')
+  const valueLabel = page.locator('.point-label').first()
+  let previous = ''
+  const y = box.y + box.height / 2
+  const chart = page.locator('.chart-wrapper canvas').first()
+  for (const share of [0.5, 0.3, 0.8, 0.6]) {
+    // Over the chart first, as on the way to the timeline: the hover must not stick.
+    const area = await chart.boundingBox()
+    if (area) await page.mouse.move(area.x + area.width * 0.4, area.y + area.height * 0.5, { steps: 3 })
+    await page.mouse.move(box.x + box.width * share, y, { steps: 3 })
+    await page.mouse.click(box.x + box.width * share, y)
+    const playhead = await strip.getAttribute('aria-valuetext')
+    await expect(day).toHaveAttribute('data-date', playhead ?? '')
+    // The value next to the line is that of the new day.
+    await expect(valueLabel).not.toHaveText(previous)
+    previous = (await valueLabel.textContent()) ?? ''
+  }
   expect(errors).toEqual([])
 })
