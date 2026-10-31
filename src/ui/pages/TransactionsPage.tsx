@@ -2,6 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { db } from '../../data/db.ts'
+import { DownloadCsvButton } from '../components/DownloadCsvButton.tsx'
+import { transactionRows } from '../csvTables.ts'
 import {
   buildTransaction,
   deleteTransaction,
@@ -98,14 +100,23 @@ export function TransactionsPage() {
 
       {transactions.length > 0 && (
         <>
-          <input
-            type="search"
-            className="transactions-search"
-            aria-label={t('Search transactions')}
-            placeholder={t('Search product, ISIN, type or broker')}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          <div className="csv-row">
+            <input
+              type="search"
+              className="transactions-search"
+              aria-label={t('Search transactions')}
+              placeholder={t('Search product, ISIN, type or broker')}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {filtered.length > 0 && (
+              <DownloadCsvButton
+                rows={() => transactionRows(filtered)}
+                name={query.trim() ? `transactions-${localToday()}-search` : `transactions-${localToday()}`}
+                what={query.trim() ? t('the transactions found') : t('every transaction')}
+              />
+            )}
+          </div>
           <div className="table-scroll">
             <table className="table">
               <thead>

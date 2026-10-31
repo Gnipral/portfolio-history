@@ -5,6 +5,8 @@ import type { EngineOptions } from '../../engine/options.ts'
 import { computeDailySeries, type SeriesResult } from '../../engine/series.ts'
 import { localToday } from '../../market/dates.ts'
 import { formatEur, formatPercent } from '../format.ts'
+import { DownloadCsvButton } from '../components/DownloadCsvButton.tsx'
+import { chargesRows } from '../csvTables.ts'
 import { t } from '../../i18n/i18n.ts'
 
 interface Props {
@@ -64,7 +66,10 @@ export function CostsSection({ inputs, options, series }: Props) {
       {!counted && <p className="muted small">{t('Costs, taxes and FX costs are all switched off on the dashboard, so they do not lower its figures.')}</p>}
 
       <div className="panel">
-        <h3>{t('Per year')}</h3>
+        <div className="panel-header">
+          <h3>{t('Per year')}</h3>
+          <DownloadCsvButton rows={() => chargesRows(years, inputs.currency)} name={`costs-${localToday()}`} what={t('the costs per year')} />
+        </div>
         <table className="table">
           <thead>
             <tr>
