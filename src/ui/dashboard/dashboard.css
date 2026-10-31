@@ -1,0 +1,1090 @@
+/*
+ * The dashboard: figures of the period, the chart with its toolbar, side panel and timeline, the toggles, the
+ * allocation bar and the holdings. Grayscale from the tokens; only the benchmark has a colour.
+ */
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Title row: the title, the asset-type filter, and on the right the links and Share. */
+
+.dash-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+}
+
+.dash-title h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.dash-title-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.dash-title-tools .progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.dash-title-tools progress {
+  width: 120px;
+  height: 2px;
+  appearance: none;
+  border: none;
+  background: var(--border);
+  accent-color: var(--accent);
+}
+
+.dash-title-tools progress::-webkit-progress-bar {
+  background: var(--border);
+}
+
+.dash-title-tools progress::-webkit-progress-value {
+  background: var(--accent);
+}
+
+.data-check-link {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Chips: the asset-type filter, the saved periods and the benchmark choice. */
+
+.benchmark-picker,
+.period-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 -1px 0 0;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.chip:hover {
+  color: var(--text);
+}
+
+.chip[aria-pressed='true'] {
+  position: relative;
+  z-index: 1;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.chip-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--border);
+}
+
+/* The row of key figures of the period. */
+
+.dash-figures .figure-cell .figure {
+  font-size: 1.3rem;
+}
+
+.dash-summary {
+  margin: 0;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.dash-summary .label-caps {
+  margin-right: 0.5rem;
+}
+
+.dash-summary .figure {
+  font-weight: 600;
+}
+
+/* The chart block: toolbar, chart and side panel, timeline and saved periods, in one frame. */
+
+.dash-chart-block {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.dash-chart-block:fullscreen,
+.dash-chart-block.expanded {
+  overflow: auto;
+}
+
+.dash-chart-block.expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.dash-chart-block:fullscreen .chart,
+.dash-chart-block.expanded .chart {
+  height: calc(100vh - 230px);
+  min-height: 320px;
+}
+
+.chart-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.chart-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.legend-item.benchmark {
+  color: var(--benchmark);
+}
+
+.legend-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.legend-markers {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  color: var(--text-muted);
+}
+
+.swatch {
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  color: inherit;
+  background: var(--chart-value);
+}
+
+.swatch.secondary {
+  background: repeating-linear-gradient(90deg, var(--chart-invested) 0 3px, transparent 3px 5px);
+}
+
+.marker-swatch {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+}
+
+.marker-deposit {
+  background: var(--text);
+}
+
+.marker-buy {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 7px solid var(--text-muted);
+}
+
+.marker-sell {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 7px solid var(--text);
+}
+
+.marker-dividend {
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.chart-controls > button,
+.menu-button {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.65rem;
+}
+
+.chart-controls > button[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.chart-expand {
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+}
+
+/* Menus: a button that opens a small panel under it. */
+
+.menu {
+  position: relative;
+}
+
+.legend-benchmark .menu-button {
+  border: none;
+  padding: 0;
+  background: none;
+  font-size: inherit;
+  letter-spacing: inherit;
+  color: var(--benchmark);
+}
+
+.menu-panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 220px;
+  max-width: min(560px, 90vw);
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8125rem;
+  color: var(--text);
+}
+
+.menu-left {
+  left: 0;
+}
+
+.menu-right {
+  right: 0;
+}
+
+.menu-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.menu-check.disabled {
+  color: var(--text-faint);
+}
+
+.menu-radios {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.menu-panel .benchmark-picker {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.benchmark-method summary {
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.benchmark-method p {
+  margin: 0.4rem 0 0;
+  max-width: 48ch;
+}
+
+.benchmark-picker-search {
+  width: 100%;
+}
+
+.dashboard .link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  text-transform: none;
+  letter-spacing: 0;
+  text-decoration: underline;
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* The chart and the side panel next to each other. */
+
+.dash-chart {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.dash-chart.with-panel {
+  grid-template-columns: minmax(0, 1fr) 300px;
+}
+
+.dash-chart-area {
+  min-width: 0;
+  padding: 0.75rem 0.5rem 0.5rem 1rem;
+}
+
+.chart-wrapper {
+  position: relative;
+  background: var(--surface);
+}
+
+.chart {
+  height: 420px;
+}
+
+.chart-placeholder {
+  height: 420px;
+  background: var(--surface);
+}
+
+.pane-divider {
+  position: absolute;
+  z-index: 2;
+  height: 0;
+  border-top: 1px solid var(--chart-separator);
+  pointer-events: none;
+}
+
+.pane-label {
+  position: absolute;
+  top: 0;
+  left: 0.5rem;
+  transform: translateY(-50%);
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--chart-separator);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The name and value of each line, at its point on the inspected day. */
+.point-label {
+  position: absolute;
+  z-index: 3;
+  transform: translate(10px, -50%);
+  padding: 0.1rem 0.4rem;
+  color: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.point-label.flip {
+  transform: translate(calc(-100% - 10px), -50%);
+}
+
+/* The side panel: "State inspection". */
+
+.inspection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0.9rem 1rem 1rem;
+  border-left: 1px solid var(--border);
+  min-width: 0;
+}
+
+.inspection-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.inspection-head .label-caps {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.pinned {
+  padding: 0.1rem 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+}
+
+.inspection-date {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.inspection-day {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.inspection-trades {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.6rem 0.7rem;
+  list-style: none;
+  background: var(--highlight);
+}
+
+.inspection-trades li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 0.6rem;
+  font-size: 0.75rem;
+}
+
+.inspection-trades .figure {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.trade-product {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspection .kv dt,
+.inspection .kv dd {
+  padding: 0.35rem 0;
+  font-size: 0.7rem;
+}
+
+.inspection .kv dd {
+  font-size: 0.8rem;
+}
+
+.kv-row {
+  display: contents;
+}
+
+.kv-note {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.inspection .kv dt.benchmark,
+.inspection .kv dd.benchmark,
+.inspection .kv dd.benchmark .kv-note {
+  color: var(--benchmark);
+}
+
+/* Alpha: the one highlighted block of the panel. */
+.kv.alpha {
+  padding: 0.5rem 0.65rem;
+  background: var(--benchmark-soft);
+  border-left: 2px solid var(--benchmark);
+}
+
+.kv.alpha dt,
+.kv.alpha dd {
+  border-bottom: none;
+  color: var(--benchmark);
+}
+
+.kv.alpha dd {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.inspection-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.inspection .kv-small dt,
+.inspection .kv-small dd {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* The timeline: dates, the strip with its window and playhead, and the quick ranges. */
+
+.timeline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.timeline-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+}
+
+.timeline-date {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.timeline-date input {
+  padding: 0.25rem 0.4rem;
+  font-size: 0.75rem;
+}
+
+.timeline-strip {
+  position: relative;
+  height: 40px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  touch-action: none;
+  cursor: pointer;
+}
+
+.timeline-strip:focus-visible {
+  outline-offset: 3px;
+}
+
+.timeline-line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.timeline-line polyline {
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.timeline-shade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--surface-2) 75%, transparent);
+  pointer-events: none;
+}
+
+.timeline-window {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  min-width: 2px;
+  border: 1px solid var(--border-strong);
+  cursor: grab;
+}
+
+.timeline-window:active {
+  cursor: grabbing;
+}
+
+.timeline-days {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0 0.35rem;
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.timeline-handle {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 8px;
+  padding: 0;
+  border: none;
+  background: var(--border-strong);
+  cursor: ew-resize;
+}
+
+.timeline-handle::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 30%;
+  bottom: 30%;
+  width: 2px;
+  background: var(--surface);
+}
+
+.timeline-handle.start {
+  left: -4px;
+}
+
+.timeline-handle.end {
+  right: -4px;
+}
+
+.timeline-playhead {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text);
+  cursor: ew-resize;
+}
+
+.timeline-playhead::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -4px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--text);
+}
+
+/* Saved periods, as chips under the timeline. */
+
+.dash-chart-block .period-bar {
+  padding: 0.6rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.period-chip {
+  display: inline-flex;
+  margin-right: 0.4rem;
+}
+
+.period-remove {
+  margin-left: -1px;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.period-save {
+  border-style: dashed;
+}
+
+.period-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* What counts in the result: one thin row, folded by default. */
+
+.result-toggles {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.result-toggles-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.55rem 0;
+  border: none;
+  background: none;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.result-toggles-row:hover {
+  border: none;
+}
+
+.result-toggles-summary {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.result-toggles-row > span[aria-hidden] {
+  margin-left: auto;
+  color: var(--text-muted);
+}
+
+.result-toggles-body {
+  padding: 0 0 1rem;
+}
+
+.result-toggles-body > p {
+  margin: 0 0 0.75rem;
+}
+
+.toggle-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem 2rem;
+}
+
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.toggle-group legend {
+  margin-bottom: 0.35rem;
+}
+
+label.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+
+label.toggle input {
+  margin-top: 0.2rem;
+}
+
+label.toggle.disabled {
+  cursor: not-allowed;
+  color: var(--text-faint);
+}
+
+.toggle-label {
+  display: block;
+  font-size: 0.8125rem;
+}
+
+.toggle-description {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Allocation: one thin stacked bar with a legend. */
+
+.allocation-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.allocation-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+
+.allocation-head h3 {
+  font-size: 0.6875rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.allocation-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem 1.25rem;
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+  font-size: 0.7rem;
+}
+
+.allocation-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.allocation-legend i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--border);
+}
+
+.allocation-legend .legend-name {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.allocation-legend .figure {
+  color: var(--text-muted);
+}
+
+.allocation-track {
+  display: flex;
+  height: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.allocation-track span {
+  height: 100%;
+  border-right: 1px solid var(--surface);
+}
+
+.allocation-track span:last-child {
+  border-right: none;
+}
+
+/* The holdings, with rows that open in place. */
+
+.dash-holdings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.dash-holdings-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.dash-holdings-head h3 {
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.dash-holdings-head > :nth-child(3) {
+  margin-left: auto;
+}
+
+.table.holdings td {
+  vertical-align: middle;
+}
+
+.table.holdings .isin {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.holding-name {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.875rem;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  color: var(--text);
+}
+
+.holding-facts {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.table tr.clickable {
+  cursor: pointer;
+}
+
+.table tr.selected td {
+  background: var(--highlight);
+}
+
+.table .holding-detail td {
+  padding: 0.75rem;
+  background: var(--surface);
+}
+
+.sort-button {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+
+.sort-button:hover {
+  border: none;
+  color: var(--text);
+}
+
+.dashboard .badge {
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The chart of one position, in its opened row. */
+.chart.position-chart {
+  height: 260px;
+}
+
+.holding-detail .chart-legend {
+  margin-bottom: 0.5rem;
+}
+
+/* Phones: not designed yet, but nothing may break: the panel goes under the chart. */
+@media (max-width: 900px) {
+  .dash-chart.with-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inspection {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .timeline {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .timeline-dates {
+    flex-wrap: wrap;
+  }
+
+  .chart-controls {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .chart,
+  .chart-placeholder {
+    height: 300px;
+  }
+
+  .dash-title-tools {
+    margin-left: 0;
+  }
+}
+
+/* The chart grows to the height of the side panel beside it. */
+.dash-chart-area {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-chart-area > .chart-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-chart-area .chart {
+  flex: 1;
+  height: auto;
+  min-height: 420px;
+}
+
+/* The profit of the day, its month, its year and since the start: a 2 × 2 grid. */
+.inspection-profits {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.inspection-profits > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0.5rem;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+}
+
+.inspection-profits .label-caps {
+  font-size: 0.6rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspection-profits .figure {
+  font-size: 0.8rem;
+}
+
+/* The older .table is a block for scrolling; the holdings scroll in their wrapper, so they are a table again. */
+.table.holdings {
+  display: table;
+}
+
+/* Column headers stay in the label font; only the figures are monospace. */
+.table.holdings th.num {
+  font-family: var(--font);
+}

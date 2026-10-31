@@ -72,21 +72,6 @@
   align-items: center;
 }
 
-/* How the benchmark is simulated, on its own line under the chips. */
-.benchmark-method {
-  flex-basis: 100%;
-}
-
-.benchmark-method summary {
-  cursor: pointer;
-  color: var(--text-muted);
-}
-
-.benchmark-method p {
-  margin: 0.4rem 0 0;
-  max-width: 70ch;
-}
-
 .callout.warning {
   border-left-color: var(--warning);
 }
@@ -376,23 +361,6 @@ code {
   font-size: 1.6rem;
 }
 
-.cards-title {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.time-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
 /* A pill dock: the active segment is a tinted pill in accent color. */
 .segmented {
   display: inline-flex;
@@ -426,192 +394,10 @@ code {
   color: var(--accent);
 }
 
-/* Phones: the eight quick ranges share the full width instead of scrolling. */
-@media (max-width: 640px) {
-  .time-controls .segmented {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .time-controls .segmented button {
-    padding: 0.3rem 0.4rem;
-  }
-}
-
-.timeline {
-  flex: 1;
-  min-width: 160px;
-  accent-color: var(--accent);
-  padding: 0;
-  border: none;
-  background: none;
-}
-
-.chart-wrapper {
-  position: relative;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 0.75rem;
-}
-
-.chart {
-  height: 440px;
-}
-
-/* Full screen: the browser's own, or (iPhone) the chart filling the window. */
-.chart-wrapper:fullscreen,
-.chart-wrapper.expanded {
-  display: flex;
-  flex-direction: column;
-  border: none;
-  border-radius: 0;
-  background: var(--surface);
-}
-
-.chart-wrapper.expanded {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  padding-top: max(0.75rem, env(safe-area-inset-top));
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
-}
-
-.chart-wrapper:fullscreen .chart,
-.chart-wrapper.expanded .chart {
-  flex: 1;
-  height: auto;
-  min-height: 0;
-}
-
-/* Legend and full-screen button in a bar above the chart, so they never cover the lines or axis. */
-.chart-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.chart-expand {
-  flex: none;
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  padding: 0;
-  background: color-mix(in srgb, var(--surface-2) 90%, transparent);
-}
-
-.chart-expand svg {
-  width: 18px;
-  height: 18px;
-}
-
 .chart-legend,
 .chart-tooltip {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-}
-
-.chart-legend {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 1.1rem;
-  min-height: 2.25rem;
-  padding-left: 0.15rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.swatch {
-  display: inline-block;
-  width: 14px;
-  height: 4px;
-  border-radius: 2px;
-  vertical-align: middle;
-  margin-right: 0.15rem;
-  background: var(--chart-value);
-}
-
-.swatch.secondary {
-  background: repeating-linear-gradient(90deg, var(--chart-invested) 0 3px, transparent 3px 5px);
-}
-
-.swatch.pnl {
-  background: linear-gradient(90deg, var(--chart-positive) 50%, var(--chart-negative) 50%);
-}
-
-/*
- * The boundary between the value and the profit pane: a line over the plot area only (it stops
- * where the price axis starts, so it never covers a label there) with the pane's name on it.
- */
-.pane-divider {
-  position: absolute;
-  z-index: 2;
-  height: 0;
-  border-top: 2px solid var(--chart-separator);
-  transform: translateY(-1px);
-  pointer-events: none;
-}
-
-.pane-label {
-  position: absolute;
-  top: 0;
-  left: 0.5rem;
-  transform: translateY(-50%);
-  padding: 0.1rem 0.55rem;
-  border: 2px solid var(--chart-separator);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--text);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-@media (max-width: 640px) {
-  .chart {
-    height: 300px;
-  }
-}
-
-.sort-button {
-  background: none;
-  border: none;
-  padding: 0;
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-  white-space: nowrap;
-}
-
-.sort-button:hover {
-  color: var(--text);
-}
-
-.positions td {
-  vertical-align: top;
-}
-
-.positions .badge {
-  margin-left: 0.35rem;
-}
-
-.positions {
-  display: table;
-}
-
-@media (max-width: 900px) {
-  .positions {
-    display: block;
-  }
 }
 
 .dashboard-grid {
@@ -646,57 +432,11 @@ code {
   font-size: 1.2rem;
 }
 
-.allocation {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 1rem;
-}
-
-.allocation-chart {
-  height: 220px;
-}
-
-.allocation-legend {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.85rem;
-}
-
-.allocation-legend li {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .legend-dot {
   width: 10px;
   height: 10px;
   border-radius: 3px;
   flex: none;
-}
-
-.legend-label {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.legend-value {
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
 }
 
 .chart-tooltip {
@@ -711,84 +451,8 @@ code {
   font-size: 0.85rem;
 }
 
-.chart-placeholder {
-  height: 510px;
-}
-
-.swatch.benchmark {
-  background: var(--series-2);
-}
-
 .table .num {
   white-space: nowrap;
-}
-
-.toggle-bar {
-  margin: 0;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  font-size: 0.9rem;
-}
-
-.toggle-bar legend {
-  padding: 0 0.25rem;
-  font-weight: 600;
-}
-
-.toggle-intro {
-  margin: 0 0 0.75rem;
-}
-
-.toggle-groups {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 0.75rem 1.5rem;
-}
-
-.toggle-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.toggle-group-title {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.toggle-bar label.toggle {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-
-.toggle-bar label.toggle.disabled {
-  cursor: not-allowed;
-}
-
-.toggle-bar input {
-  margin: 0.2rem 0 0;
-  accent-color: var(--accent);
-}
-
-.toggle-label {
-  display: block;
-}
-
-.toggle-bar label.disabled .toggle-label {
-  color: var(--text-muted);
-}
-
-.toggle-description {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--text-muted);
 }
 
 .radio-group {
@@ -844,14 +508,6 @@ button.danger:hover {
   cursor: pointer;
 }
 
-.position-detail h4 {
-  margin: 0;
-}
-
-.chart.position-chart {
-  height: 260px;
-}
-
 .income-chart {
   height: 220px;
 }
@@ -898,58 +554,6 @@ button.danger:hover {
 
 progress {
   accent-color: var(--accent);
-}
-
-/* Benchmarks under the chart: one chip per fund, colored like its line when switched on. */
-.benchmark-picker {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  margin-top: -0.25rem;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: 2rem;
-  padding: 0.25rem 0.75rem;
-  background: var(--surface);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-}
-
-.chip[aria-pressed='true'] {
-  color: var(--text);
-  border-color: var(--chart-separator);
-  background: var(--surface-2);
-}
-
-.chip-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid var(--text-muted);
-  flex: none;
-}
-
-/* On but without a line yet (prices still loading): a grey dot until the line's color is known. */
-.chip[aria-pressed='true'] .chip-dot {
-  border-color: transparent;
-  background: var(--text-muted);
-}
-
-/* Share card: a picture of the return in percent, in a dialog over the dashboard. */
-.share-button {
-  margin-left: auto;
 }
 
 .share-backdrop {
@@ -1041,71 +645,6 @@ progress {
   flex-basis: 100%;
 }
 
-.connection-notice {
-  display: grid;
-  gap: 0.2rem;
-  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
-}
-
-.connection-notice p {
-  margin: 0;
-}
-
-/* Profit per period: four tiles, then the best and worst position and the gap with the benchmark. */
-.profit-overview {
-  display: grid;
-  gap: 1rem;
-}
-
-.profit-periods {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.profit-period {
-  display: grid;
-  gap: 0.2rem;
-  padding: 0.75rem 0.9rem;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.profit-eur {
-  font-family: var(--font-mono);
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.profit-facts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.profit-facts li {
-  display: grid;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.profit-facts strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@media (max-width: 640px) {
-  .profit-periods,
-  .profit-facts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 .palette-picker {
   display: grid;
   gap: 0.5rem;
@@ -1136,122 +675,6 @@ progress {
   width: 14px;
   height: 22px;
   border-radius: 3px;
-}
-
-/* Chart style: a bar between the legend and the chart, so nothing of the chart is covered. */
-.chart-style-button {
-  margin-left: auto;
-}
-
-.chart-style-button + .chart-expand {
-  margin-left: 0;
-}
-
-.chart-style-button[aria-expanded='true'] {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.chart-style-panel {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem 1.5rem;
-  margin-bottom: 0.75rem;
-  padding: 0.75rem 0.9rem;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-
-.chart-style-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-}
-
-.chart-style-close {
-  margin-left: auto;
-  padding: 0.3rem 0.9rem;
-  font-size: 0.85rem;
-}
-
-.chip .palette-swatches i {
-  width: 6px;
-  height: 14px;
-  border-radius: 2px;
-}
-
-.chip:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-
-/* With a palette, the chart block is one colored card: its own background, text and borders. */
-.chart-block[data-palette] {
-  padding: 0.75rem;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.chart-block[data-palette] .chart-wrapper {
-  padding: 0;
-  border: none;
-  box-shadow: none;
-}
-
-.chart-block[data-palette] .muted {
-  color: var(--text-muted);
-}
-
-/* Saved periods: chips to open one, a small cross to remove it, and an inline form to name one. */
-.period-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-}
-
-.period-chip {
-  display: inline-flex;
-  align-items: center;
-}
-
-.period-chip .chip {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.period-remove {
-  min-height: 2rem;
-  padding: 0 0.55rem;
-  border-left: none;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  background: var(--surface);
-  color: var(--text-muted);
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.period-save {
-  border-style: dashed;
-}
-
-.period-form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  flex-basis: 100%;
-}
-
-.period-form input {
-  min-width: 14rem;
 }
 
 .transactions-search {
@@ -1494,18 +917,6 @@ progress {
   color: var(--negative);
 }
 
-/* Shown while the chart is zoomed in; it takes the place where the chart buttons start. */
-.chart-zoom-reset {
-  flex: none;
-  margin-left: auto;
-  padding: 0.3rem 0.65rem;
-  font-size: 0.8rem;
-}
-
-.chart-zoom-reset + .chart-expand {
-  margin-left: 0;
-}
-
 /* A product switched off on the Prices page. */
 .table tr.excluded td {
   opacity: 0.55;
@@ -1536,58 +947,6 @@ progress {
 .benchmark-results .link-button {
   text-align: left;
   font-size: 0.9rem;
-}
-
-.benchmark-picker-search {
-  flex-basis: 100%;
-  max-width: 32rem;
-}
-
-/* Name and value of a line, next to its point at the day under the pointer. */
-.point-label {
-  position: absolute;
-  z-index: 2;
-  transform: translate(8px, -50%);
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  color: #fff;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 600;
-  white-space: nowrap;
-  pointer-events: none;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
-}
-
-.point-label.flip {
-  transform: translate(calc(-100% - 8px), -50%);
-}
-
-.toggle-bar-heading {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.toggle-bar-summary {
-  font-weight: 400;
-}
-
-.toggle-bar.folded {
-  padding-bottom: 0.25rem;
-}
-
-.toggle-bar.folded {
-  border-color: transparent;
-  background: none;
-  padding: 0 0.25rem;
 }
 
 /* Data check: one row per check, problems first. */

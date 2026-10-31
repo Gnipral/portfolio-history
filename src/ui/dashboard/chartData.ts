@@ -20,9 +20,9 @@ export interface ChartData {
 }
 
 /**
- * Chart lines for the visible days. In percent mode the time-weighted return starts at 0 on the
- * first visible day, so a 1M range shows the return of that month. The simple return is measured
- * since the first transaction and cannot be rebased, so it is only shown for the full history.
+ * Chart lines for the days `from` to `to`. In percent mode the time-weighted return starts at 0 on the day
+ * `base` (the first visible day, `from` unless given), so a 1M window shows the return of that month. The
+ * simple return is measured since the first transaction and cannot be rebased, so it is not drawn in percent.
  */
 export function chartData(
   points: DailyPoint[],
@@ -30,6 +30,7 @@ export function chartData(
   to: number,
   mode: ChartMode,
   benchmarkLines: BenchmarkPoint[][] = [],
+  base: number = from,
 ): ChartData {
   const visible = points.slice(from, to + 1)
   if (mode === 'eur') {
@@ -40,13 +41,13 @@ export function chartData(
       pnl: visible.map((p) => ({ time: p.date, value: round(p.pnl) })),
     }
   }
-  const base = 1 + (from > 0 ? (points[from - 1]?.twr ?? 0) : 0)
+  const start = 1 + (base > 0 ? (points[base - 1]?.twr ?? 0) : 0)
   return {
     benchmarks: benchmarkLines.map((line) => {
-      const lineBase = 1 + (from > 0 ? (line[from - 1]?.twr ?? 0) : 0)
+      const lineBase = 1 + (base > 0 ? (line[base - 1]?.twr ?? 0) : 0)
       return line.slice(from, to + 1).map((p) => ({ time: p.date, value: round(((1 + p.twr) / lineBase - 1) * 100) }))
     }),
-    main: visible.map((p) => ({ time: p.date, value: round(((1 + p.twr) / base - 1) * 100) })),
+    main: visible.map((p) => ({ time: p.date, value: round(((1 + p.twr) / start - 1) * 100) })),
     // No invested line in percent: the simple return moves with deposits, and the percentages show prices only.
     secondary: [],
     pnl: [],

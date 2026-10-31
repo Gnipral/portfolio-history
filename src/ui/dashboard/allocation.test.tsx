@@ -1,9 +1,9 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { tx } from '../../engine/testing.ts'
 import type { Position } from '../../engine/positions.ts'
 import { allocationSlices, colorSlots, groupedSlices, instrumentFacts, SERIES_SLOTS } from './allocation.ts'
-import { AllocationChart } from './AllocationChart.tsx'
+import { AllocationBar } from './AllocationBar.tsx'
 
 const position = (key: string, value: number): Position => ({
   key,
@@ -58,19 +58,26 @@ describe('allocationSlices', () => {
   })
 })
 
-describe('AllocationChart', () => {
-  it('names every slice with its share in the legend', () => {
-    render(
-      <AllocationChart
-        slices={[
-          { key: 'B', label: 'Beta', value: 500, share: 0.625, slot: 1 },
-          { key: 'other', label: 'Other', value: 300, share: 0.375, slot: 0 },
-        ]}
-      />,
-    )
+describe('AllocationBar', () => {
+  const slices = [
+    { key: 'other', label: 'Other', value: 300, share: 0.375, slot: 0 },
+    { key: 'B', label: 'Beta', value: 500, share: 0.625, slot: 1 },
+  ]
+
+  it('draws one segment per slice, largest first, and names each with its share', () => {
+    render(<AllocationBar slices={slices} dimension="position" onDimension={() => {}} />)
     expect(screen.getByText('Beta')).toBeTruthy()
-    expect(screen.getByText('62.50%')).toBeTruthy()
-    expect(screen.getByRole('img', { name: /Allocation/ })).toBeTruthy()
+    expect(screen.getByText(/62\.50%/)).toBeTruthy()
+    const track = screen.getByRole('img', { name: /Beta 62\.50%, Other 37\.50%/ })
+    expect([...track.children].map((segment) => (segment as HTMLElement).style.width)).toEqual(['62.5%', '37.5%'])
+  })
+
+  it('switches between type, position, currency and country', () => {
+    const onDimension = vi.fn()
+    render(<AllocationBar slices={slices} dimension="assetClass" onDimension={onDimension} />)
+    expect(screen.getByRole('button', { name: 'Type' }).getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: 'Country' }))
+    expect(onDimension).toHaveBeenCalledWith('country')
   })
 })
 

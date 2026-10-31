@@ -18,8 +18,8 @@ interface FlowPoint {
   outflow: number
 }
 
-/** Categorical slots for benchmark lines; never cyan or blue, which is the portfolio's own value line. */
-const COLORS = ['--series-2', '--series-7', '--series-5', '--series-6']
+/** The first benchmark in the one accent colour of the app; more of them in grays, told apart by their pattern. */
+const COLORS = ['--benchmark', '--series-3', '--series-5', '--series-6']
 
 export function shortLabel(benchmark: LoadedBenchmark): string {
   return benchmark.info.symbol.split('.')[0] ?? benchmark.info.id
