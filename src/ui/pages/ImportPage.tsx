@@ -15,12 +15,14 @@ import { Rich } from '../../i18n/Rich.tsx'
 type State =
   | { phase: 'idle' }
   | { phase: 'reading' }
-  | { phase: 'error'; message: string; details: string[] }
+  | { phase: 'error'; message: string; details: string[]; report?: string | undefined }
   | { phase: 'preview'; result: ImportResult; files: string[]; confirmReplace: boolean }
   | { phase: 'saving' }
   | { phase: 'done'; count: number; skipped: number }
 
 const ACCEPT = '.csv,.xlsx,.xls'
+
+const ISSUES_URL = 'https://github.com/Gnipral/portfolio-history/issues/new'
 
 /** Which file to export at each supported broker. */
 const BROKERS: [string, string][] = [
@@ -55,7 +57,7 @@ export function ImportPage() {
       const result = importTables(tables, { context: await loadImportContext() })
       setState({ phase: 'preview', result, files: files.map((f) => f.name), confirmReplace: false })
     } catch (error) {
-      if (error instanceof ImportError) setState({ phase: 'error', message: error.message, details: error.details })
+      if (error instanceof ImportError) setState({ phase: 'error', message: error.message, details: error.details, report: error.report })
       else setState({ phase: 'error', message: t('The file could not be read.'), details: [String(error)] })
     }
   }
@@ -102,7 +104,7 @@ export function ImportPage() {
     <section className="stack">
       <h2>{t('Import')}</h2>
       <p className="muted">
-        {t('Import the export of one broker; the broker is recognized from the file. Select several files at once when a broker splits its history over more files, and import the next broker afterwards to combine them in one portfolio. Your data is processed and stored only on this device.')}
+        {t('Import the export of one broker; the broker is recognized from the file. Select several files at once when a broker splits its history over more files, and import the next broker afterwards to combine them in one portfolio. Your data is processed and stored only on this device. Once loaded, the app works offline: turn off Wi-Fi and import to check.')}
       </p>
       <p className="muted small demo-hint">
         <Rich
@@ -157,6 +159,7 @@ export function ImportPage() {
               ))}
             </ul>
           )}
+          {state.report && <ReportUnsupported report={state.report} />}
         </div>
       )}
 
@@ -211,5 +214,35 @@ export function ImportPage() {
         </>
       )}
     </section>
+  )
+}
+
+/** The header rows of a file no broker recognized, to share so the broker can be added without anyone posting an export. */
+function ReportUnsupported({ report }: { report: string }) {
+  const [copied, setCopied] = useState(false)
+  const fence = '```'
+  const body = `Broker and export: \n\nColumn headers:\n${fence}\n${report}\n${fence}\n`
+  const issue = `${ISSUES_URL}?${new URLSearchParams({ title: 'Export not recognized', body })}`
+
+  async function copy() {
+    await navigator.clipboard.writeText(report)
+    setCopied(true)
+  }
+
+  return (
+    <div className="report-unsupported">
+      <p className="small">
+        {t('Is your broker missing? Share only the column headers below: no transactions, amounts or names. Check them first.')}
+      </p>
+      <pre>{report}</pre>
+      <div className="actions">
+        <button type="button" onClick={() => void copy()}>
+          {copied ? t('Copied') : t('Copy the headers')}
+        </button>
+        <a href={issue} target="_blank" rel="noreferrer">
+          {t('Report on GitHub')}
+        </a>
+      </div>
+    </div>
   )
 }

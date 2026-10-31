@@ -623,6 +623,37 @@ button:disabled {
   border-left-color: var(--positive);
 }
 
+/* The header rows of an unrecognized export, to copy into a report. */
+.report-unsupported pre {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.report-unsupported .actions {
+  align-items: center;
+}
+
+/* How the benchmark is simulated, on its own line under the chips. */
+.benchmark-method {
+  flex-basis: 100%;
+}
+
+.benchmark-method summary {
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.benchmark-method p {
+  margin: 0.4rem 0 0;
+  max-width: 70ch;
+}
+
 .callout.warning {
   border-left-color: var(--warning);
 }

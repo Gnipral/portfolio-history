@@ -32,7 +32,7 @@ The screenshots show the demo portfolio; all names and numbers in it are made up
    - the profit of the selected day, its month, its year and since the start, in euros and percent, with the best and the worst position and how much more or less the same money made in the benchmark;
    - cards for value, invested capital, profit/loss, simple return, time-weighted return (TWR) and money-weighted return (XIRR) on the selected day;
    - the positions and an allocation chart for that day, by position, type, currency or country of the ISIN; click a position for its own chart with its trades;
-   - benchmarks (MSCI World, FTSE All-World, S&P 500 ETF, any stock, fund or index found with the search, or your own mix of them) bought and sold with exactly the same money on the same days. The default is set in Settings; under the chart you compare with something else for a moment;
+   - benchmarks (MSCI World, FTSE All-World, S&P 500 ETF, any stock, fund or index found with the search, or your own mix of them) bought and sold with exactly the same money on the same days. The default is set in Settings; under the chart you compare with something else for a moment. The built-in ones are accumulating ETFs quoted in EUR, so their dividends are reinvested inside the fund and already in the price; other currencies are converted at the ECB rate of the day. Broker fees and taxes (such as TOB) are left out of the benchmark. "How is this compared?" under the chart says the same;
    - a **Share** button that makes a picture of the time-weighted return over the chosen period (post or story size), optionally against a benchmark, with the mix by type and with your positions (their weight and return, the largest or the best first; a large portfolio sums up the rest in one row), plus a text to paste with it, or a link that opens the card read-only (the card itself is compressed into the part after #, so no server ever sees it). It never shows amounts or quantities, and product names only when you choose to show the positions;
    - toggles to include or exclude dividends, transaction costs, taxes, FX costs and deposits. Options the export has no data for are disabled, with the reason.
 4. **Analysis**, per year:
@@ -50,7 +50,7 @@ Everything works without an account. Where the optional account service is set u
 
 ### Privacy
 
-Without an account there is no backend. Transactions, prices and settings live in your browser's IndexedDB and never leave the device. The only outgoing requests are for market data: tickers, ISINs and date ranges, never quantities or amounts. **Settings → Delete all data** wipes everything, including the price cache and API keys.
+Without an account there is no backend. Transactions, prices and settings live in your browser's IndexedDB and never leave the device. The only outgoing requests are for market data: tickers, ISINs and date ranges, never quantities or amounts. To check: load the app once, turn off Wi-Fi, and import an export. A file that no broker recognizes shows only its column headers, with a button to copy them and a link to report it on GitHub, so a missing broker can be added without anyone sharing an export. **Settings → Delete all data** wipes everything, including the price cache and API keys.
 
 ### Offline
 

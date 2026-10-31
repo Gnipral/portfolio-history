@@ -56,10 +56,41 @@ export class ImportError extends Error {
   constructor(
     message: string,
     readonly details: string[] = [],
+    /** What can be shared to get a file supported: file types and header rows only, no transactions. */
+    readonly report?: string,
   ) {
     super(message)
     this.name = 'ImportError'
   }
+}
+
+/**
+ * The header row of every unrecognized spreadsheet, to report a missing broker without sharing the
+ * export. File names are left out (they can hold an account number), and so are PDFs: their first
+ * line is often a name or an address rather than a header.
+ */
+function unsupportedReport(tables: RawTable[]): string | undefined {
+  const sheets = tables.filter((table) => table.text === undefined)
+  if (sheets.length === 0) return undefined
+  return sheets
+    .map((table) => {
+      const type = table.fileName.split('.').pop()?.toUpperCase() ?? '?'
+      const sheet = table.sheetName ? `, sheet "${table.sheetName}"` : ''
+      return `${type}${sheet}: ${likelyHeader(table.rows)?.join(' | ') ?? '(no header row found)'}`
+    })
+    .join('\n')
+}
+
+/**
+ * The first of the top rows that looks like a header: at least three cells, all text without digits.
+ * Preamble lines above it (account holder, account number, period) and data rows are never taken.
+ */
+function likelyHeader(rows: RawTable['rows']): string[] | undefined {
+  for (const row of rows.slice(0, 20)) {
+    const cells = row.filter((c) => c !== null && String(c).trim() !== '').map((c) => String(c).trim())
+    if (cells.length >= 3 && cells.every((c) => typeof c === 'string' && !/\d/.test(c))) return cells
+  }
+  return undefined
 }
 
 function describe(table: RawTable): string {
@@ -97,6 +128,7 @@ export function importTables(tables: RawTable[], { context, candidates = adapter
         const header = table?.rows[0]?.filter((c) => c !== null).join(', ') ?? ''
         return [`${f}: ${t('no supported broker matched the header row.')}`, t('Header found: {text}', { text: header || t('(empty)') })]
       }),
+      unsupportedReport(tables.filter((table) => unrecognizedFiles.includes(table.fileName))),
     )
   }
 
