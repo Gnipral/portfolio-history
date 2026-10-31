@@ -27,7 +27,7 @@ export interface Contribution {
   weight: number
   /** Result over what was at stake: the value at the start of the period plus the money put in during it. */
   return?: number
-  /** Σ previous day's weight × the day's return, in basis points of the portfolio. */
+  /** Σ previous day's weight × the day's return, linked with Carino's factors, in basis points of the portfolio. */
   contributionBps: number
 }
 
@@ -36,9 +36,9 @@ export interface ContributionResult {
   /** The sum of the contributions, in basis points. */
   totalBps: number
   /**
-   * The portfolio's TWR over the period, in basis points. The contributions add up daily returns without
-   * compounding them, and leave out what belongs to no position (interest, cash fees), so the sum can
-   * differ slightly from this: worth a footnote.
+   * The portfolio's TWR over the period, in basis points. The linked contributions add up to it, except for
+   * what belongs to no position (interest, fees on cash), so the sum can differ slightly from this: worth
+   * a footnote.
    */
   twrBps: number
 }
@@ -59,6 +59,28 @@ function heldKeys(transactions: Transaction[]): Map<string, Transaction> {
     if (!absorbed.has(key)) latest.set(key, t)
   }
   return latest
+}
+
+/** ln(1 + r) / r, the Carino factor; 1 for a return of zero, where the limit is 1. */
+function carino(r: number): number {
+  return Math.abs(r) < 1e-12 ? 1 : Math.log1p(r) / r
+}
+
+/**
+ * Carino's link per day of the window: a day's contribution times this factor makes the parts add up to
+ * the compounded return of the period, instead of to the plain sum of the daily returns.
+ */
+function linkFactors(days: PortfolioDay[], window: Window): Map<string, number> {
+  const before = window.from > 0 ? days[window.from - 1] : undefined
+  const last = days[window.to] as PortfolioDay
+  const total = carino((1 + last.twr) / (1 + (before?.twr ?? 0)) - 1)
+  const factors = new Map<string, number>()
+  for (let i = window.from; i <= window.to; i++) {
+    const day = days[i] as PortfolioDay
+    const previous = i > 0 ? (days[i - 1] as PortfolioDay).twr : 0
+    factors.set(day.date, carino((1 + day.twr) / (1 + previous) - 1) / total)
+  }
+  return factors
 }
 
 /**
@@ -85,6 +107,7 @@ export function contributions(
     bases.set(day.date, (i > 0 ? (days[i - 1] as PortfolioDay).value : 0) + day.inflow)
   }
 
+  const factors = linkFactors(days, window)
   const positions: Contribution[] = []
   for (const [key, t] of heldKeys(transactions)) {
     const byDate = new Map<string, PositionPoint>(positionSeries(transactions, prices, options, key, today).points.map((p) => [p.date, p]))
@@ -97,7 +120,7 @@ export function contributions(
       const point = byDate.get(date)
       const pnl = point?.pnl ?? previousPnl
       const base = bases.get(date) ?? 0
-      if (base > MIN_BASE) contribution += (pnl - previousPnl) / base
+      if (base > MIN_BASE) contribution += ((pnl - previousPnl) / base) * (factors.get(date) ?? 1)
       putIn += point?.inflow ?? 0
       previousPnl = pnl
     }

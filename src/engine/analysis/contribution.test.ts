@@ -43,13 +43,18 @@ describe('contributions', () => {
   it('splits the result and the return over the positions', () => {
     const result = contributions(transactions, prices, DEFAULT_OPTIONS, days, { from: 0, to: 2 }, today)
     const [a, b] = result.positions
-    expect(a).toEqual({ key: A, product: A, isin: A, assetClass: 'etf', pnl: expect.closeTo(100), weight: expect.closeTo(1100 / 1900), return: expect.closeTo(0.1), contributionBps: expect.closeTo(500) })
-    // −€200 on a base of €2,100 (the evening before).
-    expect(b?.contributionBps).toBeCloseTo((-200 / 2100) * 10_000)
+    expect(a).toMatchObject({ key: A, product: A, isin: A, assetClass: 'etf', pnl: expect.closeTo(100), weight: expect.closeTo(1100 / 1900), return: expect.closeTo(0.1) })
     expect(b?.return).toBeCloseTo(-0.2)
-    expect(result.totalBps).toBeCloseTo(500 - (200 / 2100) * 10_000)
-    // €2,000 became €1,900: −5%, a little apart from the sum of the parts.
+    // €2,000 became €1,900: −5%.
     expect(result.twrBps).toBeCloseTo(-500)
+    // Unlinked, A adds +5% on the first day and B −200 / 2,100 on the second, which sum to −4.52%, not −5%.
+    // Carino's link scales each day by ln(1 + r) / r over the period's ln(1 + R) / R, so the parts add up.
+    const k = (r: number) => Math.log1p(r) / r
+    const day1 = 0.05
+    const day2 = -200 / 2100
+    expect(a?.contributionBps).toBeCloseTo(((day1 * k(day1)) / k(-0.05)) * 10_000)
+    expect(b?.contributionBps).toBeCloseTo(((day2 * k(day2)) / k(-0.05)) * 10_000)
+    expect(result.totalBps).toBeCloseTo(result.twrBps)
   })
 
   it('measures a later period from the value the positions had when it started', () => {

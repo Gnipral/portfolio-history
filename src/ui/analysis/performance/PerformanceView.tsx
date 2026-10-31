@@ -591,7 +591,7 @@ export function PerformanceView({ inputs, options, series, settings, level, onLe
               </table>
             </div>
             <p className="muted small">
-              {t('Contributed return adds each day the weight of the evening before times the return of that day. The parts can differ slightly from the total TWR ({twr}): returns are added, not compounded, and interest or fees of the account belong to no position.', {
+              {t('Contributed return adds each day the weight of the evening before times the return of that day, linked over the period (Carino) so the parts compound like the total. They can differ slightly from the total TWR ({twr}): interest and fees of the account belong to no position.', {
                 twr: bps(contribution.twrBps),
               })}
               {tilts && ` ${t('vs MSCI World: the weight of a stock minus its weight in the index; funds and ETFs are spread by themselves.')}`}

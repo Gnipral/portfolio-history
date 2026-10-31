@@ -548,6 +548,7 @@ input[type='range'] {
 /* Tables: thin rules, small uppercase headers, figures right-aligned. */
 
 .table {
+  display: table;
   width: 100%;
   border-collapse: collapse;
   background: var(--surface);
