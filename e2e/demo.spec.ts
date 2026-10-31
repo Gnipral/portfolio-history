@@ -23,7 +23,9 @@ test.beforeEach(async ({ page }) => {
   )
 })
 
+/** Opens the demo the quick way, past the welcome flow; the flow itself has a test of its own. */
 async function openDemo(page: Page) {
+  await page.addInitScript(() => localStorage.setItem('portfolio-history:onboarded', '1'))
   await page.goto('./')
   await page.getByRole('button', { name: 'Try the demo' }).first().click()
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
@@ -212,5 +214,21 @@ test('the risk tab checks how the demo is spread', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Risk checks' })).toBeVisible()
   await expect(page.locator('.check')).toHaveCount(7)
   await expect(page.getByText('No single stock above 10%')).toBeVisible()
+  expect(errors).toEqual([])
+})
+
+test('a first visit is welcomed and can start the demo from there', async ({ page }) => {
+  const errors = watchErrors(page)
+  await page.goto('./')
+  await expect(page.getByRole('heading', { name: 'See what your portfolio really did' })).toBeVisible()
+  await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByRole('heading', { name: 'Make it yours' })).toBeVisible()
+  await page.getByRole('button', { name: 'Next' }).click()
+  await page.getByRole('button', { name: /Try the demo/ }).click()
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+  await expect(page.locator('.chart-wrapper canvas').first()).toBeVisible({ timeout: 20_000 })
+  // Seen once is enough: leaving the demo shows the plain empty dashboard.
+  await page.getByRole('button', { name: 'Leave demo' }).first().click()
+  await expect(page.getByText(/No portfolio loaded yet/)).toBeVisible()
   expect(errors).toEqual([])
 })

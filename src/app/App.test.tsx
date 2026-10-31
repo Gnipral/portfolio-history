@@ -1,13 +1,15 @@
 import 'fake-indexeddb/auto'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { App } from './App.tsx'
 
 vi.mock('virtual:pwa-register/react', () => ({
   useRegisterSW: () => ({ needRefresh: [false, () => {}], offlineReady: [false, () => {}], updateServiceWorker: async () => {} }),
 }))
 
+// The welcome flow of a first visit has its own tests; these start after it.
+beforeEach(() => localStorage.setItem('portfolio-history:onboarded', '1'))
 afterEach(cleanup)
 
 function renderAt(path: string) {
