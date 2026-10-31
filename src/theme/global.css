@@ -1014,6 +1014,18 @@ code {
   color: var(--accent);
 }
 
+/* Phones: the eight quick ranges share the full width instead of scrolling. */
+@media (max-width: 640px) {
+  .time-controls .segmented {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .time-controls .segmented button {
+    padding: 0.3rem 0.4rem;
+  }
+}
+
 .timeline {
   flex: 1;
   min-width: 160px;

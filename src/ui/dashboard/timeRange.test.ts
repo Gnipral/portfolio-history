@@ -13,6 +13,19 @@ describe('rangeStart', () => {
     expect(rangeStart('ALL', first, last)).toBe(first)
   })
 
+  it('starts the week on Monday and the month on its first day', () => {
+    // 19 October 2026 is a Monday: the week starts that day.
+    expect(rangeStart('WTD', first, last)).toBe('2026-10-19')
+    expect(rangeStart('WTD', first, '2026-10-25')).toBe('2026-10-19')
+    expect(rangeStart('WTD', first, '2026-10-21')).toBe('2026-10-19')
+    expect(rangeStart('MTD', first, last)).toBe('2026-10-01')
+  })
+
+  it('goes back five years, but not before the first transaction', () => {
+    expect(rangeStart('5Y', '2015-01-01', last)).toBe('2021-10-19')
+    expect(rangeStart('5Y', first, last)).toBe(first)
+  })
+
   it('never starts before the first transaction', () => {
     expect(rangeStart('1Y', '2026-05-01', last)).toBe('2026-05-01')
   })
