@@ -174,3 +174,9 @@ Every push to `main` is tested, built and deployed to GitHub Pages by `.github/w
 ## Brand
 
 Logo files are in `public/brand/`: the mark (`gnipral-mark.svg`, also the app icon via `public/icon.svg`), the lockup for light and dark backgrounds, a 500×500 avatar and a 1280×640 social preview image.
+
+## License
+
+Portfolio History is **source available** under the [PolyForm Noncommercial License 1.0.0](LICENSE.md): free to use, study and change for personal use, hobby projects, education, research and non-profits. **Commercial use**, such as offering it as a paid service or building it into a product, needs a separate license: open an [issue](https://github.com/Gnipral/portfolio-history/issues) to ask.
+
+The broker import rules follow the importers of [Portfolio Performance](https://github.com/portfolio-performance/portfolio) (Eclipse Public License 2.0); the code here is written independently. Charts are drawn with [TradingView Lightweight Charts](https://github.com/tradingview/lightweight-charts) (Apache 2.0) and Recharts (MIT).
