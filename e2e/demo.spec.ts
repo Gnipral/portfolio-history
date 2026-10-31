@@ -45,7 +45,7 @@ test('every analysis tab opens without an error', async ({ page }) => {
   const errors = watchErrors(page)
   await openDemo(page)
   await page.getByRole('link', { name: 'Analysis' }).click()
-  for (const tab of ['Taxes', 'Dividends', 'Realized', 'Costs', 'Risk', 'Planning']) {
+  for (const tab of ['Performance', 'Taxes', 'Dividends', 'Realized', 'Planning']) {
     await page.getByRole('tab', { name: tab }).click()
     await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true')
     await expect(page.getByRole('tabpanel').locator('h3').first()).toBeVisible()
@@ -206,13 +206,18 @@ test('the data check opens from the dashboard and checks the demo', async ({ pag
   expect(errors).toEqual([])
 })
 
-test('the risk tab checks how the demo is spread', async ({ page }) => {
+test('every level of Performance opens, with the checks of the demo', async ({ page }) => {
   const errors = watchErrors(page)
   await openDemo(page)
   await page.getByRole('link', { name: 'Analysis' }).click()
-  await page.getByRole('tab', { name: 'Risk' }).click()
-  await expect(page.getByRole('heading', { name: 'Risk checks' })).toBeVisible()
-  await expect(page.locator('.check')).toHaveCount(7)
+  for (const level of ['Basic', 'Advanced', 'Expert']) {
+    await page.getByRole('button', { name: level, exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Key figures' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Checks' })).toBeVisible()
+    await expect(page.getByText('could not be shown')).toHaveCount(0)
+  }
+  await expect(page.getByRole('heading', { name: 'Methodology' })).toBeVisible()
+  await expect(page.locator('.rc-row')).toHaveCount(7)
   await expect(page.getByText('No single stock above 10%')).toBeVisible()
   expect(errors).toEqual([])
 })
