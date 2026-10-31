@@ -429,7 +429,6 @@ function PreviewSection({ number, result }: { number: number; result: ImportResu
                     </thead>
                     <tbody>
                       {result.issues.map((issue, i) => (
-                        // biome-ignore lint/suspicious/noArrayIndexKey: issues have no id and keep their order
                         <tr key={i}>
                           <td className="label-caps">{issue.severity}</td>
                           <td>{issue.file}</td>

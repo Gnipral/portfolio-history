@@ -1,36 +1,4 @@
 
-.dropzone {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 140px;
-  padding: 1.5rem;
-  border: 2px dashed var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-muted);
-  text-align: center;
-  cursor: pointer;
-}
-
-.dropzone.dragging,
-.dropzone:hover {
-  border-color: var(--accent);
-  color: var(--text);
-}
-
-.dropzone input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-
-.dropzone:focus-within {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 .callout {
   padding: 0.75rem 1rem;
   border-radius: var(--radius);
@@ -54,22 +22,6 @@
 
 .callout.success {
   border-left-color: var(--positive);
-}
-
-/* The header rows of an unrecognized export, to copy into a report. */
-.report-unsupported pre {
-  margin: 0 0 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.report-unsupported .actions {
-  align-items: center;
 }
 
 /* How the benchmark is simulated, on its own line under the chips. */
@@ -791,12 +743,6 @@ code {
   color: var(--text-muted);
 }
 
-.radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
 .settings-form label.radio {
   flex-direction: row;
   align-items: baseline;
@@ -806,16 +752,6 @@ code {
 
 .radio input {
   accent-color: var(--accent);
-}
-
-button.danger {
-  color: var(--negative);
-  border-color: var(--negative);
-}
-
-button.danger:hover {
-  background: var(--negative);
-  color: #fff;
 }
 
 /* Analysis and dashboard additions */
@@ -864,16 +800,6 @@ button.danger:hover {
 .returns-table th {
   white-space: nowrap;
   font-size: 0.85rem;
-}
-
-.mix-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0.5rem;
-}
-
-.mix-grid input {
-  width: 100%;
 }
 
 .panel .table {
@@ -1104,27 +1030,6 @@ progress {
   .profit-facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
-
-.palette-picker {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.settings-form .palette-option {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.settings-form .palette-option:has(input:checked) {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .palette-swatches {
