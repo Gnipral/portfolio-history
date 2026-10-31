@@ -78,3 +78,26 @@ export function parseYahooCloses(result: NonNullable<YahooChart['chart']['result
   })
   return rows
 }
+
+/**
+ * The holdings CSV of iShares Core MSCI World (IE00B4L5Y983, listed as IWDA in Amsterdam and SWDA in
+ * London: one fund). The blackrock.com address serves the file without the site's cookie wall.
+ */
+export const MSCI_WORLD_HOLDINGS_URL =
+  'https://www.blackrock.com/uk/individual/products/251882/ishares-msci-world-ucits-etf-acc-fund/1472631233320.ajax?fileType=csv&fileName=SWDA_holdings&dataType=fund'
+
+export async function fetchText(url: string, attempts = 4): Promise<string> {
+  let lastError: unknown
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT, Accept: 'text/csv,text/plain,*/*' } })
+      if (response.ok) return await response.text()
+      lastError = new Error(`HTTP ${response.status} for ${url}`)
+      if (response.status < 500 && response.status !== 429) break
+    } catch (error) {
+      lastError = error
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 1000))
+  }
+  throw lastError
+}

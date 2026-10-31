@@ -5,7 +5,8 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { BENCHMARKS, DATA_START, FX_CURRENCIES, FX_FILE, META_FILE, benchmarkFile } from './lib/config.ts'
+import { BENCHMARKS, DATA_START, FX_CURRENCIES, FX_FILE, INDEX_WEIGHTS_FILE, META_FILE, benchmarkFile } from './lib/config.ts'
+import { parseIsharesHoldings, serializeIndexWeights, type IndexWeightsFile } from './lib/holdings.ts'
 import {
   addDays,
   closeStats,
@@ -20,11 +21,12 @@ import {
   type FxFile,
   type MetaFile,
 } from './lib/snapshot.ts'
-import { fetchDailyCloses, fetchFxSeries } from './lib/sources.ts'
+import { fetchDailyCloses, fetchFxSeries, fetchText, MSCI_WORLD_HOLDINGS_URL } from './lib/sources.ts'
 
 const DATA_DIR = join(import.meta.dirname, '..', 'public', 'data')
 const FX_SOURCE = 'European Central Bank reference rates via Frankfurter (api.frankfurter.dev)'
 const BENCHMARK_SOURCE = 'Yahoo Finance daily closes'
+const INDEX_WEIGHTS_SOURCE = 'iShares Core MSCI World UCITS ETF holdings (IE00B4L5Y983), blackrock.com'
 
 function readJson<T>(file: string): T | null {
   const path = join(DATA_DIR, file)
@@ -81,11 +83,24 @@ async function main() {
     }
   }
 
+
+  // MSCI World constituent weights: replaced as a whole, not appended, since only today's weights matter.
+  const existingWeights = readJson<IndexWeightsFile>(INDEX_WEIGHTS_FILE)
+  try {
+    const file = parseIsharesHoldings(await fetchText(MSCI_WORLD_HOLDINGS_URL), INDEX_WEIGHTS_SOURCE)
+    const changed = writeIfChanged(INDEX_WEIGHTS_FILE, serializeIndexWeights(file))
+    changes['MSCI World weights'] = changed ? 1 : 0
+    files[INDEX_WEIGHTS_FILE] = { rows: file.holdings.length, firstDate: file.asOf, lastDate: file.asOf }
+  } catch (error) {
+    errors.push(`MSCI World weights: ${String(error)}`)
+    if (existingWeights) files[INDEX_WEIGHTS_FILE] = { rows: existingWeights.holdings.length, firstDate: existingWeights.asOf, lastDate: existingWeights.asOf }
+  }
   const meta: MetaFile = {
     lastCheck: now.toISOString().replace(/\.\d{3}Z$/, 'Z'),
     sources: {
       [FX_FILE]: FX_SOURCE,
       ...Object.fromEntries(BENCHMARKS.map((b) => [benchmarkFile(b.id), `${BENCHMARK_SOURCE} (${b.symbol})`])),
+      [INDEX_WEIGHTS_FILE]: INDEX_WEIGHTS_SOURCE,
     },
     files,
     errors,
