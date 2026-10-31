@@ -2165,3 +2165,69 @@ progress {
   background: none;
   padding: 0 0.25rem;
 }
+
+/* Data check: one row per check, problems first. */
+.data-check-link.warning {
+  color: var(--warning);
+}
+
+.checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.check {
+  display: flex;
+  gap: 0.85rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.check:last-child {
+  border-bottom: none;
+}
+
+.check-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.check-ok .check-icon {
+  color: var(--positive);
+  background: color-mix(in srgb, var(--positive) 14%, transparent);
+}
+
+.check-problem .check-icon {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+}
+
+.check-note .check-icon {
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 14%, transparent);
+}
+
+.check-body {
+  min-width: 0;
+}
+
+.check-body p {
+  margin: 0.25rem 0;
+}
+
+.check-count {
+  color: var(--warning);
+}
+
+.check-items {
+  margin: 0.35rem 0 0.5rem;
+  padding-left: 1.1rem;
+  overflow-wrap: anywhere;
+}

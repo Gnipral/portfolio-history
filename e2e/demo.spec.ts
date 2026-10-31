@@ -193,3 +193,13 @@ test('hiding amounts leaves only percentages on the dashboard', async ({ page })
   await expect(page.locator('.card.hero .card-value')).toContainText(/\d/)
   expect(errors).toEqual([])
 })
+
+test('the data check opens from the dashboard and checks the demo', async ({ page }) => {
+  const errors = watchErrors(page)
+  await openDemo(page)
+  await page.getByRole('link', { name: /Data check/ }).click()
+  await expect(page.getByRole('heading', { name: 'Data check' })).toBeVisible()
+  await expect(page.locator('.check')).toHaveCount(9)
+  await expect(page.getByText('could not be shown')).toHaveCount(0)
+  expect(errors).toEqual([])
+})

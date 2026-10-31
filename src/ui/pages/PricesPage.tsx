@@ -68,6 +68,9 @@ export function PricesPage() {
       <p className="muted">
         {t('Daily closing prices are fetched once and stored on this device. Only the symbol is sent to price sources, never quantities or amounts.')}
       </p>
+      <p className="small">
+        <Link to="/check">{t('Data check')} →</Link> {t('lists what can make a figure wrong, such as a wrong symbol or a missing split.')}
+      </p>
       <p className="muted small">{t('Switch a product off under Counts to leave it out of every figure, the chart and the analysis, as if you never traded it.')}</p>
 
       {noSource && (

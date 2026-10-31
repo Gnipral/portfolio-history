@@ -15,6 +15,7 @@ import { useHideAmounts } from '../ui/privacy.ts'
 
 // The dashboard comes first; every other page loads when it is opened.
 const AnalysisPage = lazy(() => import('../ui/pages/AnalysisPage.tsx').then((m) => ({ default: m.AnalysisPage })))
+const DataCheckPage = lazy(() => import('../ui/pages/DataCheckPage.tsx').then((m) => ({ default: m.DataCheckPage })))
 const ComparePage = lazy(() => import('../ui/pages/ComparePage.tsx').then((m) => ({ default: m.ComparePage })))
 const ImportPage = lazy(() => import('../ui/pages/ImportPage.tsx').then((m) => ({ default: m.ImportPage })))
 const PricesPage = lazy(() => import('../ui/pages/PricesPage.tsx').then((m) => ({ default: m.PricesPage })))
@@ -73,6 +74,7 @@ export function App() {
               <Route path="/import" element={<ImportPage />} />
               <Route path="/transactions" element={<TransactionsPage />} />
               <Route path="/prices" element={<PricesPage />} />
+              <Route path="/check" element={<DataCheckPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/s/:data" element={<SharedCardPage />} />
               <Route path="/c/:data" element={<ComparePage />} />
