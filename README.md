@@ -169,6 +169,7 @@ Every push to `main` is tested, built and deployed to GitHub Pages by `.github/w
 - New broker: open an issue with an anonymized sample (the header row plus a few rows with made-up numbers), then add an adapter in `src/import/adapters/<broker>/` and register it. Open broker requests have the [`broker`](https://github.com/Gnipral/portfolio-history/issues?q=is%3Aopen+label%3Abroker) label.
 - Don't edit `public/data/*` or `CHANGELOG.md` by hand; the workflows own them.
 - Commit with a noreply email address (GitHub → Settings → Emails → Keep my email addresses private).
+- Found a security problem? Report it privately, as described in [SECURITY.md](SECURITY.md), not in a public issue.
 
 ## Brand
 
