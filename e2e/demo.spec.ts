@@ -180,3 +180,16 @@ test('finds a stock and compares with it for now', async ({ page }) => {
   await expect(page.getByRole('option', { name: /Apple Inc\. \(AAPL\)/ })).toHaveCount(1)
   expect(errors).toEqual([])
 })
+
+test('hiding amounts leaves only percentages on the dashboard', async ({ page }) => {
+  const errors = watchErrors(page)
+  await openDemo(page)
+  await page.getByRole('button', { name: 'Hide amounts' }).click()
+  await expect(page.locator('.chart-wrapper canvas').first()).toBeVisible({ timeout: 20_000 })
+  await expect(page.locator('.card.hero .card-value')).toHaveText('€•••')
+  await expect(page.locator('.cards')).toContainText('%')
+  await expect(page.locator('.cards')).not.toContainText(/€\s?\d/)
+  await page.getByRole('button', { name: 'Show amounts' }).click()
+  await expect(page.locator('.card.hero .card-value')).toContainText(/\d/)
+  expect(errors).toEqual([])
+})

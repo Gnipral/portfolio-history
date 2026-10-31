@@ -16,8 +16,8 @@ import {
 import { loadImportContext } from '../../import/fxContext.ts'
 import { localToday } from '../../market/dates.ts'
 import type { AssetClass, Transaction } from '../../model/transaction.ts'
-import { formatDate, formatEur } from '../format.ts'
-import { locale, t } from '../../i18n/i18n.ts'
+import { formatDate, formatEur, formatQuantity } from '../format.ts'
+import { t } from '../../i18n/i18n.ts'
 import { Rich } from '../../i18n/Rich.tsx'
 import { useAccountSync } from '../components/AccountSync.tsx'
 
@@ -125,7 +125,7 @@ export function TransactionsPage() {
                     <td>{formatDate(tx.date)}</td>
                     <td>{TYPE_LABELS[tx.type] ?? tx.type}</td>
                     <td>{tx.product}</td>
-                    <td className="num">{tx.quantity ? tx.quantity.toLocaleString(locale(), { maximumFractionDigits: 6 }) : ''}</td>
+                    <td className="num">{tx.quantity ? formatQuantity(tx.quantity) : ''}</td>
                     <td className="num">{formatEur(tx.totalEur)}</td>
                     <td className="muted small">{tx.source.broker}</td>
                     <td className="row-actions">
