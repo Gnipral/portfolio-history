@@ -2,6 +2,75 @@
 
 Generated every week from the merged pull requests by the weekly maintenance workflow. Do not edit by hand.
 
+## Week of 2026-10-26
+
+- Chart labels and side panel follow the playhead (#127) by @SausMeesterXIV
+- Timeline: fixed window, easier playhead (#126) by @SausMeesterXIV
+- UI refactor: report-like desktop design and new analytics (#125) by @SausMeesterXIV
+- Transactions page: stored amounts in euros (#123) by @SausMeesterXIV
+- Download the main tables as CSV (#122) by @SausMeesterXIV
+- Welcome flow on a first visit (#121) by @SausMeesterXIV
+- Quick ranges: week, month and five years (#120) by @SausMeesterXIV
+- Risk checks (#119) by @SausMeesterXIV
+- Data check (#118) by @SausMeesterXIV
+- License: PolyForm Noncommercial 1.0.0 (#117) by @SausMeesterXIV
+- Security policy (#116) by @SausMeesterXIV
+- Hide amounts (#115) by @SausMeesterXIV
+- Load the pages when they are opened (#114) by @SausMeesterXIV
+- Offline note, header-only import reports and benchmark method (#113) by @SausMeesterXIV
+- English only (#112) by @SausMeesterXIV
+- chore(deps): bump the actions group with 7 updates (#97) by @dependabot[bot]
+- chore(deps): bump the minor-and-patch group across 1 directory with 3 updates (#98) by @dependabot[bot]
+- On a phone the chart comes first (#111) by @SausMeesterXIV
+- Version 1.0.0, README up to date (#110) by @SausMeesterXIV
+- No TradingView logo over the profit line (#109) by @SausMeesterXIV
+- No stray black number boxes on the charts (#108) by @SausMeesterXIV
+- Chart labels stay at their own point, no black crosshair boxes (#107) by @SausMeesterXIV
+- Chart labels next to the point under the pointer (#106) by @SausMeesterXIV
+- Compare with any stock, fund or index (#105) by @SausMeesterXIV
+- Axis labels follow the day under the pointer (#104) by @SausMeesterXIV
+- Switch products off, zoom into the chart, profit follows the pointer (#103) by @SausMeesterXIV
+- No false profit from an export that starts after the first buys (#102) by @SausMeesterXIV
+- The allocation can never cover the positions (#101) by @SausMeesterXIV
+- Percentages without deposits, Dutch first, layout and settings fixes (#100) by @SausMeesterXIV
+- End-to-end encryption of the account data (#99) by @SausMeesterXIV
+- Rate limits, production-only origins, capped share links, pinned actions (#96) by @SausMeesterXIV
+- Brokers without deposits, and no unasked overwrite of account data (#95) by @SausMeesterXIV
+- Self-hosted fonts and a Content-Security-Policy (#94) by @SausMeesterXIV
+- Fix dropped rows of a newer export, confirm deletes, EUR fallback (#93) by @SausMeesterXIV
+- The app in Dutch (#92) by @SausMeesterXIV
+- Linting (Biome) and an end-to-end test of the demo (#91) by @SausMeesterXIV
+- Backup file: download and restore (#90) by @SausMeesterXIV
+- Error boundary with 'Report this problem' (#89) by @SausMeesterXIV
+- chore: D1 database id for the account worker (#88) by @SausMeesterXIV
+- feat: base currency other than EUR (#87) by @SausMeesterXIV
+- feat: net worth with savings and other assets (#86) by @SausMeesterXIV
+- feat: compare shared portfolios with friends (#85) by @SausMeesterXIV
+- feat: planning tab with rebalancing and FIRE projection (#84) by @SausMeesterXIV
+- feat: export a tax report per year (#83) by @SausMeesterXIV
+- feat: add and correct transactions by hand (#82) by @SausMeesterXIV
+- feat: combine several brokers in one portfolio (#81) by @SausMeesterXIV
+- docs: screenshots of the demo and a pointer to it in the README (#80) by @SausMeesterXIV
+- feat: optional account with passkeys to keep the portfolio and periods (#79) by @SausMeesterXIV
+- feat: share a card as a link that opens it read-only (#78) by @SausMeesterXIV
+- feat: save periods under a name and open them again (#77) by @SausMeesterXIV
+- feat: say plainly that the dividend forecast is based on last year (#76) by @SausMeesterXIV
+- feat: dividend forecast for the next 12 months (#75) by @SausMeesterXIV
+- fix: chart lines invisible with palettes that use pure black or white (#74) by @SausMeesterXIV
+- feat: colour-blind palette checked by simulation, lines told apart without color (#73) by @SausMeesterXIV
+- feat: bolder chart palettes, applied to the chart block only (#72) by @SausMeesterXIV
+- fix: chart style as a bar above the chart, with the colors in it (#71) by @SausMeesterXIV
+- feat: filter the dashboard on the type of asset (#70) by @SausMeesterXIV
+- feat: chart style menu (fill, invested line, profit pane, log scale) (#69) by @SausMeesterXIV
+- feat: choose a color palette (colour-blind friendly, high contrast, soft) (#68) by @SausMeesterXIV
+- feat: profit per period, best and worst position, gap with the benchmark (#67) by @SausMeesterXIV
+- feat: plain notice for a weak or missing connection (#66) by @SausMeesterXIV
+- feat: keep working on a slow connection (#65) by @SausMeesterXIV
+- feat: clearer positions on the share card, also for large portfolios (#64) by @SausMeesterXIV
+- feat: show positions with their weight and return on the share card (#63) by @SausMeesterXIV
+- feat: demo mode with a made-up portfolio (#62) by @SausMeesterXIV
+- feat: share card with the return in percent (#61) by @SausMeesterXIV
+
 ## Week of 2026-10-19
 
 - feat: choose benchmarks on the dashboard (#60) by @SausMeesterXIV
