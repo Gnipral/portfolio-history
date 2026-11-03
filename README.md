@@ -109,7 +109,7 @@ Import either the PDFs or the CSV of a broker, not both: they describe the same 
 
 Brokers are detected from the header row, also after a few preamble lines, and PDFs from their text. Each broker is an adapter in `src/import/adapters/` that maps its rows to the normalized `Transaction` model (`src/model/transaction.ts`), with shared helpers in `kit.ts`; the PDF readers are in `src/import/pdf/`. The rules for each broker follow [Portfolio Performance](https://github.com/portfolio-performance/portfolio)'s importers, which are tested on many real documents. Amounts in another currency than EUR are converted at the ECB rate of the day. Adding a broker means adding an adapter and registering it in `src/import/registry.ts`.
 
-To check real exports without committing them:
+To check real exports without actually committing them:
 
 ```bash
 DEGIRO_SAMPLE=/path/to/Transactions.xlsx npx vitest run privateSample --silent=false
