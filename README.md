@@ -117,7 +117,7 @@ BROKER_EXPORTS=/path/to/folder npx vitest run brokerExports --silent=false   # e
 PDF_SAMPLES=/path/to/folder npx vitest run pdfSamples --silent=false         # every PDF, or PDF text dump (.txt)
 ```
 
-Never commit personal broker exports: this repository is public.
+Never commit personal broker exports: this repository is public!
 
 ## Static market data
 
