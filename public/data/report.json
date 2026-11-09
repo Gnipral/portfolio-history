@@ -1,39 +1,39 @@
 {
-  "generated": "2026-11-02T14:53:06Z",
+  "generated": "2026-11-09T15:20:53Z",
   "status": "ok",
   "warnings": [],
   "files": {
     "fx-rates.json": {
-      "rows": 4310,
+      "rows": 4315,
       "firstDate": "2010-01-04",
-      "lastDate": "2026-10-30",
+      "lastDate": "2026-11-06",
       "staleDays": 3,
       "gaps": [],
       "jumps": [],
       "missingValues": 0
     },
     "benchmark-iwda.json": {
-      "rows": 4307,
+      "rows": 4312,
       "firstDate": "2010-01-04",
-      "lastDate": "2026-10-30",
+      "lastDate": "2026-11-06",
       "staleDays": 3,
       "gaps": [],
       "jumps": [],
       "missingValues": 0
     },
     "benchmark-vwce.json": {
-      "rows": 1846,
+      "rows": 1851,
       "firstDate": "2019-07-29",
-      "lastDate": "2026-10-30",
+      "lastDate": "2026-11-06",
       "staleDays": 3,
       "gaps": [],
       "jumps": [],
       "missingValues": 0
     },
     "benchmark-sxr8.json": {
-      "rows": 4180,
+      "rows": 4185,
       "firstDate": "2010-05-19",
-      "lastDate": "2026-10-30",
+      "lastDate": "2026-11-06",
       "staleDays": 3,
       "gaps": [],
       "jumps": [
