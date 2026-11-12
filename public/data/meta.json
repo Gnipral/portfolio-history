@@ -1,5 +1,5 @@
 {
-  "lastCheck": "2026-11-11T01:22:54Z",
+  "lastCheck": "2026-11-12T02:23:44Z",
   "sources": {
     "fx-rates.json": "European Central Bank reference rates via Frankfurter (api.frankfurter.dev)",
     "benchmark-iwda.json": "Yahoo Finance daily closes (IWDA.AS)",
@@ -9,29 +9,29 @@
   },
   "files": {
     "fx-rates.json": {
-      "rows": 4317,
+      "rows": 4318,
+      "firstDate": "2010-01-04",
+      "lastDate": "2026-11-11"
+    },
+    "benchmark-iwda.json": {
+      "rows": 4314,
       "firstDate": "2010-01-04",
       "lastDate": "2026-11-10"
     },
-    "benchmark-iwda.json": {
-      "rows": 4313,
-      "firstDate": "2010-01-04",
-      "lastDate": "2026-11-09"
-    },
     "benchmark-vwce.json": {
-      "rows": 1852,
+      "rows": 1853,
       "firstDate": "2019-07-29",
-      "lastDate": "2026-11-09"
+      "lastDate": "2026-11-10"
     },
     "benchmark-sxr8.json": {
-      "rows": 4186,
+      "rows": 4187,
       "firstDate": "2010-05-19",
-      "lastDate": "2026-11-09"
+      "lastDate": "2026-11-10"
     },
     "msci-world-weights.json": {
       "rows": 1247,
-      "firstDate": "2026-11-09",
-      "lastDate": "2026-11-09"
+      "firstDate": "2026-11-10",
+      "lastDate": "2026-11-10"
     }
   },
   "errors": []
